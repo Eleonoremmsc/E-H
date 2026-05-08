@@ -374,6 +374,12 @@
 
       <form id="rsvp-form" novalidate>
 
+        <!-- 01 Contact person -->
+        <div class="rsvp-sub-header">
+          <span class="rsvp-sub-num">01</span>
+          <span class="rsvp-sub-title" data-i18n="rsvp_contact_label">Contact person</span>
+        </div>
+
         <div class="form-group">
           <label class="form-label" for="f-email"><span data-i18n="rsvp_email">Email address</span> <span class="req">*</span></label>
           <input type="email" id="f-email" name="email" class="form-input" autocomplete="email">
@@ -382,14 +388,14 @@
 
         <div class="form-row">
           <div class="form-group">
+            <label class="form-label" for="f-firstname"><span data-i18n="rsvp_firstname">First name</span> <span class="req">*</span></label>
+            <input type="text" id="f-firstname" name="firstName" class="form-input" autocomplete="given-name">
+            <div class="form-error" id="err-firstName"></div>
+          </div>
+          <div class="form-group">
             <label class="form-label" for="f-lastname"><span data-i18n="rsvp_lastname">Last name</span> <span class="req">*</span></label>
             <input type="text" id="f-lastname" name="lastName" class="form-input" autocomplete="family-name">
             <div class="form-error" id="err-lastName"></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="f-firstnames"><span data-i18n="rsvp_firstnames">First name(s)</span> <span class="req">*</span></label>
-            <input type="text" id="f-firstnames" name="firstNames" class="form-input" autocomplete="given-name">
-            <div class="form-error" id="err-firstNames"></div>
           </div>
         </div>
 
@@ -401,7 +407,12 @@
 
         <div class="rsvp-divider"></div>
 
-        <div class="rsvp-section-label" data-i18n="rsvp_guests_label">Guests</div>
+        <!-- 02 Guests -->
+        <div class="rsvp-sub-header">
+          <span class="rsvp-sub-num">02</span>
+          <span class="rsvp-sub-title" data-i18n="rsvp_guests_label">Guests</span>
+        </div>
+
         <div id="attendees-list"></div>
         <button type="button" id="add-attendee-btn" class="btn-add">
           <span data-i18n="rsvp_add">+ Add another guest</span>

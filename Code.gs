@@ -53,7 +53,7 @@ function handleSubmit(data) {
     now,
     data.email,
     data.lastName,
-    data.firstNames,
+    data.firstName,
     data.address,
     JSON.stringify(data.attendees || []),
     token,
@@ -74,7 +74,7 @@ function handleUpdate(data) {
       const row = i + 1;
       sheet.getRange(row, 3).setValue(data.email);
       sheet.getRange(row, 4).setValue(data.lastName);
-      sheet.getRange(row, 5).setValue(data.firstNames);
+      sheet.getRange(row, 5).setValue(data.firstName);
       sheet.getRange(row, 6).setValue(data.address);
       sheet.getRange(row, 7).setValue(JSON.stringify(data.attendees || []));
       sheet.getRange(row, 9).setValue(new Date().toISOString());
@@ -95,9 +95,9 @@ function getByToken(token) {
       return {
         success: true,
         data: {
-          email:      rows[i][2],
-          lastName:   rows[i][3],
-          firstNames: rows[i][4],
+          email:     rows[i][2],
+          lastName:  rows[i][3],
+          firstName: rows[i][4],
           address:    rows[i][5],
           attendees:  JSON.parse(rows[i][6] || '[]'),
         },
@@ -117,14 +117,14 @@ function sendEmail(data, editUrl, isUpdate) {
   };
 
   const lines = (data.attendees || [])
-    .map(a => `  • ${a.name} — ${statusLabel[a.status] || a.status}`)
+    .map(a => `  • ${a.firstName} ${a.lastName} — ${statusLabel[a.status] || a.status}`)
     .join('\n');
 
   const subject = isUpdate
     ? `Your updated RSVP – Éléonore & Hubert's wedding`
     : `Your RSVP to Éléonore & Hubert's wedding`;
 
-  const body = `Thank you, ${data.firstNames} ${data.lastName}.
+  const body = `Thank you, ${data.firstName} ${data.lastName}.
 
 You have successfully ${isUpdate ? 'updated your RSVP' : "RSVP'd"} to Éléonore & Hubert's wedding on 26 June 2027 in Crillon-le-Brave, Provence.
 

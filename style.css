@@ -777,8 +777,31 @@ body {
 .rsvp-modal::-webkit-scrollbar-track { background: transparent; }
 .rsvp-modal::-webkit-scrollbar-thumb { background: var(--navy-line); }
 
+/* ── Subsection headers ────────────── */
+.rsvp-sub-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 0.5px solid var(--navy-line);
+  margin-bottom: 24px;
+}
+.rsvp-sub-num {
+  font-family: var(--sans);
+  font-size: 0.54rem; font-weight: 300;
+  letter-spacing: 0.18em;
+  color: var(--navy-mid);
+  flex-shrink: 0;
+}
+.rsvp-sub-title {
+  font-family: var(--sans);
+  font-size: 0.6rem; font-weight: 300;
+  letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--navy);
+}
+
 /* ── Form inputs ───────────────────── */
-.form-group { margin-bottom: 28px; }
+.form-group { margin-bottom: 20px; }
 
 .form-label {
   display: block;
@@ -812,8 +835,10 @@ body {
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px;
+  gap: 24px;
+  margin-bottom: 20px;
 }
+.form-row .form-group { margin-bottom: 0; }
 
 .form-error {
   font-family: var(--serif);

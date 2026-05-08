@@ -100,6 +100,7 @@ const T = {
     modal_when:          '26 June 2027 · Crillon-le-Brave',
     modal_prompt:        'Choose your calendar:',
     rsvp_eyebrow:        'RSVP',
+    rsvp_contact_label:  'Contact person',
     rsvp_email:          'Email address',
     rsvp_lastname:       'Last name',
     rsvp_firstnames:     'First name(s)',
@@ -196,6 +197,7 @@ const T = {
     modal_when:          '26 juin 2027 · Crillon-le-Brave',
     modal_prompt:        'Choisissez votre application de calendrier :',
     rsvp_eyebrow:        'RSVP',
+    rsvp_contact_label:  'Personne de contact',
     rsvp_email:          'Adresse email',
     rsvp_lastname:       'Nom de famille',
     rsvp_firstnames:     'Prénom(s)',
@@ -292,6 +294,7 @@ const T = {
     modal_when:          '26. Juni 2027 · Crillon-le-Brave',
     modal_prompt:        'Wählen Sie Ihre Kalenderanwendung:',
     rsvp_eyebrow:        'RSVP',
+    rsvp_contact_label:  'Kontaktperson',
     rsvp_email:          'E-Mail-Adresse',
     rsvp_lastname:       'Nachname',
     rsvp_firstnames:     'Vorname(n)',
@@ -619,13 +622,23 @@ function addAttendee(isFirst = false, prefill = null) {
       <span class="attendee-num"></span>
       ${!isFirst ? `<button type="button" class="attendee-remove">${t.rsvp_remove}</button>` : ''}
     </div>
-    <div class="form-group">
-      <label class="form-label">
-        <span data-i18n="rsvp_firstname">${t.rsvp_firstname}</span> <span class="req">*</span>
-      </label>
-      <input type="text" name="att_name_${idx}" class="form-input att-name"
-             value="${prefill ? escHtml(prefill.name) : ''}">
-      <div class="form-error att-err-name"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">
+          <span data-i18n="rsvp_firstname">${t.rsvp_firstname}</span> <span class="req">*</span>
+        </label>
+        <input type="text" name="att_firstname_${idx}" class="form-input att-firstname"
+               value="${prefill ? escHtml(prefill.firstName || '') : ''}">
+        <div class="form-error att-err-firstname"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">
+          <span data-i18n="rsvp_lastname">${t.rsvp_lastname}</span> <span class="req">*</span>
+        </label>
+        <input type="text" name="att_lastname_${idx}" class="form-input att-lastname"
+               value="${prefill ? escHtml(prefill.lastName || '') : ''}">
+        <div class="form-error att-err-lastname"></div>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">
@@ -676,15 +689,20 @@ function collectFormData() {
   const form = document.getElementById('rsvp-form');
   const attendees = [];
   document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
-    const nameEl   = block.querySelector('.att-name');
+    const fnEl     = block.querySelector('.att-firstname');
+    const lnEl     = block.querySelector('.att-lastname');
     const statusEl = block.querySelector('input[type="radio"]:checked');
-    attendees.push({ name: nameEl ? nameEl.value.trim() : '', status: statusEl ? statusEl.value : '' });
+    attendees.push({
+      firstName: fnEl     ? fnEl.value.trim()     : '',
+      lastName:  lnEl     ? lnEl.value.trim()     : '',
+      status:    statusEl ? statusEl.value         : '',
+    });
   });
   return {
-    email:      form.email.value.trim(),
-    lastName:   form.lastName.value.trim(),
-    firstNames: form.firstNames.value.trim(),
-    address:    form.address.value.trim(),
+    email:     form.email.value.trim(),
+    firstName: form.firstName.value.trim(),
+    lastName:  form.lastName.value.trim(),
+    address:   form.address.value.trim(),
     attendees,
   };
 }
@@ -705,17 +723,22 @@ function validateForm(data) {
 
   if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
     showErr('err-email', t.rsvp_err_email);
-  if (!data.lastName)   showErr('err-lastName',   t.rsvp_err_required);
-  if (!data.firstNames) showErr('err-firstNames', t.rsvp_err_required);
-  if (!data.address)    showErr('err-address',    t.rsvp_err_required);
+  if (!data.firstName) showErr('err-firstName', t.rsvp_err_required);
+  if (!data.lastName)  showErr('err-lastName',  t.rsvp_err_required);
+  if (!data.address)   showErr('err-address',   t.rsvp_err_required);
 
   document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
-    const nameEl    = block.querySelector('.att-name');
+    const fnEl      = block.querySelector('.att-firstname');
+    const lnEl      = block.querySelector('.att-lastname');
     const statusEl  = block.querySelector('input[type="radio"]:checked');
-    const nameErr   = block.querySelector('.att-err-name');
+    const fnErr     = block.querySelector('.att-err-firstname');
+    const lnErr     = block.querySelector('.att-err-lastname');
     const statusErr = block.querySelector('.att-err-status');
-    if (nameEl && !nameEl.value.trim() && nameErr) {
-      nameErr.textContent = t.rsvp_err_required; nameErr.classList.add('visible'); valid = false;
+    if (fnEl && !fnEl.value.trim() && fnErr) {
+      fnErr.textContent = t.rsvp_err_required; fnErr.classList.add('visible'); valid = false;
+    }
+    if (lnEl && !lnEl.value.trim() && lnErr) {
+      lnErr.textContent = t.rsvp_err_required; lnErr.classList.add('visible'); valid = false;
     }
     if (!statusEl && statusErr) {
       statusErr.textContent = t.rsvp_err_attendance; statusErr.classList.add('visible'); valid = false;
@@ -778,10 +801,10 @@ async function fetchExistingRSVP(token) {
 
 function prefillForm(data) {
   const form = document.getElementById('rsvp-form');
-  form.email.value      = data.email      || '';
-  form.lastName.value   = data.lastName   || '';
-  form.firstNames.value = data.firstNames || '';
-  form.address.value    = data.address    || '';
+  form.email.value     = data.email     || '';
+  form.firstName.value = data.firstName || '';
+  form.lastName.value  = data.lastName  || '';
+  form.address.value   = data.address   || '';
 
   document.getElementById('attendees-list').innerHTML = '';
   attendeeCount = 0;
