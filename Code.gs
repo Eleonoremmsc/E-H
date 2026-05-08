@@ -14,7 +14,7 @@
 
 const SHEET_ID   = '1DgTfgjqHhAbPp5FPUCfmVoiwKjCCI348BPl_iIcHhDk';
 const SHEET_NAME = 'RSVPs';
-const WEBSITE_URL = 'https://delicate-frangipane-f07d0a.netlify.app/#welcome';
+const WEBSITE_URL = 'https://delicate-frangipane-f07d0a.netlify.app';
 const SENDER_NAME = 'Éléonore & Hubert';
 
 // ── Entry points ─────────────────────────────────
