@@ -4,10 +4,13 @@
 
 // ── Config ──────────────────────────────────────
 const CONFIG = {
-  password: 'CrillonEH2027',   // Change this to your chosen password (case-insensitive)
-  sessionKey: 'weddingAccess',
+  password:    'CrillonEH2027',
+  sessionKey:  'weddingAccess',
   defaultLang: 'en',
 };
+
+// Paste your Google Apps Script Web App URL here after deploying Code.gs
+const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymunneSd_fTcMqOhWV8_ujkc60qa0rJCE6JJJB5PsvXeyn-KDGW80hwSdxd2iFoSqL/exec';
 
 // ── Event Data ──────────────────────────────────
 const EVENT = {
@@ -96,6 +99,27 @@ const T = {
     modal_eyebrow:       'Save the Date',
     modal_when:          '26 June 2027 · Crillon-le-Brave',
     modal_prompt:        'Choose your calendar:',
+    rsvp_eyebrow:        'RSVP',
+    rsvp_email:          'Email address',
+    rsvp_lastname:       'Last name',
+    rsvp_firstnames:     'First name(s)',
+    rsvp_address:        'Postal address',
+    rsvp_guests_label:   'Guests',
+    rsvp_guest:          'Guest',
+    rsvp_firstname:      'First name',
+    rsvp_attendance:     'Attendance',
+    rsvp_yes:            'With joy, I will be there',
+    rsvp_maybe:          'I hope to attend',
+    rsvp_no:             'Regretfully, I will not be able to join',
+    rsvp_add:            '+ Add another guest',
+    rsvp_remove:         'Remove',
+    rsvp_submit:         'Confirm RSVP',
+    rsvp_update:         'Update RSVP',
+    rsvp_err_required:   'This field is required',
+    rsvp_err_email:      'Please enter a valid email address',
+    rsvp_err_attendance: 'Please select an attendance option',
+    rsvp_thanks:         'Thank you.',
+    rsvp_success_note:   'A confirmation has been sent to your email address.',
   },
 
   fr: {
@@ -171,6 +195,27 @@ const T = {
     modal_eyebrow:       'Retenir la date',
     modal_when:          '26 juin 2027 · Crillon-le-Brave',
     modal_prompt:        'Choisissez votre application de calendrier :',
+    rsvp_eyebrow:        'RSVP',
+    rsvp_email:          'Adresse email',
+    rsvp_lastname:       'Nom de famille',
+    rsvp_firstnames:     'Prénom(s)',
+    rsvp_address:        'Adresse postale',
+    rsvp_guests_label:   'Invités',
+    rsvp_guest:          'Invité',
+    rsvp_firstname:      'Prénom',
+    rsvp_attendance:     'Présence',
+    rsvp_yes:            'Avec joie, je serai présent(e)',
+    rsvp_maybe:          "J'espère pouvoir participer",
+    rsvp_no:             'Je ne pourrai malheureusement pas être présent(e)',
+    rsvp_add:            '+ Ajouter un autre invité',
+    rsvp_remove:         'Supprimer',
+    rsvp_submit:         'Confirmer le RSVP',
+    rsvp_update:         'Mettre à jour le RSVP',
+    rsvp_err_required:   'Ce champ est obligatoire',
+    rsvp_err_email:      'Veuillez entrer une adresse email valide',
+    rsvp_err_attendance: 'Veuillez sélectionner une option de présence',
+    rsvp_thanks:         'Merci.',
+    rsvp_success_note:   'Une confirmation a été envoyée à votre adresse email.',
   },
 
   de: {
@@ -246,18 +291,46 @@ const T = {
     modal_eyebrow:       'Datum speichern',
     modal_when:          '26. Juni 2027 · Crillon-le-Brave',
     modal_prompt:        'Wählen Sie Ihre Kalenderanwendung:',
+    rsvp_eyebrow:        'RSVP',
+    rsvp_email:          'E-Mail-Adresse',
+    rsvp_lastname:       'Nachname',
+    rsvp_firstnames:     'Vorname(n)',
+    rsvp_address:        'Postanschrift',
+    rsvp_guests_label:   'Gäste',
+    rsvp_guest:          'Gast',
+    rsvp_firstname:      'Vorname',
+    rsvp_attendance:     'Teilnahme',
+    rsvp_yes:            'Mit Freude, ich werde dabei sein',
+    rsvp_maybe:          'Ich hoffe, teilnehmen zu können',
+    rsvp_no:             'Leider werde ich nicht teilnehmen können',
+    rsvp_add:            '+ Weiteren Gast hinzufügen',
+    rsvp_remove:         'Entfernen',
+    rsvp_submit:         'RSVP bestätigen',
+    rsvp_update:         'RSVP aktualisieren',
+    rsvp_err_required:   'Dieses Feld ist erforderlich',
+    rsvp_err_email:      'Bitte geben Sie eine gültige E-Mail-Adresse ein',
+    rsvp_err_attendance: 'Bitte wählen Sie eine Teilnahme-Option',
+    rsvp_thanks:         'Vielen Dank.',
+    rsvp_success_note:   'Eine Bestätigung wurde an Ihre E-Mail-Adresse gesendet.',
   },
 };
 
 // ── State ────────────────────────────────────────
-let lang = localStorage.getItem('weddingLang') || CONFIG.defaultLang;
+let lang      = localStorage.getItem('weddingLang') || CONFIG.defaultLang;
+let editToken = null;
 
 // ── Boot ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Capture edit token before any init so unlock() can use it
+  const params = new URLSearchParams(window.location.search);
+  editToken = params.get('rsvp') || null;
+  if (editToken) window.history.replaceState({}, '', window.location.pathname);
+
   applyLang(lang);
   initGate();
   initNav();
   initModal();
+  initRSVP();
 });
 
 // ── Language ─────────────────────────────────────
@@ -325,11 +398,11 @@ function unlock(gate, site) {
   gate.style.display = 'none';
   site.classList.add('visible');
   handleScroll();
+  if (editToken) setTimeout(openRSVP, 400);
 }
 
 // ── Navigation ────────────────────────────────────
 function initNav() {
-  const navbar    = document.getElementById('navbar');
   const hamburger = document.getElementById('hamburger');
   const mobileMenu= document.getElementById('mobile-menu');
   const sections  = document.querySelectorAll('section[id]');
@@ -482,4 +555,238 @@ function downloadICS() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════
+// RSVP MODAL
+// ══════════════════════════════════════════════════
+
+let attendeeCount = 0;
+
+function initRSVP() {
+  document.getElementById('rsvp-btn').addEventListener('click', openRSVP);
+  document.getElementById('rsvp-close').addEventListener('click', closeRSVP);
+  document.getElementById('rsvp-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('rsvp-overlay')) closeRSVP();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('rsvp-overlay').classList.contains('open')) closeRSVP();
+  });
+  document.getElementById('add-attendee-btn').addEventListener('click', () => addAttendee());
+  document.getElementById('rsvp-form').addEventListener('submit', handleRSVPSubmit);
+
+  // Keep attendee guest labels updated on lang change
+  const origApplyLang = window.__origApplyLang;
+  if (!origApplyLang) {
+    // Patch lang switcher to also renumber attendees
+    document.addEventListener('click', e => {
+      if (e.target.closest('.lang-btn')) setTimeout(renumberAttendees, 10);
+    });
+  }
+
+  addAttendee(true);
+}
+
+function openRSVP() {
+  const overlay = document.getElementById('rsvp-overlay');
+  overlay.classList.add('open');
+  overlay.removeAttribute('aria-hidden');
+  document.body.style.overflow = 'hidden';
+  if (editToken) fetchExistingRSVP(editToken);
+}
+
+function closeRSVP() {
+  const overlay = document.getElementById('rsvp-overlay');
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+// ── Attendee blocks ───────────────────────────────
+function addAttendee(isFirst = false, prefill = null) {
+  const idx  = attendeeCount++;
+  const t    = T[lang] || T.en;
+  const list = document.getElementById('attendees-list');
+
+  const block = document.createElement('div');
+  block.className = 'attendee-block';
+  block.dataset.index = idx;
+
+  const checked = s => prefill && prefill.status === s ? 'checked' : '';
+
+  block.innerHTML = `
+    <div class="attendee-header">
+      <span class="attendee-num"></span>
+      ${!isFirst ? `<button type="button" class="attendee-remove">${t.rsvp_remove}</button>` : ''}
+    </div>
+    <div class="form-group">
+      <label class="form-label">
+        <span data-i18n="rsvp_firstname">${t.rsvp_firstname}</span> <span class="req">*</span>
+      </label>
+      <input type="text" name="att_name_${idx}" class="form-input att-name"
+             value="${prefill ? escHtml(prefill.name) : ''}">
+      <div class="form-error att-err-name"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">
+        <span data-i18n="rsvp_attendance">${t.rsvp_attendance}</span> <span class="req">*</span>
+      </label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="att_status_${idx}" value="yes" ${checked('yes')}>
+          <span class="radio-dot"></span>
+          <span class="radio-text" data-i18n="rsvp_yes">${t.rsvp_yes}</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="att_status_${idx}" value="maybe" ${checked('maybe')}>
+          <span class="radio-dot"></span>
+          <span class="radio-text" data-i18n="rsvp_maybe">${t.rsvp_maybe}</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="att_status_${idx}" value="no" ${checked('no')}>
+          <span class="radio-dot"></span>
+          <span class="radio-text" data-i18n="rsvp_no">${t.rsvp_no}</span>
+        </label>
+      </div>
+      <div class="form-error att-err-status"></div>
+    </div>
+  `;
+
+  const removeBtn = block.querySelector('.attendee-remove');
+  if (removeBtn) removeBtn.addEventListener('click', () => { block.remove(); renumberAttendees(); });
+
+  list.appendChild(block);
+  renumberAttendees();
+}
+
+function renumberAttendees() {
+  const t = T[lang] || T.en;
+  document.querySelectorAll('#attendees-list .attendee-block').forEach((b, i) => {
+    const label = b.querySelector('.attendee-num');
+    if (label) label.textContent = `${t.rsvp_guest} ${i + 1}`;
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Collect & validate ────────────────────────────
+function collectFormData() {
+  const form = document.getElementById('rsvp-form');
+  const attendees = [];
+  document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
+    const nameEl   = block.querySelector('.att-name');
+    const statusEl = block.querySelector('input[type="radio"]:checked');
+    attendees.push({ name: nameEl ? nameEl.value.trim() : '', status: statusEl ? statusEl.value : '' });
+  });
+  return {
+    email:      form.email.value.trim(),
+    lastName:   form.lastName.value.trim(),
+    firstNames: form.firstNames.value.trim(),
+    address:    form.address.value.trim(),
+    attendees,
+  };
+}
+
+function validateForm(data) {
+  let valid = true;
+  const t = T[lang] || T.en;
+
+  document.querySelectorAll('.form-error').forEach(el => {
+    el.textContent = ''; el.classList.remove('visible');
+  });
+
+  function showErr(id, msg) {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = msg; el.classList.add('visible'); }
+    valid = false;
+  }
+
+  if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email))
+    showErr('err-email', t.rsvp_err_email);
+  if (!data.lastName)   showErr('err-lastName',   t.rsvp_err_required);
+  if (!data.firstNames) showErr('err-firstNames', t.rsvp_err_required);
+  if (!data.address)    showErr('err-address',    t.rsvp_err_required);
+
+  document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
+    const nameEl    = block.querySelector('.att-name');
+    const statusEl  = block.querySelector('input[type="radio"]:checked');
+    const nameErr   = block.querySelector('.att-err-name');
+    const statusErr = block.querySelector('.att-err-status');
+    if (nameEl && !nameEl.value.trim() && nameErr) {
+      nameErr.textContent = t.rsvp_err_required; nameErr.classList.add('visible'); valid = false;
+    }
+    if (!statusEl && statusErr) {
+      statusErr.textContent = t.rsvp_err_attendance; statusErr.classList.add('visible'); valid = false;
+    }
+  });
+
+  return valid;
+}
+
+// ── Submit ────────────────────────────────────────
+async function handleRSVPSubmit(e) {
+  e.preventDefault();
+  const data = collectFormData();
+  if (!validateForm(data)) return;
+
+  if (!RSVP_ENDPOINT) {
+    alert('Backend not configured — add your Apps Script URL to RSVP_ENDPOINT in script.js.');
+    return;
+  }
+
+  const btn = document.getElementById('rsvp-submit-btn');
+  btn.classList.add('btn-loading');
+
+  const payload = editToken
+    ? { action: 'update', token: editToken, ...data }
+    : { action: 'submit', ...data };
+
+  try {
+    const res    = await fetch(RSVP_ENDPOINT, { method: 'POST', body: JSON.stringify(payload) });
+    const result = await res.json();
+    if (result.success) {
+      document.getElementById('rsvp-form-view').style.display  = 'none';
+      document.getElementById('rsvp-success-view').style.display = 'block';
+      document.querySelector('.rsvp-modal').scrollTop = 0;
+      if (result.token) editToken = result.token;
+    } else {
+      alert('Something went wrong. Please try again.');
+    }
+  } catch {
+    alert('Connection error. Please try again.');
+  } finally {
+    btn.classList.remove('btn-loading');
+  }
+}
+
+// ── Pre-fill from edit link ───────────────────────
+async function fetchExistingRSVP(token) {
+  if (!RSVP_ENDPOINT) return;
+  try {
+    const res    = await fetch(`${RSVP_ENDPOINT}?token=${encodeURIComponent(token)}`);
+    const result = await res.json();
+    if (result.success && result.data) {
+      prefillForm(result.data);
+      const label = document.getElementById('rsvp-submit-label');
+      if (label) label.setAttribute('data-i18n', 'rsvp_update');
+      applyLang(lang);
+    }
+  } catch { /* silently fail — form stays blank */ }
+}
+
+function prefillForm(data) {
+  const form = document.getElementById('rsvp-form');
+  form.email.value      = data.email      || '';
+  form.lastName.value   = data.lastName   || '';
+  form.firstNames.value = data.firstNames || '';
+  form.address.value    = data.address    || '';
+
+  document.getElementById('attendees-list').innerHTML = '';
+  attendeeCount = 0;
+
+  const attendees = data.attendees || [];
+  attendees.forEach((att, i) => addAttendee(i === 0, att));
+  if (attendees.length === 0) addAttendee(true);
 }

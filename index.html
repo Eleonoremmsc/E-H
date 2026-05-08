@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Pinyon+Script&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Allura&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -87,7 +87,7 @@
       </p>
       <div class="welcome-buttons">
         <button class="btn btn-primary" id="save-the-date-btn" data-i18n="btn_save">Save the Date</button>
-        <a href="https://forms.gle/hNNNDDcSxPLc3VE46" target="_blank" rel="noopener noreferrer" class="btn btn-outline" data-i18n="btn_rsvp">RSVP</a>
+        <button class="btn btn-outline" id="rsvp-btn" data-i18n="btn_rsvp">RSVP</button>
       </div>
     </div>
   </section>
@@ -356,6 +356,70 @@
       <button class="cal-btn" data-cal="ical">
         <span class="cal-mark">↓</span> iCal File
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- RSVP MODAL -->
+<div id="rsvp-overlay" class="modal-overlay" aria-hidden="true">
+  <div class="modal-card rsvp-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-heading">
+    <button class="modal-close" id="rsvp-close" aria-label="Close">&#215;</button>
+
+    <!-- Form view -->
+    <div id="rsvp-form-view">
+      <div class="modal-eyebrow" data-i18n="rsvp_eyebrow">RSVP</div>
+      <div class="modal-script" id="rsvp-heading">Éléonore &amp; Hubert</div>
+      <div class="modal-when" data-i18n="modal_when">26 June 2027 · Crillon-le-Brave</div>
+      <div class="modal-rule"></div>
+
+      <form id="rsvp-form" novalidate>
+
+        <div class="form-group">
+          <label class="form-label" for="f-email"><span data-i18n="rsvp_email">Email address</span> <span class="req">*</span></label>
+          <input type="email" id="f-email" name="email" class="form-input" autocomplete="email">
+          <div class="form-error" id="err-email"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="f-lastname"><span data-i18n="rsvp_lastname">Last name</span> <span class="req">*</span></label>
+            <input type="text" id="f-lastname" name="lastName" class="form-input" autocomplete="family-name">
+            <div class="form-error" id="err-lastName"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-firstnames"><span data-i18n="rsvp_firstnames">First name(s)</span> <span class="req">*</span></label>
+            <input type="text" id="f-firstnames" name="firstNames" class="form-input" autocomplete="given-name">
+            <div class="form-error" id="err-firstNames"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-address"><span data-i18n="rsvp_address">Postal address</span> <span class="req">*</span></label>
+          <textarea id="f-address" name="address" class="form-textarea" rows="3" autocomplete="street-address"></textarea>
+          <div class="form-error" id="err-address"></div>
+        </div>
+
+        <div class="rsvp-divider"></div>
+
+        <div class="rsvp-section-label" data-i18n="rsvp_guests_label">Guests</div>
+        <div id="attendees-list"></div>
+        <button type="button" id="add-attendee-btn" class="btn-add">
+          <span data-i18n="rsvp_add">+ Add another guest</span>
+        </button>
+
+        <div class="rsvp-divider"></div>
+
+        <button type="submit" class="btn btn-primary btn-full" id="rsvp-submit-btn">
+          <span id="rsvp-submit-label" data-i18n="rsvp_submit">Confirm RSVP</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Success view -->
+    <div id="rsvp-success-view" style="display:none;">
+      <div class="success-mark">✓</div>
+      <div class="success-script" data-i18n="rsvp_thanks">Thank you.</div>
+      <p class="success-message" data-i18n="rsvp_success_note">A confirmation has been sent to your email address.</p>
     </div>
   </div>
 </div>

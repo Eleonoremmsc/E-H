@@ -9,7 +9,7 @@
   --navy-mid:   rgba(27, 45, 82, 0.70);
   --navy-line:  rgba(27, 45, 82, 0.14);
   --navy-line2: rgba(27, 45, 82, 0.08);
-  --script:     'Pinyon Script', cursive;
+  --script:     'Allura', cursive;
   --serif:      'Cormorant Garamond', Georgia, serif;
   --sans:       'Montserrat', sans-serif;
   --ease:       0.28s ease;
@@ -759,4 +759,197 @@ body {
 
   .gate-card { padding: 40px 20px; }
   .gate-input-row { max-width: 100%; }
+}
+
+/* ══════════════════════════════════════
+   RSVP MODAL
+   ══════════════════════════════════════ */
+
+.rsvp-modal {
+  max-width: 560px;
+  max-height: 88vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--navy-line) transparent;
+}
+.rsvp-modal::-webkit-scrollbar { width: 4px; }
+.rsvp-modal::-webkit-scrollbar-track { background: transparent; }
+.rsvp-modal::-webkit-scrollbar-thumb { background: var(--navy-line); }
+
+/* ── Form inputs ───────────────────── */
+.form-group { margin-bottom: 28px; }
+
+.form-label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.58rem; font-weight: 300;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--navy-mid);
+  margin-bottom: 10px;
+}
+.req { color: var(--navy-mid); margin-left: 2px; }
+
+.form-input,
+.form-textarea {
+  display: block; width: 100%;
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 0.5px solid var(--navy-line);
+  font-family: var(--serif);
+  font-size: 1rem; font-weight: 300;
+  color: var(--navy);
+  outline: none;
+  transition: border-color 0.2s ease;
+  border-radius: 0;
+  -webkit-appearance: none;
+}
+.form-input:focus,
+.form-textarea:focus { border-bottom-color: var(--navy); }
+.form-textarea { resize: none; line-height: 1.7; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.form-error {
+  font-family: var(--serif);
+  font-size: 0.8rem; font-style: italic;
+  color: #8b4a3a;
+  min-height: 16px;
+  margin-top: 5px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.form-error.visible { opacity: 1; }
+
+/* ── Section divider ───────────────── */
+.rsvp-divider {
+  width: 100%; height: 0.5px;
+  background: var(--navy-line);
+  margin: 32px 0;
+}
+.rsvp-section-label {
+  font-family: var(--sans);
+  font-size: 0.58rem; font-weight: 300;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--navy-mid);
+  margin-bottom: 24px;
+}
+
+/* ── Attendee blocks ───────────────── */
+.attendee-block {
+  padding-bottom: 28px;
+  margin-bottom: 28px;
+  border-bottom: 0.5px solid var(--navy-line2);
+}
+.attendee-block:last-child { border-bottom: none; margin-bottom: 8px; }
+
+.attendee-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.attendee-num {
+  font-family: var(--sans);
+  font-size: 0.58rem; font-weight: 300;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--navy-mid);
+}
+.attendee-remove {
+  background: none; border: none;
+  font-family: var(--sans);
+  font-size: 0.56rem; font-weight: 300;
+  letter-spacing: 0.1em;
+  color: var(--navy-mid);
+  cursor: pointer; padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--ease);
+}
+.attendee-remove:hover { color: var(--navy); }
+
+/* ── Radio buttons ─────────────────── */
+.radio-group { display: flex; flex-direction: column; margin-top: 4px; }
+.radio-option {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--navy-line2);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.radio-option:first-child { border-top: 0.5px solid var(--navy-line2); }
+.radio-option:hover { opacity: 0.75; }
+.radio-option input[type="radio"] {
+  position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+}
+.radio-dot {
+  width: 12px; height: 12px;
+  border: 0.5px solid var(--navy);
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.15s;
+}
+.radio-option input[type="radio"]:checked + .radio-dot {
+  background: var(--navy);
+  box-shadow: inset 0 0 0 2.5px var(--cream);
+}
+.radio-text {
+  font-family: var(--serif);
+  font-size: 0.95rem; font-weight: 300;
+  color: var(--navy);
+  line-height: 1.4;
+}
+
+/* ── Add attendee button ───────────── */
+.btn-add {
+  display: inline-flex; align-items: center;
+  background: none; border: none;
+  font-family: var(--sans);
+  font-size: 0.6rem; font-weight: 300;
+  letter-spacing: 0.16em;
+  color: var(--navy-mid);
+  cursor: pointer; padding: 0;
+  border-bottom: 0.5px solid currentColor;
+  padding-bottom: 1px;
+  transition: color var(--ease);
+  margin-top: 8px;
+}
+.btn-add:hover { color: var(--navy); }
+
+/* ── Submit full-width ─────────────── */
+.btn-full { width: 100%; justify-content: center; }
+.btn-loading { opacity: 0.55; pointer-events: none; }
+
+/* ── Success view ──────────────────── */
+.success-mark {
+  font-size: 1.6rem;
+  color: var(--navy-mid);
+  text-align: center;
+  margin-bottom: 20px;
+}
+.success-script {
+  font-family: var(--script);
+  font-size: 2rem;
+  color: var(--navy);
+  text-align: center;
+  margin-bottom: 14px;
+}
+.success-message {
+  font-family: var(--serif);
+  font-size: 0.95rem; font-weight: 300; font-style: italic;
+  color: var(--navy-mid);
+  text-align: center;
+  line-height: 1.8;
+}
+
+/* ── RSVP responsive ───────────────── */
+@media (max-width: 640px) {
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+  .rsvp-modal { max-height: 92vh; }
 }
