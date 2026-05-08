@@ -606,6 +606,12 @@ body {
   line-height: 1.5;
 }
 .dress-list li:first-child { border-top: 0.5px solid var(--navy-line2); }
+.dress-main {
+  font-size: 0.95rem; font-weight: 300;
+  color: var(--navy);
+  line-height: 1.75;
+  margin-bottom: 16px;
+}
 .dress-note {
   font-size: 0.82rem; font-weight: 300; font-style: italic;
   color: var(--navy-mid);
