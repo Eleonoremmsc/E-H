@@ -123,7 +123,7 @@ const T = {
     dress_intro:         'We invite our guests to dress elegantly for a Provençal summer evening.',
     dress_women:         'For Women',
     dress_w_main:        'Evening dress, cocktail dress, or elegant ensemble.',
-    dress_wnote:         'Soft tones, florals, and warm summer colors are welcome. The ceremony will take place outdoors — block heels or wedges are recommended.',
+    dress_wnote:         'The ceremony will take place outdoors — block heels or wedges are recommended.',
     dress_men:           'For Men',
     dress_m_main:        'A suit with a tie.',
     map_eyebrow:         'Venue',
