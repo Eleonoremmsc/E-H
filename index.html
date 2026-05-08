@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Éléonore & Hubert — 26 June 2027</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Great+Vibes&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-monogram">Éléonore &amp; Hubert</div>
+    <p class="gate-date" data-i18n="gate_date">26 June 2027 · Crillon-le-Brave</p>
+    <div class="gate-divider"></div>
+    <label class="gate-label" data-i18n="gate_label">Enter your invitation code</label>
+    <div class="gate-input-row">
+      <input type="password" id="password-input" placeholder="· · · · · · · ·" autocomplete="off">
+      <button id="password-submit" data-i18n="gate_submit">Enter</button>
+    </div>
+    <p id="gate-error" class="gate-error" data-i18n="gate_error">Incorrect code. Please try again.</p>
+    <div class="gate-lang">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <span class="lang-sep">·</span>
+      <button class="lang-btn" data-lang="fr">FR</button>
+      <span class="lang-sep">·</span>
+      <button class="lang-btn" data-lang="de">DE</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN SITE -->
+<div id="site">
+
+  <!-- NAVIGATION -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <div class="nav-logo">É &amp; H</div>
+      <div class="nav-links">
+        <a href="#welcome" class="nav-link" data-i18n="nav_welcome">Welcome</a>
+        <a href="#programme" class="nav-link" data-i18n="nav_programme">Programme</a>
+        <a href="#accommodation" class="nav-link" data-i18n="nav_accommodation">Accommodation</a>
+        <a href="#dresscode" class="nav-link" data-i18n="nav_dresscode">Dress Code</a>
+        <a href="#map" class="nav-link" data-i18n="nav_map">Map</a>
+      </div>
+      <div class="nav-right">
+        <div class="lang-switcher">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <span class="lang-sep">·</span>
+          <button class="lang-btn" data-lang="fr">FR</button>
+          <span class="lang-sep">·</span>
+          <button class="lang-btn" data-lang="de">DE</button>
+        </div>
+        <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+    <div class="nav-mobile" id="mobile-menu">
+      <a href="#welcome" class="nav-link" data-i18n="nav_welcome">Welcome</a>
+      <a href="#programme" class="nav-link" data-i18n="nav_programme">Programme</a>
+      <a href="#accommodation" class="nav-link" data-i18n="nav_accommodation">Accommodation</a>
+      <a href="#dresscode" class="nav-link" data-i18n="nav_dresscode">Dress Code</a>
+      <a href="#map" class="nav-link" data-i18n="nav_map">Map</a>
+    </div>
+  </nav>
+
+  <!-- WELCOME -->
+  <section id="welcome" class="section-welcome">
+    <div class="welcome-inner">
+      <div class="welcome-eyebrow" data-i18n="welcome_eyebrow">26 June 2027</div>
+      <h1 class="welcome-names">Éléonore &amp; Hubert</h1>
+      <div class="welcome-rule"></div>
+      <p class="welcome-subtitle">
+        <span data-i18n="welcome_subtitle">look forward to celebrating their wedding with you on</span><br>
+        <em data-i18n="welcome_date">June 26th, 2027</em>
+      </p>
+      <p class="welcome-location">
+        <span class="loc-dash">—</span>
+        <span data-i18n="welcome_location">Crillon-le-Brave, Provence</span>
+        <span class="loc-dash">—</span>
+      </p>
+      <div class="welcome-buttons">
+        <button class="btn btn-primary" id="save-the-date-btn" data-i18n="btn_save">Save the Date</button>
+        <a href="https://forms.gle/hNNNDDcSxPLc3VE46" target="_blank" rel="noopener noreferrer" class="btn btn-outline" data-i18n="btn_rsvp">RSVP</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROGRAMME -->
+  <section id="programme" class="section-content">
+    <div class="content-inner">
+      <div class="section-header">
+        <div class="section-eyebrow" data-i18n="prog_eyebrow">The Weekend</div>
+        <h2 class="section-title" data-i18n="prog_title">Programme</h2>
+        <div class="section-rule"></div>
+      </div>
+
+      <div class="programme-day">
+        <div class="prog-day-label" data-i18n="prog_friday">Friday, 25 June</div>
+        <div class="prog-events">
+          <div class="prog-event">
+            <div class="prog-time">19:00 – 22:00</div>
+            <div class="prog-line"></div>
+            <div class="prog-details">
+              <div class="prog-name" data-i18n="prog_fri_name">Arrival Cocktail</div>
+              <div class="prog-desc" data-i18n="prog_fri_desc">Join us for a welcome drink to start the celebrations.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prog-separator"></div>
+
+      <div class="programme-day">
+        <div class="prog-day-label" data-i18n="prog_saturday">Saturday, 26 June</div>
+        <div class="prog-events">
+          <div class="prog-event">
+            <div class="prog-time">16:30 – 18:00</div>
+            <div class="prog-line"></div>
+            <div class="prog-details">
+              <div class="prog-name" data-i18n="prog_ceremony_name">Religious Ceremony</div>
+              <div class="prog-desc" data-i18n="prog_ceremony_desc">The ceremony will take place at the estate chapel.</div>
+            </div>
+          </div>
+          <div class="prog-event">
+            <div class="prog-time">19:00</div>
+            <div class="prog-line"></div>
+            <div class="prog-details">
+              <div class="prog-name" data-i18n="prog_cocktail_name">Cocktail Hour</div>
+              <div class="prog-desc" data-i18n="prog_cocktail_desc">Drinks and canapés in the garden.</div>
+            </div>
+          </div>
+          <div class="prog-event">
+            <div class="prog-time">20:30</div>
+            <div class="prog-line"></div>
+            <div class="prog-details">
+              <div class="prog-name" data-i18n="prog_dinner_name">Dinner</div>
+              <div class="prog-desc" data-i18n="prog_dinner_desc">A seated dinner under the Provençal stars.</div>
+            </div>
+          </div>
+          <div class="prog-event">
+            <div class="prog-time">23:00</div>
+            <div class="prog-line"></div>
+            <div class="prog-details">
+              <div class="prog-name" data-i18n="prog_dancing_name">Dancing</div>
+              <div class="prog-desc" data-i18n="prog_dancing_desc">Music and dancing until the early hours.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ACCOMMODATION -->
+  <section id="accommodation" class="section-content section-alt">
+    <div class="content-inner">
+      <div class="section-header">
+        <div class="section-eyebrow" data-i18n="accom_eyebrow">Nearby</div>
+        <h2 class="section-title" data-i18n="accom_title">Accommodation</h2>
+        <div class="section-rule"></div>
+        <p class="section-intro" data-i18n="accom_intro">We have gathered a selection of accommodation options near the venue to suit every preference and budget. We recommend booking early.</p>
+      </div>
+
+      <div class="hotel-grid">
+        <div class="hotel-card">
+          <div class="hotel-tier" data-i18n="tier_luxury">Luxury</div>
+          <h3 class="hotel-name">Crillon le Brave</h3>
+          <div class="hotel-stars">★★★★★</div>
+          <div class="hotel-meta">
+            <span data-i18n="accom_distance">Distance</span>: <em data-i18n="accom_onsite">On site</em>
+          </div>
+          <div class="hotel-price">€€€€</div>
+          <p class="hotel-note" data-i18n="accom_note_crillon">The Relais &amp; Châteaux property at the heart of the village. Book directly for the best rates.</p>
+          <a href="#" class="hotel-link" data-i18n="accom_book">Book now →</a>
+        </div>
+
+        <div class="hotel-card">
+          <div class="hotel-tier" data-i18n="tier_boutique">Boutique</div>
+          <h3 class="hotel-name">La Bastide de Gordes</h3>
+          <div class="hotel-stars">★★★★★</div>
+          <div class="hotel-meta">
+            <span data-i18n="accom_distance">Distance</span>: 25 min
+          </div>
+          <div class="hotel-price">€€€€</div>
+          <p class="hotel-note" data-i18n="accom_note_gordes">Perched village hotel with panoramic views over the Luberon.</p>
+          <a href="#" class="hotel-link" data-i18n="accom_book">Book now →</a>
+        </div>
+
+        <div class="hotel-card">
+          <div class="hotel-tier" data-i18n="tier_charming">Charming</div>
+          <h3 class="hotel-name">La Maison de Baume</h3>
+          <div class="hotel-stars">★★★★</div>
+          <div class="hotel-meta">
+            <span data-i18n="accom_distance">Distance</span>: 20 min
+          </div>
+          <div class="hotel-price">€€€</div>
+          <p class="hotel-note" data-i18n="accom_note_baume">Intimate maison d'hôtes with a beautiful garden and pool.</p>
+          <a href="#" class="hotel-link" data-i18n="accom_book">Book now →</a>
+        </div>
+
+        <div class="hotel-card">
+          <div class="hotel-tier" data-i18n="tier_comfortable">Comfortable</div>
+          <h3 class="hotel-name">Hôtel Les Géraniums</h3>
+          <div class="hotel-stars">★★★</div>
+          <div class="hotel-meta">
+            <span data-i18n="accom_distance">Distance</span>: 15 min
+          </div>
+          <div class="hotel-price">€€</div>
+          <p class="hotel-note" data-i18n="accom_note_geraniums">A family-run hotel in Le Barroux with lovely valley views.</p>
+          <a href="#" class="hotel-link" data-i18n="accom_book">Book now →</a>
+        </div>
+      </div>
+
+      <p class="accom-footer" data-i18n="accom_footer">Shuttle service details will follow closer to the date. We recommend coordinating transfers as a group.</p>
+    </div>
+  </section>
+
+  <!-- DRESS CODE -->
+  <section id="dresscode" class="section-content">
+    <div class="content-inner content-narrow">
+      <div class="section-header">
+        <div class="section-eyebrow" data-i18n="dress_eyebrow">Attire</div>
+        <h2 class="section-title" data-i18n="dress_title">Dress Code</h2>
+        <div class="section-rule"></div>
+      </div>
+
+      <div class="dress-headline" data-i18n="dress_headline">Black Tie</div>
+      <p class="dress-intro" data-i18n="dress_intro">We invite our guests to embrace the elegance of a Provençal evening. Formal attire is warmly encouraged.</p>
+
+      <div class="dress-cols">
+        <div class="dress-col">
+          <h3 class="dress-col-title" data-i18n="dress_women">For Women</h3>
+          <div class="dress-col-rule"></div>
+          <ul class="dress-list">
+            <li data-i18n="dress_w1">Floor-length or midi evening gown</li>
+            <li data-i18n="dress_w2">Elegant cocktail dress</li>
+            <li data-i18n="dress_w3">Refined trouser suit</li>
+          </ul>
+          <p class="dress-note" data-i18n="dress_wnote">Soft tones, florals, and warm whites are all welcome. The ceremony is outdoors — block heels or wedges are recommended.</p>
+        </div>
+        <div class="dress-vline"></div>
+        <div class="dress-col">
+          <h3 class="dress-col-title" data-i18n="dress_men">For Men</h3>
+          <div class="dress-col-rule"></div>
+          <ul class="dress-list">
+            <li data-i18n="dress_m1">Black tie (dinner jacket &amp; black tie)</li>
+            <li data-i18n="dress_m2">Dark suit with tie</li>
+          </ul>
+          <p class="dress-note" data-i18n="dress_mnote">A dark suit with a tie is perfectly appropriate. Bow ties, pocket squares, and cummerbunds are all encouraged.</p>
+        </div>
+      </div>
+
+      <p class="dress-footer" data-i18n="dress_footer">Please avoid white, ivory, and cream. Children are welcome in their finest.</p>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section id="map" class="section-content section-alt">
+    <div class="content-inner content-narrow">
+      <div class="section-header">
+        <div class="section-eyebrow" data-i18n="map_eyebrow">Venue</div>
+        <h2 class="section-title" data-i18n="map_title">Getting There</h2>
+        <div class="section-rule"></div>
+      </div>
+
+      <div class="venue-block">
+        <div class="venue-name">Domaine des Pins</div>
+        <div class="venue-address">
+          1100 Chemin de Mormoiron par les Mourands<br>
+          84410 Crillon-le-Brave<br>
+          Provence, France
+        </div>
+        <a href="https://maps.google.com/?q=Crillon-le-Brave,+84410,+France" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm" data-i18n="map_gmaps">Open in Google Maps</a>
+      </div>
+
+      <div class="map-embed">
+        <iframe
+          title="Crillon-le-Brave, Provence"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=5.0467%2C44.0445%2C5.1667%2C44.1145&amp;layer=mapnik&amp;marker=44.0745%2C5.1067"
+          width="100%"
+          height="380"
+          loading="lazy"
+          style="border:0;">
+        </iframe>
+      </div>
+
+      <div class="travel-grid">
+        <div class="travel-item">
+          <div class="travel-icon">✈</div>
+          <div>
+            <div class="travel-label" data-i18n="map_plane">By Plane</div>
+            <p class="travel-desc" data-i18n="map_plane_desc">Marseille Provence (MRS) — 1h15 by car. Avignon Airport — 45 min.</p>
+          </div>
+        </div>
+        <div class="travel-item">
+          <div class="travel-icon">◈</div>
+          <div>
+            <div class="travel-label" data-i18n="map_train">By Train</div>
+            <p class="travel-desc" data-i18n="map_train_desc">TGV to Avignon Centre or Avignon TGV, then 45 min by car to Crillon-le-Brave.</p>
+          </div>
+        </div>
+        <div class="travel-item">
+          <div class="travel-icon">◎</div>
+          <div>
+            <div class="travel-label" data-i18n="map_car">By Car</div>
+            <p class="travel-desc" data-i18n="map_car_desc">A7 motorway, exit Carpentras. Follow signs toward Crillon-le-Brave via Mormoiron.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-names">Éléonore &amp; Hubert</div>
+      <div class="footer-date" data-i18n="footer_date">26 June 2027 · Crillon-le-Brave, Provence</div>
+      <div class="footer-rule"></div>
+      <div class="footer-note" data-i18n="footer_note">Made with love ♡</div>
+    </div>
+  </footer>
+
+</div><!-- /#site -->
+
+<!-- CALENDAR MODAL -->
+<div id="modal-overlay" class="modal-overlay" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+    <button class="modal-close" id="modal-close" aria-label="Close">&#215;</button>
+    <div class="modal-eyebrow" data-i18n="modal_eyebrow">Save the Date</div>
+    <div class="modal-script" id="modal-heading">Éléonore &amp; Hubert</div>
+    <div class="modal-when" data-i18n="modal_when">26 June 2027 · Crillon-le-Brave</div>
+    <div class="modal-rule"></div>
+    <p class="modal-prompt" data-i18n="modal_prompt">Choose your calendar:</p>
+    <div class="cal-grid">
+      <button class="cal-btn" data-cal="google">
+        <span class="cal-mark">G</span> Google Calendar
+      </button>
+      <button class="cal-btn" data-cal="apple">
+        <span class="cal-mark"></span> Apple Calendar
+      </button>
+      <button class="cal-btn" data-cal="outlook">
+        <span class="cal-mark">O</span> Outlook
+      </button>
+      <button class="cal-btn" data-cal="office365">
+        <span class="cal-mark">M</span> Microsoft 365
+      </button>
+      <button class="cal-btn" data-cal="yahoo">
+        <span class="cal-mark">Y</span> Yahoo Calendar
+      </button>
+      <button class="cal-btn" data-cal="ical">
+        <span class="cal-mark">↓</span> iCal File
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
