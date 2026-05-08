@@ -14,7 +14,7 @@ const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymunneSd_fTcMqOh
 
 // ── Event Data ──────────────────────────────────
 const EVENT = {
-  title:       'Éléonore & Hubert',
+  title:       'Eléonore & Hubert',
   startUtc:    '20270626T143000Z',   // 16:30 CEST = 14:30 UTC
   endUtc:      '20270626T215900Z',   // 23:59 CEST = 21:59 UTC
   startLocal:  '20270626T163000',
@@ -45,11 +45,16 @@ const T = {
     prog_eyebrow:        'The Weekend',
     prog_title:          'Programme',
     prog_friday:         'Friday, 25 June',
+    prog_tba:            'TBA',
+    prog_acro_name:      'Accrobranche Activity',
+    prog_acro_desc:      'An outdoor tree-top adventure together — timing to be confirmed.',
+    prog_senanque_name:  'Visit to Abbaye de Sénanque',
+    prog_senanque_desc:  'A guided visit to the famous lavender abbey of Provence — timing to be confirmed.',
     prog_fri_name:       'Arrival Cocktail',
     prog_fri_desc:       'Join us for a welcome drink to start the celebrations.',
     prog_saturday:       'Saturday, 26 June',
     prog_ceremony_name:  'Religious Ceremony',
-    prog_ceremony_desc:  'The ceremony will take place at the estate chapel.',
+    prog_ceremony_desc:  'The ceremony will take place at Cathédrale Saint-Siffrein de Carpentras.',
     prog_cocktail_name:  'Cocktail Hour',
     prog_cocktail_desc:  'Drinks and canapés in the garden.',
     prog_dinner_name:    'Dinner',
@@ -71,6 +76,47 @@ const T = {
     accom_note_geraniums:'A family-run hotel in Le Barroux with lovely valley views.',
     accom_book:          'Book now →',
     accom_footer:        'Shuttle service details will follow closer to the date. We recommend coordinating transfers as a group.',
+    filter_type:         'Type',
+    filter_budget:       'Budget',
+    filter_guests:       'Guests',
+    filter_all:          'All',
+    filter_hotel:        'Hotel',
+    filter_home:         'Entire Home',
+    filter_gite:         'Gîte',
+    filter_luxury:       'Luxury',
+    filter_comfort:      'Comfort',
+    filter_simple:       'Simple',
+    filter_no_results:   'No accommodation matches your filters.',
+    tier_prem_hotel:     'Premium Hotel',
+    tier_entire_home:    'Entire Home',
+    tier_group_gite:     'Group Gîte',
+    tier_small_stay:     'Small Stay',
+    accom_guests:        'guests',
+    accom_up_to:         'up to',
+    note_crillon:        'Ultra high-end Relais & Châteaux at the heart of the village. Walking distance to the ceremony.',
+    note_maison_crillon: 'Adults only. Boutique hotel, very refined. No children.',
+    note_chateau_mazan:  'Large château hotel. Easiest logistics for guests travelling in bigger groups.',
+    note_becaras:        'Beautiful views. Can combine main house with B&B rooms. Ideal for groups.',
+    note_armajeva:       'Modern villa, quiet setting. Great for a small group.',
+    note_aube_ventoux:   'Spacious with pool. Classic Provence feel.',
+    note_gautier:        'Multiple units, good for splitting between families or friend groups.',
+    note_moulin:         'Very large capacity. Ideal for big groups who want to stay together.',
+    note_chez_nico:      'Central Bédoin. Apartments grouped together, easy to coordinate.',
+    note_dom_pierres:    'Flexible capacity with pool. Good host, easy to coordinate.',
+    note_mas_stjacques:  'Closest option to the venue. Very convenient for the wedding weekend.',
+    note_jas_ventoux:    'Charming and simple. Very close to the venue.',
+    note_brin_bois:      'Small and budget-friendly. Quiet setting.',
+    note_sidoine:        'Nature setting with split units. Calm and peaceful.',
+    note_clos_marceau:   'Well-rated B&B. A solid fallback with good reviews.',
+    tips_eyebrow:        'Practical Tips',
+    tips_booking_head:   'Booking',
+    tips_min_stay:       'Rentals in the South of France are typically available by the week (7-night minimum).',
+    tips_linen:          'Many gîtes charge extra for linen — worth confirming when booking.',
+    tips_search_head:    'Where to look',
+    tips_villages:       'The closest villages are Crillon-le-Brave and Bédoin. Caromb, Mormoiron and Mazan are a 10-minute drive away and offer good alternatives.',
+    tips_google:         "Many local hosts have their own websites and won't appear on aggregators — searching Google Maps directly often reveals them, with photos and reviews.",
+    tips_also_check:     'Also check:',
+    prog_shuttle:        'A shuttle will be organised between the estate and the cathedral for the ceremony, and from the cathedral to the cocktail.',
     dress_eyebrow:       'Attire',
     dress_title:         'Dress Code',
     dress_headline:      'Black Tie',
@@ -142,11 +188,16 @@ const T = {
     prog_eyebrow:        'Le week-end',
     prog_title:          'Programme',
     prog_friday:         'Vendredi 25 juin',
+    prog_tba:            'À confirmer',
+    prog_acro_name:      'Accrobranche',
+    prog_acro_desc:      'Une aventure en forêt tous ensemble — horaire à confirmer.',
+    prog_senanque_name:  "Visite de l'Abbaye de Sénanque",
+    prog_senanque_desc:  'Une visite guidée de la célèbre abbaye lavande de Provence — horaire à confirmer.',
     prog_fri_name:       "Cocktail d'arrivée",
     prog_fri_desc:       'Rejoignez-nous pour un verre de bienvenue pour commencer les festivités.',
     prog_saturday:       'Samedi 26 juin',
     prog_ceremony_name:  'Cérémonie religieuse',
-    prog_ceremony_desc:  'La cérémonie aura lieu dans la chapelle du domaine.',
+    prog_ceremony_desc:  'La cérémonie aura lieu à la Cathédrale Saint-Siffrein de Carpentras.',
     prog_cocktail_name:  'Cocktail',
     prog_cocktail_desc:  'Boissons et canapés dans le jardin.',
     prog_dinner_name:    'Dîner',
@@ -168,6 +219,47 @@ const T = {
     accom_note_geraniums:'Hôtel familial au Barroux avec une belle vue sur la vallée.',
     accom_book:          'Réserver →',
     accom_footer:        'Les détails du service de navette seront communiqués plus proche de la date. Nous recommandons de coordonner les taxis en groupe.',
+    filter_type:         'Type',
+    filter_budget:       'Budget',
+    filter_guests:       'Personnes',
+    filter_all:          'Tous',
+    filter_hotel:        'Hôtel',
+    filter_home:         'Maison entière',
+    filter_gite:         'Gîte',
+    filter_luxury:       'Luxe',
+    filter_comfort:      'Confort',
+    filter_simple:       'Simple',
+    filter_no_results:   'Aucun hébergement ne correspond à vos filtres.',
+    tier_prem_hotel:     'Hôtel Premium',
+    tier_entire_home:    'Maison entière',
+    tier_group_gite:     'Gîte de groupe',
+    tier_small_stay:     'Petit séjour',
+    accom_guests:        'personnes',
+    accom_up_to:         "jusqu'à",
+    note_crillon:        "Propriété Relais & Châteaux ultra haut de gamme au cœur du village. À quelques pas de la cérémonie.",
+    note_maison_crillon: "Adultes uniquement. Hôtel boutique très raffiné. Pas d'enfants.",
+    note_chateau_mazan:  "Grand hôtel de château. Logistique simplifiée pour les groupes de voyageurs.",
+    note_becaras:        "Belle vue. Possibilité de combiner la maison principale avec des chambres d'hôtes. Idéal pour les groupes.",
+    note_armajeva:       "Villa moderne, cadre calme. Parfait pour un petit groupe.",
+    note_aube_ventoux:   "Spacieux avec piscine. Ambiance Provence classique.",
+    note_gautier:        "Plusieurs unités, idéal pour répartir familles et groupes d'amis.",
+    note_moulin:         "Très grande capacité. Idéal pour les grands groupes souhaitant rester ensemble.",
+    note_chez_nico:      "Centre de Bédoin. Appartements regroupés, facile à coordonner.",
+    note_dom_pierres:    "Capacité flexible avec piscine. Bon hôte, facile à coordonner.",
+    note_mas_stjacques:  "Option la plus proche du lieu de réception. Très pratique pour le week-end du mariage.",
+    note_jas_ventoux:    "Charmant et simple. Très proche du lieu de réception.",
+    note_brin_bois:      "Petit et économique. Cadre calme.",
+    note_sidoine:        "Cadre naturel avec unités séparées. Calme et paisible.",
+    note_clos_marceau:   "Chambre d'hôtes bien notée. Bonne option de repli avec de solides avis.",
+    tips_eyebrow:        'Conseils pratiques',
+    tips_booking_head:   'Réservation',
+    tips_min_stay:       'En Provence, les locations saisonnières se louent généralement à la semaine (minimum 7 nuits).',
+    tips_linen:          "De nombreux gîtes facturent le linge de maison en supplément — pensez à le vérifier lors de la réservation.",
+    tips_search_head:    'Où chercher',
+    tips_villages:       'Les villages les plus proches sont Crillon-le-Brave et Bédoin. Caromb, Mormoiron et Mazan sont à 10 minutes en voiture et offrent de bonnes alternatives.',
+    tips_google:         "De nombreux propriétaires locaux ont leur propre site web et n'apparaissent pas sur les plateformes — une recherche directe sur Google Maps est souvent efficace, avec photos et avis à la clé.",
+    tips_also_check:     'Consultez également :',
+    prog_shuttle:        'Une navette sera organisée entre le domaine et la cathédrale pour la cérémonie, et de la cathédrale au cocktail.',
     dress_eyebrow:       'Tenue',
     dress_title:         'Code vestimentaire',
     dress_headline:      'Tenue de soirée',
@@ -239,11 +331,16 @@ const T = {
     prog_eyebrow:        'Das Wochenende',
     prog_title:          'Programm',
     prog_friday:         'Freitag, 25. Juni',
+    prog_tba:            'Wird bekannt gegeben',
+    prog_acro_name:      'Kletterpark-Aktivität',
+    prog_acro_desc:      'Ein gemeinsames Abenteuer im Baumkletterpark — Uhrzeit wird noch bekannt gegeben.',
+    prog_senanque_name:  'Besuch der Abbaye de Sénanque',
+    prog_senanque_desc:  'Eine geführte Besichtigung der berühmten Lavendelabtei der Provence — Uhrzeit wird noch bekannt gegeben.',
     prog_fri_name:       'Ankunfts-Cocktail',
     prog_fri_desc:       'Kommen Sie zu einem Willkommensdrink, um die Feierlichkeiten zu beginnen.',
     prog_saturday:       'Samstag, 26. Juni',
     prog_ceremony_name:  'Kirchliche Trauung',
-    prog_ceremony_desc:  'Die Zeremonie findet in der Kapelle des Anwesens statt.',
+    prog_ceremony_desc:  'Die Zeremonie findet in der Kathedrale Saint-Siffrein de Carpentras statt.',
     prog_cocktail_name:  'Cocktailstunde',
     prog_cocktail_desc:  'Getränke und Häppchen im Garten.',
     prog_dinner_name:    'Abendessen',
@@ -265,6 +362,47 @@ const T = {
     accom_note_geraniums:'Familienhotel in Le Barroux mit schönem Blick ins Tal.',
     accom_book:          'Jetzt buchen →',
     accom_footer:        'Details zum Shuttleservice folgen näher am Datum. Wir empfehlen, Transfers als Gruppe zu koordinieren.',
+    filter_type:         'Art',
+    filter_budget:       'Budget',
+    filter_guests:       'Personen',
+    filter_all:          'Alle',
+    filter_hotel:        'Hotel',
+    filter_home:         'Ferienhaus',
+    filter_gite:         'Gîte',
+    filter_luxury:       'Luxus',
+    filter_comfort:      'Komfort',
+    filter_simple:       'Einfach',
+    filter_no_results:   'Keine Unterkunft entspricht Ihren Filtern.',
+    tier_prem_hotel:     'Luxushotel',
+    tier_entire_home:    'Ferienhaus',
+    tier_group_gite:     'Gruppen-Gîte',
+    tier_small_stay:     'Kleines Haus',
+    accom_guests:        'Personen',
+    accom_up_to:         'bis zu',
+    note_crillon:        'Ultra exklusives Relais & Châteaux im Herzen des Dorfes. Zu Fuß zur Zeremonie.',
+    note_maison_crillon: 'Nur für Erwachsene. Boutique-Hotel, sehr raffiniert. Keine Kinder.',
+    note_chateau_mazan:  'Großes Schlosshotel. Einfachste Logistik für Gäste in größeren Gruppen.',
+    note_becaras:        'Schöne Aussicht. Haupthaus kann mit B&B-Zimmern kombiniert werden. Ideal für Gruppen.',
+    note_armajeva:       'Moderne Villa, ruhige Lage. Ideal für eine kleine Gruppe.',
+    note_aube_ventoux:   'Geräumig mit Pool. Klassisches Provence-Feeling.',
+    note_gautier:        'Mehrere Einheiten, ideal für Familien oder Freundesgruppen.',
+    note_moulin:         'Sehr große Kapazität. Ideal für große Gruppen, die zusammen bleiben möchten.',
+    note_chez_nico:      'Zentral in Bédoin. Zusammenliegende Apartments, leicht zu koordinieren.',
+    note_dom_pierres:    'Flexible Kapazität mit Pool. Gastfreundlicher Vermieter, leicht zu koordinieren.',
+    note_mas_stjacques:  'Die nächstgelegene Option zur Feier. Sehr praktisch für das Hochzeitswochenende.',
+    note_jas_ventoux:    'Charmant und einfach. Sehr nah am Veranstaltungsort.',
+    note_brin_bois:      'Klein und budgetfreundlich. Ruhige Lage.',
+    note_sidoine:        'Naturlage mit getrennten Einheiten. Ruhig und friedlich.',
+    note_clos_marceau:   'Gut bewertetes B&B. Solide Alternative mit guten Bewertungen.',
+    tips_eyebrow:        'Praktische Tipps',
+    tips_booking_head:   'Buchungshinweise',
+    tips_min_stay:       'Ferienwohnungen in Südfrankreich werden in der Regel wochenweise vermietet (Mindestaufenthalt: 7 Nächte).',
+    tips_linen:          'Viele Gîtes stellen Bettwäsche gegen Aufpreis bereit — beim Buchen am besten nachfragen.',
+    tips_search_head:    'Wo suchen',
+    tips_villages:       'Die nächstgelegenen Dörfer sind Crillon-le-Brave und Bédoin. Caromb, Mormoiron und Mazan sind 10 Minuten entfernt und bieten ebenfalls gute Optionen.',
+    tips_google:         'Viele lokale Vermieter haben eigene Websites und sind nicht auf Buchungsplattformen vertreten — eine direkte Suche auf Google Maps ist oft hilfreich, da Angebote häufig Fotos und Bewertungen enthalten.',
+    tips_also_check:     'Auch empfehlenswert:',
+    prog_shuttle:        'Ein Shuttle wird zwischen dem Anwesen und der Kathedrale für die Zeremonie sowie von der Kathedrale zum Cocktailempfang bereitgestellt.',
     dress_eyebrow:       'Kleidung',
     dress_title:         'Dresscode',
     dress_headline:      'Abendgarderobe',
@@ -334,6 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNav();
   initModal();
   initRSVP();
+  initFilters();
 });
 
 // ── Language ─────────────────────────────────────
@@ -445,6 +584,38 @@ function handleScroll() {
   if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 50);
 }
 
+// ── Accommodation Filters ─────────────────────────
+function initFilters() {
+  const state = { type: 'all', budget: 'all', capacity: 'all' };
+  const cards = document.querySelectorAll('.hotel-card');
+  const noResults = document.querySelector('.accom-no-results');
+
+  function applyFilters() {
+    let visible = 0;
+    cards.forEach(card => {
+      const matchType     = state.type     === 'all' || card.dataset.type   === state.type;
+      const matchBudget   = state.budget   === 'all' || card.dataset.budget === state.budget;
+      const matchCapacity = state.capacity === 'all' || parseInt(card.dataset.capacity) >= parseInt(state.capacity);
+      const show = matchType && matchBudget && matchCapacity;
+      card.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  document.querySelectorAll('.filter-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const group = pill.dataset.filterGroup;
+      const value = pill.dataset.filterValue;
+      state[group] = value;
+      document.querySelectorAll(`.filter-pill[data-filter-group="${group}"]`).forEach(p => {
+        p.classList.toggle('active', p.dataset.filterValue === value);
+      });
+      applyFilters();
+    });
+  });
+}
+
 // ── Calendar Modal ────────────────────────────────
 function initModal() {
   const overlay   = document.getElementById('modal-overlay');
@@ -514,7 +685,7 @@ function downloadICS() {
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Éléonore & Hubert Wedding//EN',
+    'PRODID:-//Eléonore & Hubert Wedding//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'X-WR-TIMEZONE:Europe/Paris',
