@@ -744,6 +744,12 @@ function initRSVP() {
   }
 
   addAttendee(true);
+
+  ['f-firstname', 'f-lastname'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', syncContactToGuest1);
+  });
+  syncContactToGuest1();
 }
 
 function openRSVP() {
@@ -751,6 +757,7 @@ function openRSVP() {
   overlay.classList.add('open');
   overlay.removeAttribute('aria-hidden');
   document.body.style.overflow = 'hidden';
+  syncContactToGuest1();
   if (editToken) fetchExistingRSVP(editToken);
 }
 
@@ -770,32 +777,39 @@ function addAttendee(isFirst = false, prefill = null) {
   const block = document.createElement('div');
   block.className = 'attendee-block';
   block.dataset.index = idx;
+  if (isFirst) block.dataset.isContact = 'true';
 
   const checked = s => prefill && prefill.status === s ? 'checked' : '';
+
+  const nameFields = isFirst
+    ? `<div class="form-group">
+        <div class="att-contact-name"></div>
+      </div>`
+    : `<div class="form-row">
+        <div class="form-group">
+          <label class="form-label">
+            <span data-i18n="rsvp_firstname">${t.rsvp_firstname}</span> <span class="req">*</span>
+          </label>
+          <input type="text" name="att_firstname_${idx}" class="form-input att-firstname"
+                 value="${prefill ? escHtml(prefill.firstName || '') : ''}">
+          <div class="form-error att-err-firstname"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            <span data-i18n="rsvp_lastname">${t.rsvp_lastname}</span> <span class="req">*</span>
+          </label>
+          <input type="text" name="att_lastname_${idx}" class="form-input att-lastname"
+                 value="${prefill ? escHtml(prefill.lastName || '') : ''}">
+          <div class="form-error att-err-lastname"></div>
+        </div>
+      </div>`;
 
   block.innerHTML = `
     <div class="attendee-header">
       <span class="attendee-num"></span>
       ${!isFirst ? `<button type="button" class="attendee-remove">${t.rsvp_remove}</button>` : ''}
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">
-          <span data-i18n="rsvp_firstname">${t.rsvp_firstname}</span> <span class="req">*</span>
-        </label>
-        <input type="text" name="att_firstname_${idx}" class="form-input att-firstname"
-               value="${prefill ? escHtml(prefill.firstName || '') : ''}">
-        <div class="form-error att-err-firstname"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">
-          <span data-i18n="rsvp_lastname">${t.rsvp_lastname}</span> <span class="req">*</span>
-        </label>
-        <input type="text" name="att_lastname_${idx}" class="form-input att-lastname"
-               value="${prefill ? escHtml(prefill.lastName || '') : ''}">
-        <div class="form-error att-err-lastname"></div>
-      </div>
-    </div>
+    ${nameFields}
     <div class="form-group">
       <label class="form-label">
         <span data-i18n="rsvp_attendance">${t.rsvp_attendance}</span> <span class="req">*</span>
@@ -828,6 +842,13 @@ function addAttendee(isFirst = false, prefill = null) {
   renumberAttendees();
 }
 
+function syncContactToGuest1() {
+  const fn = (document.getElementById('f-firstname') || {}).value?.trim() || '';
+  const ln = (document.getElementById('f-lastname')  || {}).value?.trim() || '';
+  const display = document.querySelector('#attendees-list [data-is-contact] .att-contact-name');
+  if (display) display.textContent = [fn, ln].filter(Boolean).join(' ');
+}
+
 function renumberAttendees() {
   const t = T[lang] || T.en;
   document.querySelectorAll('#attendees-list .attendee-block').forEach((b, i) => {
@@ -845,14 +866,16 @@ function collectFormData() {
   const form = document.getElementById('rsvp-form');
   const attendees = [];
   document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
-    const fnEl     = block.querySelector('.att-firstname');
-    const lnEl     = block.querySelector('.att-lastname');
     const statusEl = block.querySelector('input[type="radio"]:checked');
-    attendees.push({
-      firstName: fnEl     ? fnEl.value.trim()     : '',
-      lastName:  lnEl     ? lnEl.value.trim()     : '',
-      status:    statusEl ? statusEl.value         : '',
-    });
+    let firstName, lastName;
+    if (block.dataset.isContact) {
+      firstName = form.firstName.value.trim();
+      lastName  = form.lastName.value.trim();
+    } else {
+      firstName = (block.querySelector('.att-firstname') || {}).value?.trim() || '';
+      lastName  = (block.querySelector('.att-lastname')  || {}).value?.trim() || '';
+    }
+    attendees.push({ firstName, lastName, status: statusEl ? statusEl.value : '' });
   });
   return {
     email:     form.email.value.trim(),
@@ -968,4 +991,5 @@ function prefillForm(data) {
   const attendees = data.attendees || [];
   attendees.forEach((att, i) => addAttendee(i === 0, att));
   if (attendees.length === 0) addAttendee(true);
+  syncContactToGuest1();
 }

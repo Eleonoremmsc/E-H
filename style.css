@@ -7,14 +7,14 @@
   src: url('fonts/ParfumerieScriptOldStyle_new.41455b9c652.878ed817-62ff-40fe-8103-2536046.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 :root {
   --cream:      #FAF8F4;
   --cream-alt:  #F4F2EE;
   --navy:       #1B2D52;
-  --navy-mid:   rgba(27, 45, 82, 0.70);
+  --navy-mid:   rgba(27, 45, 82, 0.82);
   --navy-line:  rgba(27, 45, 82, 0.14);
   --navy-line2: rgba(27, 45, 82, 0.08);
   --script:     'Parfumerie Script', cursive;
@@ -990,6 +990,14 @@ body {
   border-bottom: 0.5px solid var(--navy-line2);
 }
 .attendee-block:last-child { border-bottom: none; margin-bottom: 8px; }
+.att-contact-name {
+  font-family: var(--serif);
+  font-size: 1rem; font-weight: 300; font-style: italic;
+  color: var(--navy);
+  padding: 6px 0;
+  border-bottom: 0.5px solid var(--navy-line);
+  min-height: 36px;
+}
 
 .attendee-header {
   display: flex;
