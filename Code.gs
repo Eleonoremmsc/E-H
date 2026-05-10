@@ -12,8 +12,9 @@
 //    account email (shown in Deploy → Manage deployments)
 // ================================================
 
-const SHEET_ID   = '1DgTfgjqHhAbPp5FPUCfmVoiwKjCCI348BPl_iIcHhDk';
-const SHEET_NAME = 'RSVPs';
+const SHEET_ID    = '1DgTfgjqHhAbPp5FPUCfmVoiwKjCCI348BPl_iIcHhDk';
+const SHEET_NAME  = 'RSVPs';
+const GUESTS_NAME = 'Guests';
 const WEBSITE_URL = 'https://delicate-frangipane-f07d0a.netlify.app';
 const SENDER_NAME = 'Éléonore & Hubert';
 
@@ -60,6 +61,8 @@ function handleSubmit(data) {
     now,  // updatedAt
   ]);
 
+  writeGuests(id, now, data);
+
   sendEmail(data, editUrl, false);
   return { success: true, token, editUrl };
 }
@@ -72,12 +75,17 @@ function handleUpdate(data) {
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][7] === token) {
       const row = i + 1;
+      const id  = rows[i][0];
+      const submitted = rows[i][1];
+
       sheet.getRange(row, 3).setValue(data.email);
       sheet.getRange(row, 4).setValue(data.lastName);
       sheet.getRange(row, 5).setValue(data.firstName);
       sheet.getRange(row, 6).setValue(data.address);
       sheet.getRange(row, 7).setValue(JSON.stringify(data.attendees || []));
       sheet.getRange(row, 9).setValue(new Date().toISOString());
+
+      writeGuests(id, submitted, data, true);
 
       const editUrl = `${WEBSITE_URL}?rsvp=${token}`;
       sendEmail(data, editUrl, true);
@@ -105,6 +113,37 @@ function getByToken(token) {
     }
   }
   return { error: 'Not found' };
+}
+
+// ── Guests sheet ──────────────────────────────────
+// One row per attendee — easy to filter/sort for headcount.
+// Columns: RSVP ID | Submitted | First Name | Last Name | Status |
+//          Household Email | Contact First | Contact Last
+
+function writeGuests(id, submitted, data, isUpdate) {
+  const sheet = getGuestsSheet();
+
+  if (isUpdate) {
+    // Remove existing rows for this RSVP ID (iterate backwards to avoid index shift)
+    const rows = sheet.getDataRange().getValues();
+    for (let i = rows.length - 1; i >= 1; i--) {
+      if (rows[i][0] === id) sheet.deleteRow(i + 1);
+    }
+  }
+
+  const attendees = data.attendees || [];
+  attendees.forEach(function(a) {
+    sheet.appendRow([
+      id,
+      submitted,
+      a.firstName,
+      a.lastName,
+      a.status,
+      data.email,
+      data.firstName,
+      data.lastName,
+    ]);
+  });
 }
 
 // ── Email ─────────────────────────────────────────
@@ -150,6 +189,20 @@ function getSheet() {
     sheet.appendRow([
       'ID', 'Submitted', 'Email', 'Last Name', 'First Name(s)',
       'Address', 'Attendees (JSON)', 'Edit Token', 'Updated',
+    ]);
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function getGuestsSheet() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sheet = ss.getSheetByName(GUESTS_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(GUESTS_NAME);
+    sheet.appendRow([
+      'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
+      'Household Email', 'Contact First', 'Contact Last',
     ]);
     sheet.setFrozenRows(1);
   }
