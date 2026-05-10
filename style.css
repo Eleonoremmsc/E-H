@@ -229,6 +229,7 @@ body {
   border-top: 0.5px solid var(--navy-line);
 }
 .nav-mobile.open { display: flex; }
+.mobile-lang { display: flex; align-items: center; gap: 10px; margin-top: 4px; border-top: 0.5px solid var(--navy-line); padding-top: 20px; width: 100%; justify-content: center; }
 
 /* ── Welcome / Hero ────────────────────────────── */
 .section-welcome {
