@@ -37,6 +37,8 @@ const T = {
     nav_activities:      'Activities',
     nav_dresscode:       'Dress Code',
     nav_map:             'Map',
+    lang_icon_label:     'Change language',
+    lang_modal_title:    'Choose your language',
     welcome_subtitle:    'look forward to celebrating their wedding with you on',
     welcome_date:        'June 26th, 2027',
     welcome_location:    'Crillon-le-Brave, Provence',
@@ -45,14 +47,13 @@ const T = {
     prog_title:          'Programme',
     prog_friday:         'Friday, 25 June',
     prog_fri_name:       'Cocktail Evening',
-    prog_fri_desc:       'Join us for a welcome drink to start the celebrations.',
+    prog_fri_location:   'Château Pesquié',
     prog_saturday:       'Saturday, 26 June',
     prog_ceremony_name:  'Religious Ceremony',
-    prog_ceremony_desc:  'The ceremony will take place at Cathédrale Saint-Siffrein de Carpentras.',
+    prog_ceremony_location: 'TBD',
     prog_reception_time: 'From 19:00',
     prog_reception_name: 'Reception',
-    prog_reception_desc: 'Drinks and canapés in the garden, a seated dinner under the Provençal stars, and dancing into the night.',
-    accom_eyebrow:       'Nearby',
+    prog_reception_location: 'Domaine des Pins',
     accom_title:         'Accommodation',
     accom_intro:         'We have gathered a selection of accommodation options near the venue to suit every preference and budget. We recommend booking early.',
     tier_luxury:         'Luxury',
@@ -78,6 +79,13 @@ const T = {
     filter_comfort:      'Comfort',
     filter_simple:       'Simple',
     filter_no_results:   'No accommodation matches your filters.',
+    filter_crowd:        'Crowd',
+    filter_nature:       'Nature',
+    filter_heritage:     'Heritage',
+    filter_wine:         'Wine',
+    crowd_quiet:         'Quiet',
+    crowd_popular:       'Popular',
+    activities_no_results: 'No activities match your filters.',
     tier_prem_hotel:     'Premium Hotel',
     tier_entire_home:    'Entire Home',
     tier_group_gite:     'Group Gîte',
@@ -107,7 +115,6 @@ const T = {
     tips_villages:       'The closest villages are Crillon-le-Brave and Bédoin. Caromb, Mormoiron and Mazan are a 10-minute drive away and offer good alternatives.',
     tips_google:         "Many local hosts have their own websites and won't appear on aggregators — searching Google Maps directly often reveals them, with photos and reviews.",
     tips_also_check:     'Also check:',
-    activities_eyebrow:  "While You're Here",
     activities_title:    'Activities',
     activities_intro:    'A few of our favourite ways to make the most of Provence, whether you arrive early or stay on after the celebrations.',
     activities_cat_nature:   'Walks & Bike',
@@ -147,8 +154,25 @@ const T = {
     act_gigondas_desc:    'A postcard vineyard village at the foot of the Dentelles.',
     act_islesorgue_name:  "L'Isle-sur-la-Sorgue",
     act_islesorgue_desc:  'Antique markets and canoeing on the Sorgue — famous for its Sunday market.',
-    activities_map_note:  'A few of our favourite spots, mapped:',
-    dress_eyebrow:       'Attire',
+    act_ventoux_distance:      '~30 min drive',
+    act_abeilles_distance:     '~35 min drive',
+    act_accrobranche_distance: '~15 min drive',
+    act_dentelles_distance:    '~30 min drive',
+    act_barroux_distance:      '~5 min drive',
+    act_senanque_distance:     '~45 min drive',
+    act_orange_distance:       '~35 min drive',
+    act_arles_distance:        '~1h15 drive',
+    act_gordes_distance:       '~35 min drive',
+    act_roussillon_distance:   '~45 min drive',
+    act_fontaine_distance:     '~40 min drive',
+    act_vaison_distance:       '~30 min drive',
+    act_pesquie_distance:      '~10 min drive',
+    act_chateauneuf_distance:  '~40 min drive',
+    act_beaumes_distance:      '~20 min drive',
+    act_gigondas_distance:     '~25 min drive',
+    act_islesorgue_distance:   '~35 min drive',
+    activities_map_note:  'A rough guide to distances from the estate — not to scale.',
+    map_interactive_link: 'Open interactive map →',
     dress_title:         'Dress Code',
     dress_headline:      'Formal Attire',
     dress_intro:         'We invite our guests to dress elegantly for a Provençal summer evening.',
@@ -157,14 +181,20 @@ const T = {
     dress_wnote:         'The ceremony will take place outdoors — block heels or wedges are recommended.',
     dress_men:           'For Men',
     dress_m_main:        'A suit with a tie.',
-    map_eyebrow:         'Venue',
     map_title:           'Getting There',
     map_gmaps:           'Open in Google Maps',
-    map_plane:           'By Plane',
-    map_plane_desc:      'Marseille Provence (MRS) — 1h15 by car. Avignon Airport — approx. 45 min.',
-    map_train:           'By Train',
-    map_train_desc:      'TGV to Avignon Centre or Avignon TGV, then 45 min by car to Crillon-le-Brave.',
-    map_car:             'By Car',
+    map_abroad_title:    'Flying In From Abroad',
+    map_option1_label:   'Option 1',
+    map_option1_step1:   'Land in Paris at Charles de Gaulle Airport (CDG).',
+    map_option1_step2:   'Take a direct TGV train from the airport to Avignon TGV — not Avignon Centre, which is a hassle to reach and hard to navigate by car.',
+    map_option1_step3:   "Book a car at Avignon TGV (Sixt, Avis, Europcar — plenty of choice). It's the best way to explore the region.",
+    map_option1_step4:   'Crillon-le-Brave is a 40-minute drive from Avignon TGV.',
+    map_option2_label:   'Option 2',
+    map_option2_step1:   'Land in Marseille at Marseille Provence Airport (MRS).',
+    map_option2_step2:   'Book a car at the airport. Crillon-le-Brave is a 1h20 drive away.',
+    map_paris_title:     'Arriving from Paris',
+    map_paris_note:      "We don't recommend driving all the way — it takes 6–8 hours, and with the long weekend traffic, it can take even longer. Instead, take the train from Gare de Lyon to Avignon TGV (2h40), then book a car for your time in the area.",
+    map_car:             'Driving to the Venue',
     map_car_desc:        'A7 motorway, exit Carpentras. Follow signs toward Crillon-le-Brave via Mormoiron.',
     footer_date:         '26 June 2027 · Crillon-le-Brave, Provence',
     modal_eyebrow:       'Save the Date',
@@ -206,6 +236,8 @@ const T = {
     nav_activities:      'Activités',
     nav_dresscode:       'Tenue',
     nav_map:             'Carte',
+    lang_icon_label:     'Changer de langue',
+    lang_modal_title:    'Choisissez votre langue',
     welcome_subtitle:    'ont le plaisir de célébrer leur mariage avec vous le',
     welcome_date:        '26 juin 2027',
     welcome_location:    'Crillon-le-Brave, Provence',
@@ -214,14 +246,13 @@ const T = {
     prog_title:          'Programme',
     prog_friday:         'Vendredi 25 juin',
     prog_fri_name:       'Soirée cocktail',
-    prog_fri_desc:       'Rejoignez-nous pour un verre de bienvenue pour commencer les festivités.',
+    prog_fri_location:   'Château Pesquié',
     prog_saturday:       'Samedi 26 juin',
     prog_ceremony_name:  'Cérémonie religieuse',
-    prog_ceremony_desc:  'La cérémonie aura lieu à la Cathédrale Saint-Siffrein de Carpentras.',
+    prog_ceremony_location: 'À déterminer',
     prog_reception_time: 'À partir de 19h00',
     prog_reception_name: 'Réception',
-    prog_reception_desc: 'Boissons et canapés dans le jardin, un dîner assis sous les étoiles provençales, puis une soirée dansante.',
-    accom_eyebrow:       'À proximité',
+    prog_reception_location: 'Domaine des Pins',
     accom_title:         'Hébergement',
     accom_intro:         'Nous avons sélectionné quelques options d\'hébergement à proximité du domaine, pour tous les goûts et budgets. Nous recommandons de réserver tôt.',
     tier_luxury:         'Luxe',
@@ -247,6 +278,13 @@ const T = {
     filter_comfort:      'Confort',
     filter_simple:       'Simple',
     filter_no_results:   'Aucun hébergement ne correspond à vos filtres.',
+    filter_crowd:        'Affluence',
+    filter_nature:       'Nature',
+    filter_heritage:     'Patrimoine',
+    filter_wine:         'Vin',
+    crowd_quiet:         'Tranquille',
+    crowd_popular:       'Fréquenté',
+    activities_no_results: 'Aucune activité ne correspond à vos filtres.',
     tier_prem_hotel:     'Hôtel Premium',
     tier_entire_home:    'Maison entière',
     tier_group_gite:     'Gîte de groupe',
@@ -276,7 +314,6 @@ const T = {
     tips_villages:       'Les villages les plus proches sont Crillon-le-Brave et Bédoin. Caromb, Mormoiron et Mazan sont à 10 minutes en voiture et offrent de bonnes alternatives.',
     tips_google:         "De nombreux propriétaires locaux ont leur propre site web et n'apparaissent pas sur les plateformes — une recherche directe sur Google Maps est souvent efficace, avec photos et avis à la clé.",
     tips_also_check:     'Consultez également :',
-    activities_eyebrow:  'Pendant votre séjour',
     activities_title:    'Activités',
     activities_intro:    "Quelques-unes de nos façons préférées de profiter de la Provence, que vous arriviez en avance ou prolongiez votre séjour après les festivités.",
     activities_cat_nature:   'Randonnées & Vélo',
@@ -316,24 +353,47 @@ const T = {
     act_gigondas_desc:    'Un village viticole de carte postale, au pied des Dentelles.',
     act_islesorgue_name:  "L'Isle-sur-la-Sorgue",
     act_islesorgue_desc:  'Marchés d\'antiquaires et balades en canoë sur la Sorgue — célèbre pour son marché du dimanche.',
-    activities_map_note:  'Quelques-uns de nos coins préférés, sur la carte :',
-    dress_eyebrow:       'Tenue',
+    act_ventoux_distance:      '~30 min en voiture',
+    act_abeilles_distance:     '~35 min en voiture',
+    act_accrobranche_distance: '~15 min en voiture',
+    act_dentelles_distance:    '~30 min en voiture',
+    act_barroux_distance:      '~5 min en voiture',
+    act_senanque_distance:     '~45 min en voiture',
+    act_orange_distance:       '~35 min en voiture',
+    act_arles_distance:        '~1h15 en voiture',
+    act_gordes_distance:       '~35 min en voiture',
+    act_roussillon_distance:   '~45 min en voiture',
+    act_fontaine_distance:     '~40 min en voiture',
+    act_vaison_distance:       '~30 min en voiture',
+    act_pesquie_distance:      '~10 min en voiture',
+    act_chateauneuf_distance:  '~40 min en voiture',
+    act_beaumes_distance:      '~20 min en voiture',
+    act_gigondas_distance:     '~25 min en voiture',
+    act_islesorgue_distance:   '~35 min en voiture',
+    activities_map_note:  "Un aperçu approximatif des distances depuis le domaine — sans échelle précise.",
+    map_interactive_link: 'Ouvrir la carte interactive →',
     dress_title:         'Code vestimentaire',
     dress_headline:      'Tenue formelle',
     dress_intro:         "Nous invitons nos invités à s'habiller avec élégance pour une soirée d'été provençale.",
     dress_women:         'Pour les femmes',
     dress_w_main:        'Robe de soirée, robe de cocktail ou ensemble élégant.',
-    dress_wnote:         "Les tons doux, les imprimés fleuris et les couleurs chaudes d'été sont les bienvenus. La cérémonie se déroule en extérieur — des talons compensés ou blocs sont recommandés.",
+    dress_wnote:         "La cérémonie se déroule en extérieur — des talons compensés ou blocs sont recommandés.",
     dress_men:           'Pour les hommes',
     dress_m_main:        'Un costume avec une cravate.',
-    map_eyebrow:         'Lieu',
     map_title:           'Accès',
     map_gmaps:           'Ouvrir dans Google Maps',
-    map_plane:           'En avion',
-    map_plane_desc:      'Aéroport de Marseille Provence (MRS) — environ 1h15 en voiture. Aéroport d\'Avignon — environ 45 min.',
-    map_train:           'En train',
-    map_train_desc:      'TGV jusqu\'à Avignon Centre ou Avignon TGV, puis 45 min en voiture jusqu\'à Crillon-le-Brave.',
-    map_car:             'En voiture',
+    map_abroad_title:    "De l'étranger",
+    map_option1_label:   'Option n°1',
+    map_option1_step1:   'Atterrissez à Paris, à l\'aéroport Charles de Gaulle (CDG).',
+    map_option1_step2:   'Prenez un TGV direct depuis l\'aéroport jusqu\'à AVIGNON TGV — attention, pas Avignon Centre, une gare peu pratique et difficile à rejoindre en voiture.',
+    map_option1_step3:   "Réservez une voiture à AVIGNON TGV (Sixt, Avis, Europcar — l'offre ne manque pas). C'est le meilleur moyen d'explorer la région.",
+    map_option1_step4:   "Crillon-le-Brave se trouve à 40 minutes de route d'AVIGNON TGV.",
+    map_option2_label:   'Option n°2',
+    map_option2_step1:   'Atterrissez à Marseille, à l\'aéroport de Marseille Provence (MRS).',
+    map_option2_step2:   "Réservez une voiture à l'aéroport. Crillon-le-Brave se trouve à 1h20 de route.",
+    map_paris_title:     'Depuis Paris',
+    map_paris_note:      "Nous ne recommandons pas de faire tout le trajet en voiture — il faut compter 6 à 8h de route, et avec le week-end prolongé, les embouteillages risquent d'allonger encore le trajet. Prenez plutôt le train depuis la Gare de Lyon jusqu'à AVIGNON TGV (2h40), puis réservez une voiture pour la durée de votre séjour sur place.",
+    map_car:             'En voiture jusqu\'au domaine',
     map_car_desc:        'Autoroute A7, sortie Carpentras. Suivre les indications vers Crillon-le-Brave via Mormoiron.',
     footer_date:         '26 juin 2027 · Crillon-le-Brave, Provence',
     modal_eyebrow:       'Retenir la date',
@@ -375,6 +435,8 @@ const T = {
     nav_activities:      'Aktivitäten',
     nav_dresscode:       'Kleidung',
     nav_map:             'Karte',
+    lang_icon_label:     'Sprache ändern',
+    lang_modal_title:    'Wählen Sie Ihre Sprache',
     welcome_subtitle:    'freuen sich, ihre Hochzeit mit Ihnen zu feiern am',
     welcome_date:        '26. Juni 2027',
     welcome_location:    'Crillon-le-Brave, Provence',
@@ -383,14 +445,13 @@ const T = {
     prog_title:          'Programm',
     prog_friday:         'Freitag, 25. Juni',
     prog_fri_name:       'Cocktailabend',
-    prog_fri_desc:       'Kommen Sie zu einem Willkommensdrink, um die Feierlichkeiten zu beginnen.',
+    prog_fri_location:   'Château Pesquié',
     prog_saturday:       'Samstag, 26. Juni',
     prog_ceremony_name:  'Kirchliche Trauung',
-    prog_ceremony_desc:  'Die Zeremonie findet in der Kathedrale Saint-Siffrein de Carpentras statt.',
+    prog_ceremony_location: 'Wird noch bekannt gegeben',
     prog_reception_time: 'Ab 19:00 Uhr',
     prog_reception_name: 'Empfang',
-    prog_reception_desc: 'Getränke und Häppchen im Garten, ein festliches Abendessen unter dem provenzalischen Sternenhimmel und Tanz bis in die Nacht.',
-    accom_eyebrow:       'In der Nähe',
+    prog_reception_location: 'Domaine des Pins',
     accom_title:         'Unterkunft',
     accom_intro:         'Wir haben eine Auswahl an Unterkunftsmöglichkeiten in der Nähe des Veranstaltungsortes zusammengestellt. Wir empfehlen eine frühzeitige Buchung.',
     tier_luxury:         'Luxus',
@@ -416,6 +477,13 @@ const T = {
     filter_comfort:      'Komfort',
     filter_simple:       'Einfach',
     filter_no_results:   'Keine Unterkunft entspricht Ihren Filtern.',
+    filter_crowd:        'Andrang',
+    filter_nature:       'Natur',
+    filter_heritage:     'Kultur',
+    filter_wine:         'Wein',
+    crowd_quiet:         'Ruhig',
+    crowd_popular:       'Beliebt',
+    activities_no_results: 'Keine Aktivität entspricht Ihren Filtern.',
     tier_prem_hotel:     'Luxushotel',
     tier_entire_home:    'Ferienhaus',
     tier_group_gite:     'Gruppen-Gîte',
@@ -445,7 +513,6 @@ const T = {
     tips_villages:       'Die nächstgelegenen Dörfer sind Crillon-le-Brave und Bédoin. Caromb, Mormoiron und Mazan sind 10 Minuten entfernt und bieten ebenfalls gute Optionen.',
     tips_google:         'Viele lokale Vermieter haben eigene Websites und sind nicht auf Buchungsplattformen vertreten — eine direkte Suche auf Google Maps ist oft hilfreich, da Angebote häufig Fotos und Bewertungen enthalten.',
     tips_also_check:     'Auch empfehlenswert:',
-    activities_eyebrow:  'Während Ihres Aufenthalts',
     activities_title:    'Aktivitäten',
     activities_intro:    'Ein paar unserer liebsten Möglichkeiten, die Provence zu genießen — ob Sie früher anreisen oder nach den Feierlichkeiten noch bleiben.',
     activities_cat_nature:   'Wandern & Rad',
@@ -485,24 +552,47 @@ const T = {
     act_gigondas_desc:    'Ein bilderbuchhaftes Weindorf am Fuß der Dentelles.',
     act_islesorgue_name:  "L'Isle-sur-la-Sorgue",
     act_islesorgue_desc:  'Antiquitätenmärkte und Kanufahrten auf der Sorgue — berühmt für seinen Sonntagsmarkt.',
-    activities_map_note:  'Ein paar unserer Lieblingsorte, auf der Karte:',
-    dress_eyebrow:       'Kleidung',
+    act_ventoux_distance:      '~30 Min. mit dem Auto',
+    act_abeilles_distance:     '~35 Min. mit dem Auto',
+    act_accrobranche_distance: '~15 Min. mit dem Auto',
+    act_dentelles_distance:    '~30 Min. mit dem Auto',
+    act_barroux_distance:      '~5 Min. mit dem Auto',
+    act_senanque_distance:     '~45 Min. mit dem Auto',
+    act_orange_distance:       '~35 Min. mit dem Auto',
+    act_arles_distance:        '~1h15 mit dem Auto',
+    act_gordes_distance:       '~35 Min. mit dem Auto',
+    act_roussillon_distance:   '~45 Min. mit dem Auto',
+    act_fontaine_distance:     '~40 Min. mit dem Auto',
+    act_vaison_distance:       '~30 Min. mit dem Auto',
+    act_pesquie_distance:      '~10 Min. mit dem Auto',
+    act_chateauneuf_distance:  '~40 Min. mit dem Auto',
+    act_beaumes_distance:      '~20 Min. mit dem Auto',
+    act_gigondas_distance:     '~25 Min. mit dem Auto',
+    act_islesorgue_distance:   '~35 Min. mit dem Auto',
+    activities_map_note:  'Eine ungefähre Orientierung zu den Entfernungen ab dem Anwesen — nicht maßstabsgetreu.',
+    map_interactive_link: 'Interaktive Karte öffnen →',
     dress_title:         'Dresscode',
     dress_headline:      'Formelle Kleidung',
     dress_intro:         'Wir laden unsere Gäste ein, sich elegant für einen provenzalischen Sommerabend zu kleiden.',
     dress_women:         'Für Damen',
     dress_w_main:        'Abendkleid, Cocktailkleid oder elegantes Ensemble.',
-    dress_wnote:         'Zarte Töne, Blumenmuster und warme Sommerfarben sind willkommen. Die Zeremonie findet im Freien statt — Keilabsätze oder Blockabsätze werden empfohlen.',
+    dress_wnote:         'Die Zeremonie findet im Freien statt — Keilabsätze oder Blockabsätze werden empfohlen.',
     dress_men:           'Für Herren',
     dress_m_main:        'Ein Anzug mit Krawatte.',
-    map_eyebrow:         'Veranstaltungsort',
     map_title:           'Anreise',
     map_gmaps:           'In Google Maps öffnen',
-    map_plane:           'Mit dem Flugzeug',
-    map_plane_desc:      'Flughafen Marseille Provence (MRS) — ca. 1h15 mit dem Auto. Flughafen Avignon — ca. 45 Min.',
-    map_train:           'Mit dem Zug',
-    map_train_desc:      'TGV nach Avignon Centre oder Avignon TGV, dann 45 Min. mit dem Auto nach Crillon-le-Brave.',
-    map_car:             'Mit dem Auto',
+    map_abroad_title:    'Aus dem Ausland anreisen',
+    map_option1_label:   'Option 1',
+    map_option1_step1:   'Landen Sie in Paris am Flughafen Charles de Gaulle (CDG).',
+    map_option1_step2:   'Nehmen Sie einen direkten TGV vom Flughafen nach AVIGNON TGV — nicht Avignon Centre, das nur umständlich zu erreichen und mit dem Auto schwer zu navigieren ist.',
+    map_option1_step3:   'Mieten Sie ein Auto direkt am Bahnhof AVIGNON TGV (Sixt, Avis, Europcar — die Auswahl ist groß). Das ist die beste Art, die Region zu erkunden.',
+    map_option1_step4:   'Crillon-le-Brave liegt eine 40-minütige Autofahrt von AVIGNON TGV entfernt.',
+    map_option2_label:   'Option 2',
+    map_option2_step1:   'Landen Sie in Marseille am Flughafen Marseille Provence (MRS).',
+    map_option2_step2:   'Mieten Sie ein Auto direkt am Flughafen. Crillon-le-Brave liegt eine 1 Std. 20 Min. entfernte Autofahrt entfernt.',
+    map_paris_title:     'Anreise ab Paris',
+    map_paris_note:      'Wir empfehlen nicht, die gesamte Strecke mit dem Auto zu fahren — das dauert 6 bis 8 Stunden, und durch das lange Wochenende ist mit zusätzlichem Stau zu rechnen. Nehmen Sie stattdessen den Zug vom Gare de Lyon nach AVIGNON TGV (2 Std. 40 Min.) und mieten Sie anschließend ein Auto für Ihren Aufenthalt vor Ort.',
+    map_car:             'Anfahrt zum Anwesen',
     map_car_desc:        'Autobahn A7, Ausfahrt Carpentras. Schilder nach Crillon-le-Brave über Mormoiron folgen.',
     footer_date:         '26. Juni 2027 · Crillon-le-Brave, Provence',
     modal_eyebrow:       'Datum speichern',
@@ -549,6 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGate();
   initNav();
   initModal();
+  initLangModal();
   initRSVP();
   initFilters();
 });
@@ -563,6 +654,11 @@ function applyLang(l) {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
     if (t[key] != null) el.textContent = t[key];
+  });
+
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const key = el.dataset.i18nAria;
+    if (t[key] != null) el.setAttribute('aria-label', t[key]);
   });
 
   document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -662,36 +758,62 @@ function handleScroll() {
   if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 50);
 }
 
-// ── Accommodation Filters ─────────────────────────
+// ── Filters (Accommodation + Activities) ──────────
 function initFilters() {
-  const state = { type: 'all', budget: 'all', capacity: 'all' };
-  const cards = document.querySelectorAll('.hotel-card');
-  const noResults = document.querySelector('.accom-no-results');
+  setupFilterGroup({
+    scope: document.getElementById('accommodation'),
+    cardSelector: '.hotel-card',
+    noResultsSelector: '.filter-empty',
+  });
+  setupFilterGroup({
+    scope: document.getElementById('activities'),
+    cardSelector: '.activity-card',
+    noResultsSelector: '.filter-empty',
+    catGroupSelector: '.activities-cat',
+  });
+}
+
+function setupFilterGroup({ scope, cardSelector, noResultsSelector, catGroupSelector }) {
+  if (!scope) return;
+  const state = {};
+  const cards = scope.querySelectorAll(cardSelector);
+  const noResults = scope.querySelector(noResultsSelector);
+  const pills = scope.querySelectorAll('.filter-pill');
+  const catGroups = catGroupSelector ? scope.querySelectorAll(catGroupSelector) : [];
+
+  pills.forEach(pill => { state[pill.dataset.filterGroup] = 'all'; });
 
   function applyFilters() {
     let visible = 0;
     cards.forEach(card => {
-      const matchType     = state.type     === 'all' || card.dataset.type   === state.type;
-      const matchBudget   = state.budget   === 'all' || card.dataset.budget === state.budget;
-      const matchCapacity = state.capacity === 'all' || parseInt(card.dataset.capacity) >= parseInt(state.capacity);
-      const show = matchType && matchBudget && matchCapacity;
+      const show = Object.keys(state).every(group => {
+        if (state[group] === 'all') return true;
+        if (group === 'capacity') return parseInt(card.dataset.capacity) >= parseInt(state[group]);
+        return card.dataset[group] === state[group];
+      });
       card.classList.toggle('hidden', !show);
       if (show) visible++;
+    });
+    catGroups.forEach(group => {
+      const anyVisible = [...group.querySelectorAll(cardSelector)].some(c => !c.classList.contains('hidden'));
+      group.classList.toggle('hidden', !anyVisible);
     });
     if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
   }
 
-  document.querySelectorAll('.filter-pill').forEach(pill => {
+  pills.forEach(pill => {
     pill.addEventListener('click', () => {
       const group = pill.dataset.filterGroup;
       const value = pill.dataset.filterValue;
       state[group] = value;
-      document.querySelectorAll(`.filter-pill[data-filter-group="${group}"]`).forEach(p => {
+      scope.querySelectorAll(`.filter-pill[data-filter-group="${group}"]`).forEach(p => {
         p.classList.toggle('active', p.dataset.filterValue === value);
       });
       applyFilters();
     });
   });
+
+  applyFilters();
 }
 
 // ── Calendar Modal ────────────────────────────────
@@ -707,11 +829,38 @@ function initModal() {
     if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
   });
 
-  document.querySelectorAll('.cal-btn').forEach(btn => {
+  overlay.querySelectorAll('.cal-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       addToCalendar(btn.dataset.cal);
       closeModal();
     });
+  });
+}
+
+// ── Language Modal (mobile) ───────────────────────
+function initLangModal() {
+  const trigger  = document.getElementById('lang-icon-btn');
+  const overlay  = document.getElementById('lang-overlay');
+  const closeBtn = document.getElementById('lang-modal-close');
+  if (!trigger || !overlay) return;
+
+  function open() {
+    overlay.classList.add('open');
+    overlay.removeAttribute('aria-hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  trigger.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', close));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) close();
   });
 }
 
