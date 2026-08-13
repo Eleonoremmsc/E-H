@@ -854,6 +854,25 @@ body {
 .travel-steps li { margin-bottom: 11px; }
 .travel-steps li:last-child { margin-bottom: 0; }
 
+.travel-warning {
+  display: flex; gap: 12px; align-items: flex-start;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 0.5px solid var(--lavender-line);
+}
+.travel-warning-icon {
+  width: 19px; height: 19px;
+  color: var(--olive-deep);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.travel-warning-icon svg { display: block; width: 100%; height: 100%; }
+.travel-warning p {
+  font-size: 0.82rem; font-weight: 500;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
 .travel-note-card {
   display: flex;
   gap: 22px;
@@ -868,40 +887,6 @@ body {
   font-size: 0.88rem; font-weight: 300;
   color: var(--ink-mid);
   line-height: 1.8;
-}
-
-.travel-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-bottom: 56px;
-}
-.travel-item {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  padding: 24px 0;
-  border-bottom: 0.5px solid var(--lavender-line);
-}
-.travel-item:first-child { border-top: 0.5px solid var(--lavender-line); }
-.travel-icon-svg {
-  width: 24px; height: 24px;
-  color: var(--ink-mid);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-.travel-icon-svg svg { display: block; width: 100%; height: 100%; }
-.travel-label {
-  font-family: var(--sans);
-  font-size: 0.6rem; font-weight: 400;
-  letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--ink);
-  margin-bottom: 6px;
-}
-.travel-desc {
-  font-size: 0.9rem; font-weight: 300;
-  color: var(--ink-mid);
-  line-height: 1.7;
 }
 
 /* ── Footer ────────────────────────────────────── */
