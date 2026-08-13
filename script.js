@@ -204,6 +204,8 @@ const T = {
     rsvp_guests_label:   'Guests',
     rsvp_guest:          'Guest',
     rsvp_firstname:      'First name',
+    rsvp_relationship:              'Relationship (optional)',
+    rsvp_relationship_placeholder:  'e.g. spouse, sibling, plus-one',
     rsvp_attendance:     'Attendance',
     rsvp_yes:            'With joy, I will be there',
     rsvp_maybe:          'I hope to attend',
@@ -398,6 +400,8 @@ const T = {
     rsvp_guests_label:   'Invités',
     rsvp_guest:          'Invité',
     rsvp_firstname:      'Prénom',
+    rsvp_relationship:              'Relation (facultatif)',
+    rsvp_relationship_placeholder:  'ex. conjoint(e), frère/sœur, accompagnant(e)',
     rsvp_attendance:     'Présence',
     rsvp_yes:            'Avec joie, je serai présent(e)',
     rsvp_maybe:          "J'espère pouvoir participer",
@@ -592,6 +596,8 @@ const T = {
     rsvp_guests_label:   'Gäste',
     rsvp_guest:          'Gast',
     rsvp_firstname:      'Vorname',
+    rsvp_relationship:              'Beziehung (optional)',
+    rsvp_relationship_placeholder:  'z. B. Ehepartner/in, Geschwister, Begleitung',
     rsvp_attendance:     'Teilnahme',
     rsvp_yes:            'Mit Freude, ich werde dabei sein',
     rsvp_maybe:          'Ich hoffe, teilnehmen zu können',
@@ -1029,6 +1035,14 @@ function addAttendee(isFirst = false, prefill = null) {
                  value="${prefill ? escHtml(prefill.lastName || '') : ''}">
           <div class="form-error att-err-lastname"></div>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">
+          <span data-i18n="rsvp_relationship">${t.rsvp_relationship}</span>
+        </label>
+        <input type="text" name="att_relationship_${idx}" class="form-input att-relationship"
+               placeholder="${t.rsvp_relationship_placeholder}"
+               value="${prefill ? escHtml(prefill.relationship || '') : ''}">
       </div>`;
 
   block.innerHTML = `
@@ -1094,15 +1108,17 @@ function collectFormData() {
   const attendees = [];
   document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
     const statusEl = block.querySelector('input[type="radio"]:checked');
-    let firstName, lastName;
+    let firstName, lastName, relationship;
     if (block.dataset.isContact) {
       firstName = form.firstName.value.trim();
       lastName  = form.lastName.value.trim();
+      relationship = '';
     } else {
       firstName = (block.querySelector('.att-firstname') || {}).value?.trim() || '';
       lastName  = (block.querySelector('.att-lastname')  || {}).value?.trim() || '';
+      relationship = (block.querySelector('.att-relationship') || {}).value?.trim() || '';
     }
-    attendees.push({ firstName, lastName, status: statusEl ? statusEl.value : '' });
+    attendees.push({ firstName, lastName, relationship, status: statusEl ? statusEl.value : '' });
   });
   return {
     email:     form.email.value.trim(),

@@ -118,7 +118,7 @@ function getByToken(token) {
 // ── Guests sheet ──────────────────────────────────
 // One row per attendee — easy to filter/sort for headcount.
 // Columns: RSVP ID | Submitted | First Name | Last Name | Status |
-//          Household Email | Contact First | Contact Last
+//          Household Email | Contact First | Contact Last | Relationship
 
 function writeGuests(id, submitted, data, isUpdate) {
   const sheet = getGuestsSheet();
@@ -142,6 +142,7 @@ function writeGuests(id, submitted, data, isUpdate) {
       data.email,
       data.firstName,
       data.lastName,
+      a.relationship || '',
     ]);
   });
 }
@@ -202,7 +203,7 @@ function getGuestsSheet() {
     sheet = ss.insertSheet(GUESTS_NAME);
     sheet.appendRow([
       'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
-      'Household Email', 'Contact First', 'Contact Last',
+      'Household Email', 'Contact First', 'Contact Last', 'Relationship',
     ]);
     sheet.setFrozenRows(1);
   }
