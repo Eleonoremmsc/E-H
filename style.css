@@ -439,10 +439,11 @@ body {
   color: var(--ink);
   margin-bottom: 4px;
 }
-.prog-desc {
-  font-size: 0.88rem; font-weight: 300;
+.prog-location {
+  font-family: var(--sans);
+  font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.06em;
   color: var(--ink-mid);
-  line-height: 1.7;
 }
 
 /* ── Activities ────────────────────────────────── */
