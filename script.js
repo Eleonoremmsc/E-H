@@ -37,6 +37,8 @@ const T = {
     nav_activities:      'Activities',
     nav_dresscode:       'Dress Code',
     nav_map:             'Map',
+    lang_icon_label:     'Change language',
+    lang_modal_title:    'Choose your language',
     welcome_subtitle:    'look forward to celebrating their wedding with you on',
     welcome_date:        'June 26th, 2027',
     welcome_location:    'Crillon-le-Brave, Provence',
@@ -181,11 +183,18 @@ const T = {
     dress_m_main:        'A suit with a tie.',
     map_title:           'Getting There',
     map_gmaps:           'Open in Google Maps',
-    map_plane:           'By Plane',
-    map_plane_desc:      'Marseille Provence (MRS) — 1h15 by car. Avignon Airport — approx. 45 min.',
-    map_train:           'By Train',
-    map_train_desc:      'TGV to Avignon Centre or Avignon TGV, then 45 min by car to Crillon-le-Brave.',
-    map_car:             'By Car',
+    map_abroad_title:    'Flying In From Abroad',
+    map_option1_label:   'Option 1',
+    map_option1_step1:   'Land in Paris at Charles de Gaulle Airport (CDG).',
+    map_option1_step2:   'Take a direct TGV train from the airport to Avignon TGV — not Avignon Centre, which is a hassle to reach and hard to navigate by car.',
+    map_option1_step3:   "Book a car at Avignon TGV (Sixt, Avis, Europcar — plenty of choice). It's the best way to explore the region.",
+    map_option1_step4:   'Crillon-le-Brave is a 40-minute drive from Avignon TGV.',
+    map_option2_label:   'Option 2',
+    map_option2_step1:   'Land in Marseille at Marseille Provence Airport (MRS).',
+    map_option2_step2:   'Book a car at the airport. Crillon-le-Brave is a 1h20 drive away.',
+    map_paris_title:     'Arriving from Paris',
+    map_paris_note:      "We don't recommend driving all the way — it takes 6–8 hours, and with the long weekend traffic, it can take even longer. Instead, take the train from Gare de Lyon to Avignon TGV (2h40), then book a car for your time in the area.",
+    map_car:             'Driving to the Venue',
     map_car_desc:        'A7 motorway, exit Carpentras. Follow signs toward Crillon-le-Brave via Mormoiron.',
     footer_date:         '26 June 2027 · Crillon-le-Brave, Provence',
     modal_eyebrow:       'Save the Date',
@@ -227,6 +236,8 @@ const T = {
     nav_activities:      'Activités',
     nav_dresscode:       'Tenue',
     nav_map:             'Carte',
+    lang_icon_label:     'Changer de langue',
+    lang_modal_title:    'Choisissez votre langue',
     welcome_subtitle:    'ont le plaisir de célébrer leur mariage avec vous le',
     welcome_date:        '26 juin 2027',
     welcome_location:    'Crillon-le-Brave, Provence',
@@ -371,11 +382,18 @@ const T = {
     dress_m_main:        'Un costume avec une cravate.',
     map_title:           'Accès',
     map_gmaps:           'Ouvrir dans Google Maps',
-    map_plane:           'En avion',
-    map_plane_desc:      'Aéroport de Marseille Provence (MRS) — environ 1h15 en voiture. Aéroport d\'Avignon — environ 45 min.',
-    map_train:           'En train',
-    map_train_desc:      'TGV jusqu\'à Avignon Centre ou Avignon TGV, puis 45 min en voiture jusqu\'à Crillon-le-Brave.',
-    map_car:             'En voiture',
+    map_abroad_title:    "De l'étranger",
+    map_option1_label:   'Option n°1',
+    map_option1_step1:   'Atterrissez à Paris, à l\'aéroport Charles de Gaulle (CDG).',
+    map_option1_step2:   'Prenez un TGV direct depuis l\'aéroport jusqu\'à AVIGNON TGV — attention, pas Avignon Centre, une gare peu pratique et difficile à rejoindre en voiture.',
+    map_option1_step3:   "Réservez une voiture à AVIGNON TGV (Sixt, Avis, Europcar — l'offre ne manque pas). C'est le meilleur moyen d'explorer la région.",
+    map_option1_step4:   "Crillon-le-Brave se trouve à 40 minutes de route d'AVIGNON TGV.",
+    map_option2_label:   'Option n°2',
+    map_option2_step1:   'Atterrissez à Marseille, à l\'aéroport de Marseille Provence (MRS).',
+    map_option2_step2:   "Réservez une voiture à l'aéroport. Crillon-le-Brave se trouve à 1h20 de route.",
+    map_paris_title:     'Depuis Paris',
+    map_paris_note:      "Nous ne recommandons pas de faire tout le trajet en voiture — il faut compter 6 à 8h de route, et avec le week-end prolongé, les embouteillages risquent d'allonger encore le trajet. Prenez plutôt le train depuis la Gare de Lyon jusqu'à AVIGNON TGV (2h40), puis réservez une voiture pour la durée de votre séjour sur place.",
+    map_car:             'En voiture jusqu\'au domaine',
     map_car_desc:        'Autoroute A7, sortie Carpentras. Suivre les indications vers Crillon-le-Brave via Mormoiron.',
     footer_date:         '26 juin 2027 · Crillon-le-Brave, Provence',
     modal_eyebrow:       'Retenir la date',
@@ -417,6 +435,8 @@ const T = {
     nav_activities:      'Aktivitäten',
     nav_dresscode:       'Kleidung',
     nav_map:             'Karte',
+    lang_icon_label:     'Sprache ändern',
+    lang_modal_title:    'Wählen Sie Ihre Sprache',
     welcome_subtitle:    'freuen sich, ihre Hochzeit mit Ihnen zu feiern am',
     welcome_date:        '26. Juni 2027',
     welcome_location:    'Crillon-le-Brave, Provence',
@@ -561,11 +581,18 @@ const T = {
     dress_m_main:        'Ein Anzug mit Krawatte.',
     map_title:           'Anreise',
     map_gmaps:           'In Google Maps öffnen',
-    map_plane:           'Mit dem Flugzeug',
-    map_plane_desc:      'Flughafen Marseille Provence (MRS) — ca. 1h15 mit dem Auto. Flughafen Avignon — ca. 45 Min.',
-    map_train:           'Mit dem Zug',
-    map_train_desc:      'TGV nach Avignon Centre oder Avignon TGV, dann 45 Min. mit dem Auto nach Crillon-le-Brave.',
-    map_car:             'Mit dem Auto',
+    map_abroad_title:    'Aus dem Ausland anreisen',
+    map_option1_label:   'Option 1',
+    map_option1_step1:   'Landen Sie in Paris am Flughafen Charles de Gaulle (CDG).',
+    map_option1_step2:   'Nehmen Sie einen direkten TGV vom Flughafen nach AVIGNON TGV — nicht Avignon Centre, das nur umständlich zu erreichen und mit dem Auto schwer zu navigieren ist.',
+    map_option1_step3:   'Mieten Sie ein Auto direkt am Bahnhof AVIGNON TGV (Sixt, Avis, Europcar — die Auswahl ist groß). Das ist die beste Art, die Region zu erkunden.',
+    map_option1_step4:   'Crillon-le-Brave liegt eine 40-minütige Autofahrt von AVIGNON TGV entfernt.',
+    map_option2_label:   'Option 2',
+    map_option2_step1:   'Landen Sie in Marseille am Flughafen Marseille Provence (MRS).',
+    map_option2_step2:   'Mieten Sie ein Auto direkt am Flughafen. Crillon-le-Brave liegt eine 1 Std. 20 Min. entfernte Autofahrt entfernt.',
+    map_paris_title:     'Anreise ab Paris',
+    map_paris_note:      'Wir empfehlen nicht, die gesamte Strecke mit dem Auto zu fahren — das dauert 6 bis 8 Stunden, und durch das lange Wochenende ist mit zusätzlichem Stau zu rechnen. Nehmen Sie stattdessen den Zug vom Gare de Lyon nach AVIGNON TGV (2 Std. 40 Min.) und mieten Sie anschließend ein Auto für Ihren Aufenthalt vor Ort.',
+    map_car:             'Anfahrt zum Anwesen',
     map_car_desc:        'Autobahn A7, Ausfahrt Carpentras. Schilder nach Crillon-le-Brave über Mormoiron folgen.',
     footer_date:         '26. Juni 2027 · Crillon-le-Brave, Provence',
     modal_eyebrow:       'Datum speichern',
@@ -612,6 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initGate();
   initNav();
   initModal();
+  initLangModal();
   initRSVP();
   initFilters();
 });
@@ -626,6 +654,11 @@ function applyLang(l) {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.dataset.i18n;
     if (t[key] != null) el.textContent = t[key];
+  });
+
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const key = el.dataset.i18nAria;
+    if (t[key] != null) el.setAttribute('aria-label', t[key]);
   });
 
   document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -796,11 +829,38 @@ function initModal() {
     if (e.key === 'Escape' && overlay.classList.contains('open')) closeModal();
   });
 
-  document.querySelectorAll('.cal-btn').forEach(btn => {
+  overlay.querySelectorAll('.cal-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       addToCalendar(btn.dataset.cal);
       closeModal();
     });
+  });
+}
+
+// ── Language Modal (mobile) ───────────────────────
+function initLangModal() {
+  const trigger  = document.getElementById('lang-icon-btn');
+  const overlay  = document.getElementById('lang-overlay');
+  const closeBtn = document.getElementById('lang-modal-close');
+  if (!trigger || !overlay) return;
+
+  function open() {
+    overlay.classList.add('open');
+    overlay.removeAttribute('aria-hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  trigger.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.querySelectorAll('.lang-btn').forEach(btn => btn.addEventListener('click', close));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) close();
   });
 }
 
