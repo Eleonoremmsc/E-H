@@ -123,11 +123,14 @@
         <div class="prog-day-label" data-i18n="prog_friday">Friday, 25 June</div>
         <div class="prog-events">
           <div class="prog-event">
-            <div class="prog-time">19:00 – 22:00</div>
-            <div class="prog-line"></div>
+            <div class="prog-time-wrap"><span class="prog-time">19:00 – 22:00</span></div>
+            <div class="prog-timeline"><span class="prog-dot"></span></div>
             <div class="prog-details">
               <div class="prog-name" data-i18n="prog_fri_name">Cocktail Evening</div>
-              <div class="prog-location" data-i18n="prog_fri_location">Château Pesquié</div>
+              <div class="prog-location">
+                <svg class="prog-pin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.5-7-11.5A7 7 0 0 1 19 9.5C19 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
+                <span data-i18n="prog_fri_location">Château Pesquié</span>
+              </div>
             </div>
           </div>
         </div>
@@ -139,19 +142,25 @@
         <div class="prog-day-label" data-i18n="prog_saturday">Saturday, 26 June</div>
         <div class="prog-events">
           <div class="prog-event">
-            <div class="prog-time">16:30 – 18:00</div>
-            <div class="prog-line"></div>
+            <div class="prog-time-wrap"><span class="prog-time">16:30 – 18:00</span></div>
+            <div class="prog-timeline"><span class="prog-dot"></span></div>
             <div class="prog-details">
               <div class="prog-name" data-i18n="prog_ceremony_name">Religious Ceremony</div>
-              <div class="prog-location" data-i18n="prog_ceremony_location">TBD</div>
+              <div class="prog-location">
+                <svg class="prog-pin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.5-7-11.5A7 7 0 0 1 19 9.5C19 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
+                <span data-i18n="prog_ceremony_location">TBD</span>
+              </div>
             </div>
           </div>
           <div class="prog-event">
-            <div class="prog-time" data-i18n="prog_reception_time">From 19:00</div>
-            <div class="prog-line"></div>
+            <div class="prog-time-wrap"><span class="prog-time" data-i18n="prog_reception_time">From 19:00</span></div>
+            <div class="prog-timeline"><span class="prog-dot"></span></div>
             <div class="prog-details">
               <div class="prog-name" data-i18n="prog_reception_name">Reception</div>
-              <div class="prog-location" data-i18n="prog_reception_location">Domaine des Pins</div>
+              <div class="prog-location">
+                <svg class="prog-pin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.5-7-11.5A7 7 0 0 1 19 9.5C19 14.5 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
+                <span data-i18n="prog_reception_location">Domaine des Pins</span>
+              </div>
             </div>
           </div>
         </div>
@@ -481,6 +490,12 @@
           <button class="filter-pill" data-filter-group="crowd" data-filter-value="quiet" data-i18n="crowd_quiet">Quiet</button>
           <button class="filter-pill" data-filter-group="crowd" data-filter-value="popular" data-i18n="crowd_popular">Popular</button>
         </div>
+        <div class="filter-row">
+          <span class="filter-label" data-i18n="filter_audience">For</span>
+          <button class="filter-pill active" data-filter-group="audience" data-filter-value="all" data-i18n="filter_all">All</button>
+          <button class="filter-pill" data-filter-group="audience" data-filter-value="everyone" data-i18n="audience_everyone">Everyone</button>
+          <button class="filter-pill" data-filter-group="audience" data-filter-value="young" data-i18n="audience_young">Adventurous</button>
+        </div>
       </div>
 
       <div class="activities-cat">
@@ -491,7 +506,7 @@
           <span class="activities-cat-label" data-i18n="activities_cat_nature">Walks &amp; Bike</span>
         </div>
         <div class="activities-grid">
-          <div class="activity-card" data-type="nature" data-crowd="popular">
+          <div class="activity-card" data-type="nature" data-crowd="popular" data-audience="everyone">
             <div class="activity-name" data-i18n="act_ventoux_name">Mont Ventoux</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_ventoux_distance">~30 min drive</span>
@@ -499,23 +514,25 @@
             </div>
             <p class="activity-desc" data-i18n="act_ventoux_desc">The mythic "Giant of Provence" — drive or cycle to the summit for panoramic views across the Vaucluse.</p>
           </div>
-          <div class="activity-card" data-type="nature" data-crowd="quiet">
+          <div class="activity-card" data-type="nature" data-crowd="quiet" data-audience="young">
             <div class="activity-name" data-i18n="act_abeilles_name">Col des Abeilles</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_abeilles_distance">~35 min drive</span>
               <span class="activity-crowd" data-i18n="crowd_quiet">Quiet</span>
+              <span class="activity-audience" data-i18n="audience_young">Adventurous</span>
             </div>
             <p class="activity-desc" data-i18n="act_abeilles_desc">A quieter mountain pass through beekeeping country, popular with cyclists for its views over the Ventoux ridge.</p>
           </div>
-          <div class="activity-card" data-type="nature" data-crowd="popular">
-            <div class="activity-name" data-i18n="act_accrobranche_name">Ventoux Aventure</div>
+          <div class="activity-card" data-type="nature" data-crowd="popular" data-audience="young">
+            <div class="activity-name" data-i18n="act_accrobranche_name">Ventoux Aventure (Zip-lining)</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_accrobranche_distance">~15 min drive</span>
               <span class="activity-crowd" data-i18n="crowd_popular">Popular</span>
+              <span class="activity-audience" data-i18n="audience_young">Adventurous</span>
             </div>
             <p class="activity-desc" data-i18n="act_accrobranche_desc">Treetop courses and zip lines through the pine forest — fun for the whole family.</p>
           </div>
-          <div class="activity-card" data-type="nature" data-crowd="quiet">
+          <div class="activity-card" data-type="nature" data-crowd="quiet" data-audience="everyone">
             <div class="activity-name" data-i18n="act_dentelles_name">Dentelles de Montmirail</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_dentelles_distance">~30 min drive</span>
@@ -534,7 +551,7 @@
           <span class="activities-cat-label" data-i18n="activities_cat_heritage">Visits &amp; Villages</span>
         </div>
         <div class="activities-grid">
-          <div class="activity-card" data-type="heritage" data-crowd="quiet">
+          <div class="activity-card" data-type="heritage" data-crowd="quiet" data-audience="everyone">
             <div class="activity-name" data-i18n="act_barroux_name">Château du Barroux</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_barroux_distance">~5 min drive</span>
@@ -542,7 +559,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_barroux_desc">A restored medieval fortress overlooking the plain, a short drive from Crillon-le-Brave.</p>
           </div>
-          <div class="activity-card" data-type="heritage" data-crowd="popular">
+          <div class="activity-card" data-type="heritage" data-crowd="popular" data-audience="everyone">
             <div class="activity-name" data-i18n="act_senanque_name">Abbaye de Sénanque</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_senanque_distance">~45 min drive</span>
@@ -550,7 +567,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_senanque_desc">The iconic Cistercian abbey set among lavender fields near Gordes.</p>
           </div>
-          <div class="activity-card" data-type="heritage" data-crowd="popular">
+          <div class="activity-card" data-type="heritage" data-crowd="popular" data-audience="everyone">
             <div class="activity-name" data-i18n="act_orange_name">Théâtre Antique d'Orange</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_orange_distance">~35 min drive</span>
@@ -558,7 +575,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_orange_desc">A remarkably preserved Roman theatre and UNESCO World Heritage site.</p>
           </div>
-          <div class="activity-card" data-type="heritage" data-crowd="popular">
+          <div class="activity-card" data-type="heritage" data-crowd="popular" data-audience="everyone">
             <div class="activity-name" data-i18n="act_arles_name">Arles</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_arles_distance">~1h15 drive</span>
@@ -566,7 +583,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_arles_desc">Roman arena and amphitheatre, in the town that inspired Van Gogh.</p>
           </div>
-          <div class="activity-card" data-type="heritage" data-crowd="popular">
+          <div class="activity-card" data-type="heritage" data-crowd="popular" data-audience="everyone">
             <div class="activity-name" data-i18n="act_gordes_name">Gordes</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_gordes_distance">~35 min drive</span>
@@ -574,7 +591,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_gordes_desc">One of France's most beautiful perched villages, all honey-stone and hilltop views.</p>
           </div>
-          <div class="activity-card" data-type="heritage" data-crowd="popular">
+          <div class="activity-card" data-type="heritage" data-crowd="popular" data-audience="everyone">
             <div class="activity-name" data-i18n="act_roussillon_name">Roussillon &amp; the Sentier des Ocres</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_roussillon_distance">~45 min drive</span>
@@ -582,7 +599,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_roussillon_desc">A walking trail through vivid red-and-ochre cliffs.</p>
           </div>
-          <div class="activity-card" data-type="heritage" data-crowd="popular">
+          <div class="activity-card" data-type="heritage" data-crowd="popular" data-audience="everyone">
             <div class="activity-name" data-i18n="act_fontaine_name">Fontaine-de-Vaucluse</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_fontaine_distance">~40 min drive</span>
@@ -590,7 +607,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_fontaine_desc">The spring source of the Sorgue river, with a shaded riverside village.</p>
           </div>
-          <div class="activity-card" data-type="heritage" data-crowd="quiet">
+          <div class="activity-card" data-type="heritage" data-crowd="quiet" data-audience="everyone">
             <div class="activity-name" data-i18n="act_vaison_name">Vaison-la-Romaine</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_vaison_distance">~30 min drive</span>
@@ -609,7 +626,7 @@
           <span class="activities-cat-label" data-i18n="activities_cat_wine">Wineries</span>
         </div>
         <div class="activities-grid">
-          <div class="activity-card" data-type="wine" data-crowd="quiet">
+          <div class="activity-card" data-type="wine" data-crowd="quiet" data-audience="everyone">
             <div class="activity-name" data-i18n="act_pesquie_name">Château Pesquié</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_pesquie_distance">~10 min drive</span>
@@ -617,7 +634,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_pesquie_desc">A family-run estate in the Ventoux appellation, known for elegant reds.</p>
           </div>
-          <div class="activity-card" data-type="wine" data-crowd="popular">
+          <div class="activity-card" data-type="wine" data-crowd="popular" data-audience="everyone">
             <div class="activity-name" data-i18n="act_chateauneuf_name">Châteauneuf-du-Pape</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_chateauneuf_distance">~40 min drive</span>
@@ -625,7 +642,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_chateauneuf_desc">The Rhône Valley's most famous appellation, with cellar tastings throughout the village.</p>
           </div>
-          <div class="activity-card" data-type="wine" data-crowd="quiet">
+          <div class="activity-card" data-type="wine" data-crowd="quiet" data-audience="everyone">
             <div class="activity-name" data-i18n="act_beaumes_name">Beaumes-de-Venise</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_beaumes_distance">~20 min drive</span>
@@ -633,7 +650,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_beaumes_desc">Home of the region's celebrated sweet muscat wine.</p>
           </div>
-          <div class="activity-card" data-type="wine" data-crowd="quiet">
+          <div class="activity-card" data-type="wine" data-crowd="quiet" data-audience="everyone">
             <div class="activity-name" data-i18n="act_gigondas_name">Gigondas</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_gigondas_distance">~25 min drive</span>
@@ -641,7 +658,7 @@
             </div>
             <p class="activity-desc" data-i18n="act_gigondas_desc">A postcard vineyard village at the foot of the Dentelles.</p>
           </div>
-          <div class="activity-card" data-type="wine" data-crowd="popular">
+          <div class="activity-card" data-type="wine" data-crowd="popular" data-audience="everyone">
             <div class="activity-name" data-i18n="act_islesorgue_name">L'Isle-sur-la-Sorgue</div>
             <div class="activity-meta">
               <span class="activity-distance" data-i18n="act_islesorgue_distance">~35 min drive</span>
@@ -703,7 +720,6 @@
         <circle cx="16.8" cy="395.7" r="3.2" class="map-dot" data-key="arles"/>
         <text x="0.9" y="403.1" text-anchor="end" class="map-label" data-key="arles">Arles</text>
         </svg>
-        <a href="https://www.google.com/maps/d/viewer?mid=11jTCP-h8mG4-RX1XDNZO6UP1b7djPhk" target="_blank" rel="noopener noreferrer" class="activities-map-link" data-i18n="map_interactive_link">Open interactive map →</a>
       </div>
     </div>
   </section>

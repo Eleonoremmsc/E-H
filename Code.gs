@@ -15,7 +15,7 @@
 const SHEET_ID    = '1DgTfgjqHhAbPp5FPUCfmVoiwKjCCI348BPl_iIcHhDk';
 const SHEET_NAME  = 'RSVPs';
 const GUESTS_NAME = 'Guests';
-const WEBSITE_URL = 'https://delicate-frangipane-f07d0a.netlify.app';
+const WEBSITE_URL = 'https://eleonorehubert2027.netlify.app';
 const SENDER_NAME = 'Éléonore & Hubert';
 
 // ── Entry points ─────────────────────────────────
@@ -43,7 +43,21 @@ function doPost(e) {
 // ── Handlers ──────────────────────────────────────
 
 function handleSubmit(data) {
-  const sheet   = getSheet();
+  const invalid = validateRSVP(data);
+  if (invalid) return { error: invalid };
+
+  const sheet = getSheet();
+  const rows  = sheet.getDataRange().getValues();
+  const email = data.email.trim().toLowerCase();
+
+  // Someone RSVPing again with an email already on file — treat it as an
+  // edit to their existing response rather than creating a duplicate.
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i][2] || '').toString().trim().toLowerCase() === email) {
+      return handleUpdate(Object.assign({}, data, { token: rows[i][7] }));
+    }
+  }
+
   const token   = generateToken();
   const id      = 'rsvp_' + Date.now();
   const now     = new Date().toISOString();
@@ -63,11 +77,15 @@ function handleSubmit(data) {
 
   writeGuests(id, now, data);
 
-  sendEmail(data, editUrl, false);
-  return { success: true, token, editUrl };
+  const emailSent = trySendEmail(data, editUrl, false);
+  return { success: true, token, editUrl, emailSent };
 }
 
 function handleUpdate(data) {
+  const invalid = validateRSVP(data);
+  if (invalid) return { error: invalid };
+  if (!data.token) return { error: 'Missing edit token' };
+
   const sheet = getSheet();
   const rows  = sheet.getDataRange().getValues();
   const token = data.token;
@@ -88,11 +106,25 @@ function handleUpdate(data) {
       writeGuests(id, submitted, data, true);
 
       const editUrl = `${WEBSITE_URL}?rsvp=${token}`;
-      sendEmail(data, editUrl, true);
-      return { success: true, token, editUrl };
+      const emailSent = trySendEmail(data, editUrl, true);
+      return { success: true, token, editUrl, emailSent };
     }
   }
   return { error: 'RSVP not found' };
+}
+
+// ── Validation ────────────────────────────────────
+// Minimal shape checks — the site itself is password-gated, so this just
+// guards against malformed/empty payloads reaching the sheet.
+
+function validateRSVP(data) {
+  if (!data) return 'Missing data';
+  const email = (data.email || '').trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Invalid email';
+  if (!(data.firstName || '').trim()) return 'Missing first name';
+  if (!(data.lastName || '').trim()) return 'Missing last name';
+  if (!Array.isArray(data.attendees) || data.attendees.length === 0) return 'At least one attendee is required';
+  return null;
 }
 
 function getByToken(token) {
@@ -118,7 +150,7 @@ function getByToken(token) {
 // ── Guests sheet ──────────────────────────────────
 // One row per attendee — easy to filter/sort for headcount.
 // Columns: RSVP ID | Submitted | First Name | Last Name | Status |
-//          Household Email | Contact First | Contact Last
+//          Household Email | Contact First | Contact Last | Relationship
 
 function writeGuests(id, submitted, data, isUpdate) {
   const sheet = getGuestsSheet();
@@ -142,11 +174,23 @@ function writeGuests(id, submitted, data, isUpdate) {
       data.email,
       data.firstName,
       data.lastName,
+      a.relationship || '',
     ]);
   });
 }
 
 // ── Email ─────────────────────────────────────────
+// Wrapped so a mail-quota hiccup or bad address never masks a save that
+// already succeeded — the RSVP is safe in the sheet either way.
+
+function trySendEmail(data, editUrl, isUpdate) {
+  try {
+    sendEmail(data, editUrl, isUpdate);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
 
 function sendEmail(data, editUrl, isUpdate) {
   const statusLabel = {
@@ -202,7 +246,7 @@ function getGuestsSheet() {
     sheet = ss.insertSheet(GUESTS_NAME);
     sheet.appendRow([
       'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
-      'Household Email', 'Contact First', 'Contact Last',
+      'Household Email', 'Contact First', 'Contact Last', 'Relationship',
     ]);
     sheet.setFrozenRows(1);
   }

@@ -85,6 +85,9 @@ const T = {
     filter_wine:         'Wine',
     crowd_quiet:         'Quiet',
     crowd_popular:       'Popular',
+    filter_audience:     'For',
+    audience_everyone:   'Everyone',
+    audience_young:      'Adventurous',
     activities_no_results: 'No activities match your filters.',
     tier_prem_hotel:     'Premium Hotel',
     tier_entire_home:    'Entire Home',
@@ -120,7 +123,7 @@ const T = {
     act_ventoux_desc:     'The mythic "Giant of Provence" — drive or cycle to the summit for panoramic views across the Vaucluse.',
     act_abeilles_name:    'Col des Abeilles',
     act_abeilles_desc:    'A quieter mountain pass through beekeeping country, popular with cyclists for its views over the Ventoux ridge.',
-    act_accrobranche_name:'Ventoux Aventure',
+    act_accrobranche_name:'Ventoux Aventure (Zip-lining)',
     act_accrobranche_desc:'Treetop courses and zip lines through the pine forest — fun for the whole family.',
     act_dentelles_name:   'Dentelles de Montmirail',
     act_dentelles_desc:   'Jagged limestone ridges with walking trails and sweeping views over the vineyards below.',
@@ -168,7 +171,6 @@ const T = {
     act_gigondas_distance:     '~25 min drive',
     act_islesorgue_distance:   '~35 min drive',
     activities_map_note:  'A rough guide to distances from the estate — not to scale.',
-    map_interactive_link: 'Open interactive map →',
     dress_title:         'Dress Code',
     dress_headline:      'Formal Attire',
     dress_intro:         'We invite our guests to dress elegantly for a Provençal summer evening.',
@@ -204,6 +206,8 @@ const T = {
     rsvp_guests_label:   'Guests',
     rsvp_guest:          'Guest',
     rsvp_firstname:      'First name',
+    rsvp_relationship:              'Relationship (optional)',
+    rsvp_relationship_placeholder:  'e.g. spouse, sibling, plus-one',
     rsvp_attendance:     'Attendance',
     rsvp_yes:            'With joy, I will be there',
     rsvp_maybe:          'I hope to attend',
@@ -279,6 +283,9 @@ const T = {
     filter_wine:         'Vin',
     crowd_quiet:         'Tranquille',
     crowd_popular:       'Fréquenté',
+    filter_audience:     'Pour qui',
+    audience_everyone:   'Tout le monde',
+    audience_young:      'Aventureux',
     activities_no_results: 'Aucune activité ne correspond à vos filtres.',
     tier_prem_hotel:     'Hôtel Premium',
     tier_entire_home:    'Maison entière',
@@ -314,7 +321,7 @@ const T = {
     act_ventoux_desc:     "Le mythique « Géant de Provence » — en voiture ou à vélo jusqu'au sommet pour une vue panoramique sur le Vaucluse.",
     act_abeilles_name:    'Col des Abeilles',
     act_abeilles_desc:    "Un col plus tranquille au cœur du pays de l'apiculture, prisé des cyclistes pour ses vues sur la crête du Ventoux.",
-    act_accrobranche_name:'Ventoux Aventure',
+    act_accrobranche_name:'Ventoux Aventure (Accrobranche)',
     act_accrobranche_desc:'Parcours dans les arbres et tyroliennes en pleine forêt de pins — idéal en famille.',
     act_dentelles_name:   'Dentelles de Montmirail',
     act_dentelles_desc:   'Crêtes calcaires escarpées, sentiers de randonnée et vues dégagées sur les vignes en contrebas.',
@@ -362,7 +369,6 @@ const T = {
     act_gigondas_distance:     '~25 min en voiture',
     act_islesorgue_distance:   '~35 min en voiture',
     activities_map_note:  "Un aperçu approximatif des distances depuis le domaine — sans échelle précise.",
-    map_interactive_link: 'Ouvrir la carte interactive →',
     dress_title:         'Code vestimentaire',
     dress_headline:      'Tenue formelle',
     dress_intro:         "Nous invitons nos invités à s'habiller avec élégance pour une soirée d'été provençale.",
@@ -398,6 +404,8 @@ const T = {
     rsvp_guests_label:   'Invités',
     rsvp_guest:          'Invité',
     rsvp_firstname:      'Prénom',
+    rsvp_relationship:              'Relation (facultatif)',
+    rsvp_relationship_placeholder:  'ex. conjoint(e), frère/sœur, accompagnant(e)',
     rsvp_attendance:     'Présence',
     rsvp_yes:            'Avec joie, je serai présent(e)',
     rsvp_maybe:          "J'espère pouvoir participer",
@@ -473,6 +481,9 @@ const T = {
     filter_wine:         'Wein',
     crowd_quiet:         'Ruhig',
     crowd_popular:       'Beliebt',
+    filter_audience:     'Für wen',
+    audience_everyone:   'Jeder',
+    audience_young:      'Abenteuerlustig',
     activities_no_results: 'Keine Aktivität entspricht Ihren Filtern.',
     tier_prem_hotel:     'Luxushotel',
     tier_entire_home:    'Ferienhaus',
@@ -508,7 +519,7 @@ const T = {
     act_ventoux_desc:     'Der legendäre „Riese der Provence" — mit dem Auto oder dem Rad bis zum Gipfel für einen Panoramablick über das Vaucluse.',
     act_abeilles_name:    'Col des Abeilles',
     act_abeilles_desc:    'Ein ruhigerer Pass mitten im Land der Imker, bei Radfahrern beliebt für den Blick auf den Ventoux-Kamm.',
-    act_accrobranche_name:'Ventoux Aventure',
+    act_accrobranche_name:'Ventoux Aventure (Seilrutschen)',
     act_accrobranche_desc:'Kletterparcours und Seilrutschen im Pinienwald — ein Vergnügen für die ganze Familie.',
     act_dentelles_name:   'Dentelles de Montmirail',
     act_dentelles_desc:   'Zerklüftete Kalksteinkämme mit Wanderwegen und weiten Blicken über die Weinberge.',
@@ -556,7 +567,6 @@ const T = {
     act_gigondas_distance:     '~25 Min. mit dem Auto',
     act_islesorgue_distance:   '~35 Min. mit dem Auto',
     activities_map_note:  'Eine ungefähre Orientierung zu den Entfernungen ab dem Anwesen — nicht maßstabsgetreu.',
-    map_interactive_link: 'Interaktive Karte öffnen →',
     dress_title:         'Dresscode',
     dress_headline:      'Formelle Kleidung',
     dress_intro:         'Wir laden unsere Gäste ein, sich elegant für einen provenzalischen Sommerabend zu kleiden.',
@@ -592,6 +602,8 @@ const T = {
     rsvp_guests_label:   'Gäste',
     rsvp_guest:          'Gast',
     rsvp_firstname:      'Vorname',
+    rsvp_relationship:              'Beziehung (optional)',
+    rsvp_relationship_placeholder:  'z. B. Ehepartner/in, Geschwister, Begleitung',
     rsvp_attendance:     'Teilnahme',
     rsvp_yes:            'Mit Freude, ich werde dabei sein',
     rsvp_maybe:          'Ich hoffe, teilnehmen zu können',
@@ -1029,6 +1041,14 @@ function addAttendee(isFirst = false, prefill = null) {
                  value="${prefill ? escHtml(prefill.lastName || '') : ''}">
           <div class="form-error att-err-lastname"></div>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">
+          <span data-i18n="rsvp_relationship">${t.rsvp_relationship}</span>
+        </label>
+        <input type="text" name="att_relationship_${idx}" class="form-input att-relationship"
+               placeholder="${t.rsvp_relationship_placeholder}"
+               value="${prefill ? escHtml(prefill.relationship || '') : ''}">
       </div>`;
 
   block.innerHTML = `
@@ -1094,15 +1114,17 @@ function collectFormData() {
   const attendees = [];
   document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
     const statusEl = block.querySelector('input[type="radio"]:checked');
-    let firstName, lastName;
+    let firstName, lastName, relationship;
     if (block.dataset.isContact) {
       firstName = form.firstName.value.trim();
       lastName  = form.lastName.value.trim();
+      relationship = '';
     } else {
       firstName = (block.querySelector('.att-firstname') || {}).value?.trim() || '';
       lastName  = (block.querySelector('.att-lastname')  || {}).value?.trim() || '';
+      relationship = (block.querySelector('.att-relationship') || {}).value?.trim() || '';
     }
-    attendees.push({ firstName, lastName, status: statusEl ? statusEl.value : '' });
+    attendees.push({ firstName, lastName, relationship, status: statusEl ? statusEl.value : '' });
   });
   return {
     email:     form.email.value.trim(),
