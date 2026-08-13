@@ -52,7 +52,6 @@ const T = {
     prog_reception_time: 'From 19:00',
     prog_reception_name: 'Reception',
     prog_reception_desc: 'Drinks and canapés in the garden, a seated dinner under the Provençal stars, and dancing into the night.',
-    accom_eyebrow:       'Nearby',
     accom_title:         'Accommodation',
     accom_intro:         'We have gathered a selection of accommodation options near the venue to suit every preference and budget. We recommend booking early.',
     tier_luxury:         'Luxury',
@@ -78,6 +77,13 @@ const T = {
     filter_comfort:      'Comfort',
     filter_simple:       'Simple',
     filter_no_results:   'No accommodation matches your filters.',
+    filter_crowd:        'Crowd',
+    filter_nature:       'Nature',
+    filter_heritage:     'Heritage',
+    filter_wine:         'Wine',
+    crowd_quiet:         'Quiet',
+    crowd_popular:       'Popular',
+    activities_no_results: 'No activities match your filters.',
     tier_prem_hotel:     'Premium Hotel',
     tier_entire_home:    'Entire Home',
     tier_group_gite:     'Group Gîte',
@@ -107,7 +113,6 @@ const T = {
     tips_villages:       'The closest villages are Crillon-le-Brave and Bédoin. Caromb, Mormoiron and Mazan are a 10-minute drive away and offer good alternatives.',
     tips_google:         "Many local hosts have their own websites and won't appear on aggregators — searching Google Maps directly often reveals them, with photos and reviews.",
     tips_also_check:     'Also check:',
-    activities_eyebrow:  "While You're Here",
     activities_title:    'Activities',
     activities_intro:    'A few of our favourite ways to make the most of Provence, whether you arrive early or stay on after the celebrations.',
     activities_cat_nature:   'Walks & Bike',
@@ -147,8 +152,25 @@ const T = {
     act_gigondas_desc:    'A postcard vineyard village at the foot of the Dentelles.',
     act_islesorgue_name:  "L'Isle-sur-la-Sorgue",
     act_islesorgue_desc:  'Antique markets and canoeing on the Sorgue — famous for its Sunday market.',
-    activities_map_note:  'A few of our favourite spots, mapped:',
-    dress_eyebrow:       'Attire',
+    act_ventoux_distance:      '~30 min drive',
+    act_abeilles_distance:     '~35 min drive',
+    act_accrobranche_distance: '~15 min drive',
+    act_dentelles_distance:    '~30 min drive',
+    act_barroux_distance:      '~5 min drive',
+    act_senanque_distance:     '~45 min drive',
+    act_orange_distance:       '~35 min drive',
+    act_arles_distance:        '~1h15 drive',
+    act_gordes_distance:       '~35 min drive',
+    act_roussillon_distance:   '~45 min drive',
+    act_fontaine_distance:     '~40 min drive',
+    act_vaison_distance:       '~30 min drive',
+    act_pesquie_distance:      '~10 min drive',
+    act_chateauneuf_distance:  '~40 min drive',
+    act_beaumes_distance:      '~20 min drive',
+    act_gigondas_distance:     '~25 min drive',
+    act_islesorgue_distance:   '~35 min drive',
+    activities_map_note:  'A rough guide to distances from the estate — not to scale.',
+    map_interactive_link: 'Open interactive map →',
     dress_title:         'Dress Code',
     dress_headline:      'Formal Attire',
     dress_intro:         'We invite our guests to dress elegantly for a Provençal summer evening.',
@@ -157,7 +179,6 @@ const T = {
     dress_wnote:         'The ceremony will take place outdoors — block heels or wedges are recommended.',
     dress_men:           'For Men',
     dress_m_main:        'A suit with a tie.',
-    map_eyebrow:         'Venue',
     map_title:           'Getting There',
     map_gmaps:           'Open in Google Maps',
     map_plane:           'By Plane',
@@ -221,7 +242,6 @@ const T = {
     prog_reception_time: 'À partir de 19h00',
     prog_reception_name: 'Réception',
     prog_reception_desc: 'Boissons et canapés dans le jardin, un dîner assis sous les étoiles provençales, puis une soirée dansante.',
-    accom_eyebrow:       'À proximité',
     accom_title:         'Hébergement',
     accom_intro:         'Nous avons sélectionné quelques options d\'hébergement à proximité du domaine, pour tous les goûts et budgets. Nous recommandons de réserver tôt.',
     tier_luxury:         'Luxe',
@@ -247,6 +267,13 @@ const T = {
     filter_comfort:      'Confort',
     filter_simple:       'Simple',
     filter_no_results:   'Aucun hébergement ne correspond à vos filtres.',
+    filter_crowd:        'Affluence',
+    filter_nature:       'Nature',
+    filter_heritage:     'Patrimoine',
+    filter_wine:         'Vin',
+    crowd_quiet:         'Tranquille',
+    crowd_popular:       'Fréquenté',
+    activities_no_results: 'Aucune activité ne correspond à vos filtres.',
     tier_prem_hotel:     'Hôtel Premium',
     tier_entire_home:    'Maison entière',
     tier_group_gite:     'Gîte de groupe',
@@ -276,7 +303,6 @@ const T = {
     tips_villages:       'Les villages les plus proches sont Crillon-le-Brave et Bédoin. Caromb, Mormoiron et Mazan sont à 10 minutes en voiture et offrent de bonnes alternatives.',
     tips_google:         "De nombreux propriétaires locaux ont leur propre site web et n'apparaissent pas sur les plateformes — une recherche directe sur Google Maps est souvent efficace, avec photos et avis à la clé.",
     tips_also_check:     'Consultez également :',
-    activities_eyebrow:  'Pendant votre séjour',
     activities_title:    'Activités',
     activities_intro:    "Quelques-unes de nos façons préférées de profiter de la Provence, que vous arriviez en avance ou prolongiez votre séjour après les festivités.",
     activities_cat_nature:   'Randonnées & Vélo',
@@ -316,8 +342,25 @@ const T = {
     act_gigondas_desc:    'Un village viticole de carte postale, au pied des Dentelles.',
     act_islesorgue_name:  "L'Isle-sur-la-Sorgue",
     act_islesorgue_desc:  'Marchés d\'antiquaires et balades en canoë sur la Sorgue — célèbre pour son marché du dimanche.',
-    activities_map_note:  'Quelques-uns de nos coins préférés, sur la carte :',
-    dress_eyebrow:       'Tenue',
+    act_ventoux_distance:      '~30 min en voiture',
+    act_abeilles_distance:     '~35 min en voiture',
+    act_accrobranche_distance: '~15 min en voiture',
+    act_dentelles_distance:    '~30 min en voiture',
+    act_barroux_distance:      '~5 min en voiture',
+    act_senanque_distance:     '~45 min en voiture',
+    act_orange_distance:       '~35 min en voiture',
+    act_arles_distance:        '~1h15 en voiture',
+    act_gordes_distance:       '~35 min en voiture',
+    act_roussillon_distance:   '~45 min en voiture',
+    act_fontaine_distance:     '~40 min en voiture',
+    act_vaison_distance:       '~30 min en voiture',
+    act_pesquie_distance:      '~10 min en voiture',
+    act_chateauneuf_distance:  '~40 min en voiture',
+    act_beaumes_distance:      '~20 min en voiture',
+    act_gigondas_distance:     '~25 min en voiture',
+    act_islesorgue_distance:   '~35 min en voiture',
+    activities_map_note:  "Un aperçu approximatif des distances depuis le domaine — sans échelle précise.",
+    map_interactive_link: 'Ouvrir la carte interactive →',
     dress_title:         'Code vestimentaire',
     dress_headline:      'Tenue formelle',
     dress_intro:         "Nous invitons nos invités à s'habiller avec élégance pour une soirée d'été provençale.",
@@ -326,7 +369,6 @@ const T = {
     dress_wnote:         "Les tons doux, les imprimés fleuris et les couleurs chaudes d'été sont les bienvenus. La cérémonie se déroule en extérieur — des talons compensés ou blocs sont recommandés.",
     dress_men:           'Pour les hommes',
     dress_m_main:        'Un costume avec une cravate.',
-    map_eyebrow:         'Lieu',
     map_title:           'Accès',
     map_gmaps:           'Ouvrir dans Google Maps',
     map_plane:           'En avion',
@@ -390,7 +432,6 @@ const T = {
     prog_reception_time: 'Ab 19:00 Uhr',
     prog_reception_name: 'Empfang',
     prog_reception_desc: 'Getränke und Häppchen im Garten, ein festliches Abendessen unter dem provenzalischen Sternenhimmel und Tanz bis in die Nacht.',
-    accom_eyebrow:       'In der Nähe',
     accom_title:         'Unterkunft',
     accom_intro:         'Wir haben eine Auswahl an Unterkunftsmöglichkeiten in der Nähe des Veranstaltungsortes zusammengestellt. Wir empfehlen eine frühzeitige Buchung.',
     tier_luxury:         'Luxus',
@@ -416,6 +457,13 @@ const T = {
     filter_comfort:      'Komfort',
     filter_simple:       'Einfach',
     filter_no_results:   'Keine Unterkunft entspricht Ihren Filtern.',
+    filter_crowd:        'Andrang',
+    filter_nature:       'Natur',
+    filter_heritage:     'Kultur',
+    filter_wine:         'Wein',
+    crowd_quiet:         'Ruhig',
+    crowd_popular:       'Beliebt',
+    activities_no_results: 'Keine Aktivität entspricht Ihren Filtern.',
     tier_prem_hotel:     'Luxushotel',
     tier_entire_home:    'Ferienhaus',
     tier_group_gite:     'Gruppen-Gîte',
@@ -445,7 +493,6 @@ const T = {
     tips_villages:       'Die nächstgelegenen Dörfer sind Crillon-le-Brave und Bédoin. Caromb, Mormoiron und Mazan sind 10 Minuten entfernt und bieten ebenfalls gute Optionen.',
     tips_google:         'Viele lokale Vermieter haben eigene Websites und sind nicht auf Buchungsplattformen vertreten — eine direkte Suche auf Google Maps ist oft hilfreich, da Angebote häufig Fotos und Bewertungen enthalten.',
     tips_also_check:     'Auch empfehlenswert:',
-    activities_eyebrow:  'Während Ihres Aufenthalts',
     activities_title:    'Aktivitäten',
     activities_intro:    'Ein paar unserer liebsten Möglichkeiten, die Provence zu genießen — ob Sie früher anreisen oder nach den Feierlichkeiten noch bleiben.',
     activities_cat_nature:   'Wandern & Rad',
@@ -485,8 +532,25 @@ const T = {
     act_gigondas_desc:    'Ein bilderbuchhaftes Weindorf am Fuß der Dentelles.',
     act_islesorgue_name:  "L'Isle-sur-la-Sorgue",
     act_islesorgue_desc:  'Antiquitätenmärkte und Kanufahrten auf der Sorgue — berühmt für seinen Sonntagsmarkt.',
-    activities_map_note:  'Ein paar unserer Lieblingsorte, auf der Karte:',
-    dress_eyebrow:       'Kleidung',
+    act_ventoux_distance:      '~30 Min. mit dem Auto',
+    act_abeilles_distance:     '~35 Min. mit dem Auto',
+    act_accrobranche_distance: '~15 Min. mit dem Auto',
+    act_dentelles_distance:    '~30 Min. mit dem Auto',
+    act_barroux_distance:      '~5 Min. mit dem Auto',
+    act_senanque_distance:     '~45 Min. mit dem Auto',
+    act_orange_distance:       '~35 Min. mit dem Auto',
+    act_arles_distance:        '~1h15 mit dem Auto',
+    act_gordes_distance:       '~35 Min. mit dem Auto',
+    act_roussillon_distance:   '~45 Min. mit dem Auto',
+    act_fontaine_distance:     '~40 Min. mit dem Auto',
+    act_vaison_distance:       '~30 Min. mit dem Auto',
+    act_pesquie_distance:      '~10 Min. mit dem Auto',
+    act_chateauneuf_distance:  '~40 Min. mit dem Auto',
+    act_beaumes_distance:      '~20 Min. mit dem Auto',
+    act_gigondas_distance:     '~25 Min. mit dem Auto',
+    act_islesorgue_distance:   '~35 Min. mit dem Auto',
+    activities_map_note:  'Eine ungefähre Orientierung zu den Entfernungen ab dem Anwesen — nicht maßstabsgetreu.',
+    map_interactive_link: 'Interaktive Karte öffnen →',
     dress_title:         'Dresscode',
     dress_headline:      'Formelle Kleidung',
     dress_intro:         'Wir laden unsere Gäste ein, sich elegant für einen provenzalischen Sommerabend zu kleiden.',
@@ -495,7 +559,6 @@ const T = {
     dress_wnote:         'Zarte Töne, Blumenmuster und warme Sommerfarben sind willkommen. Die Zeremonie findet im Freien statt — Keilabsätze oder Blockabsätze werden empfohlen.',
     dress_men:           'Für Herren',
     dress_m_main:        'Ein Anzug mit Krawatte.',
-    map_eyebrow:         'Veranstaltungsort',
     map_title:           'Anreise',
     map_gmaps:           'In Google Maps öffnen',
     map_plane:           'Mit dem Flugzeug',
@@ -662,36 +725,62 @@ function handleScroll() {
   if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 50);
 }
 
-// ── Accommodation Filters ─────────────────────────
+// ── Filters (Accommodation + Activities) ──────────
 function initFilters() {
-  const state = { type: 'all', budget: 'all', capacity: 'all' };
-  const cards = document.querySelectorAll('.hotel-card');
-  const noResults = document.querySelector('.accom-no-results');
+  setupFilterGroup({
+    scope: document.getElementById('accommodation'),
+    cardSelector: '.hotel-card',
+    noResultsSelector: '.filter-empty',
+  });
+  setupFilterGroup({
+    scope: document.getElementById('activities'),
+    cardSelector: '.activity-card',
+    noResultsSelector: '.filter-empty',
+    catGroupSelector: '.activities-cat',
+  });
+}
+
+function setupFilterGroup({ scope, cardSelector, noResultsSelector, catGroupSelector }) {
+  if (!scope) return;
+  const state = {};
+  const cards = scope.querySelectorAll(cardSelector);
+  const noResults = scope.querySelector(noResultsSelector);
+  const pills = scope.querySelectorAll('.filter-pill');
+  const catGroups = catGroupSelector ? scope.querySelectorAll(catGroupSelector) : [];
+
+  pills.forEach(pill => { state[pill.dataset.filterGroup] = 'all'; });
 
   function applyFilters() {
     let visible = 0;
     cards.forEach(card => {
-      const matchType     = state.type     === 'all' || card.dataset.type   === state.type;
-      const matchBudget   = state.budget   === 'all' || card.dataset.budget === state.budget;
-      const matchCapacity = state.capacity === 'all' || parseInt(card.dataset.capacity) >= parseInt(state.capacity);
-      const show = matchType && matchBudget && matchCapacity;
+      const show = Object.keys(state).every(group => {
+        if (state[group] === 'all') return true;
+        if (group === 'capacity') return parseInt(card.dataset.capacity) >= parseInt(state[group]);
+        return card.dataset[group] === state[group];
+      });
       card.classList.toggle('hidden', !show);
       if (show) visible++;
+    });
+    catGroups.forEach(group => {
+      const anyVisible = [...group.querySelectorAll(cardSelector)].some(c => !c.classList.contains('hidden'));
+      group.classList.toggle('hidden', !anyVisible);
     });
     if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
   }
 
-  document.querySelectorAll('.filter-pill').forEach(pill => {
+  pills.forEach(pill => {
     pill.addEventListener('click', () => {
       const group = pill.dataset.filterGroup;
       const value = pill.dataset.filterValue;
       state[group] = value;
-      document.querySelectorAll(`.filter-pill[data-filter-group="${group}"]`).forEach(p => {
+      scope.querySelectorAll(`.filter-pill[data-filter-group="${group}"]`).forEach(p => {
         p.classList.toggle('active', p.dataset.filterValue === value);
       });
       applyFilters();
     });
   });
+
+  applyFilters();
 }
 
 // ── Calendar Modal ────────────────────────────────
