@@ -320,6 +320,27 @@ body {
   animation: fadeUp 0.9s 0.4s ease both;
 }
 
+.recognition-banner {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+  font-family: var(--serif);
+  font-size: 1rem; font-style: italic; font-weight: 300;
+  color: var(--ink-mid);
+}
+.recognition-clear {
+  background: none; border: none;
+  font-family: var(--sans);
+  font-size: 0.7rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-mid);
+  cursor: pointer; padding: 0;
+  border-bottom: 0.5px solid currentColor;
+  padding-bottom: 1px;
+  transition: color var(--ease);
+}
+.recognition-clear:hover { color: var(--ink); }
+
 /* ── Buttons ────────────────────────────────────── */
 .btn {
   display: inline-block;
@@ -572,9 +593,14 @@ body {
 }
 .activities-map-svg .map-ring-label {
   font-family: var(--sans);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  fill: var(--lavender-text);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  fill: var(--olive-deep);
+  paint-order: stroke fill;
+  stroke: var(--cream-alt);
+  stroke-width: 4px;
+  stroke-linejoin: round;
 }
 .activities-map-svg .map-venue-label {
   font-family: var(--serif);
@@ -621,7 +647,7 @@ body {
   margin-bottom: 30px;
 }
 .accom-search-note {
-  font-size: 0.96rem; font-weight: 300; font-style: italic;
+  font-size: 1.08rem; font-weight: 300; font-style: italic;
   color: var(--ink-mid);
   line-height: 1.85;
 }
@@ -1332,6 +1358,57 @@ body {
 }
 .btn-add:hover { color: var(--ink); }
 
+/* ── Guest recognition (RSVP step 0) ───────────── */
+.rsvp-find-note {
+  font-family: var(--serif);
+  font-size: 0.98rem; font-weight: 300; font-style: italic;
+  color: var(--ink-mid);
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+.rsvp-find-row {
+  display: flex; align-items: flex-end; gap: 16px;
+  margin-bottom: 8px;
+}
+.rsvp-find-row .form-input { flex: 1; }
+.rsvp-find-row .btn {
+  padding: 12px 24px;
+  white-space: nowrap;
+}
+.rsvp-find-status {
+  font-family: var(--serif);
+  font-size: 0.92rem; font-style: italic;
+  color: var(--ink-mid);
+  margin: 18px 0 10px;
+}
+.rsvp-find-candidate {
+  display: block; width: 100%; text-align: left;
+  background: var(--cream-alt);
+  border: 0.5px solid var(--lavender-line);
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  font-family: var(--serif);
+  font-size: 1rem; font-style: italic;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--ease), border-color var(--ease);
+}
+.rsvp-find-candidate:hover { background: var(--cream); border-color: var(--olive); }
+.rsvp-find-skip {
+  display: inline-block;
+  background: none; border: none;
+  font-family: var(--sans);
+  font-size: 0.74rem; font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--ink-mid);
+  cursor: pointer; padding: 0;
+  border-bottom: 0.5px solid currentColor;
+  padding-bottom: 1px;
+  margin-top: 14px;
+  transition: color var(--ease);
+}
+.rsvp-find-skip:hover { color: var(--ink); }
+
 /* ── Submit full-width ─────────────── */
 .btn-full { width: 100%; justify-content: center; }
 .btn-loading { opacity: 0.55; pointer-events: none; }
@@ -1361,6 +1438,7 @@ body {
 /* ── RSVP responsive ───────────────── */
 @media (max-width: 640px) {
   .form-row { grid-template-columns: 1fr; gap: 0; }
+  .rsvp-find-row { flex-direction: column; align-items: stretch; }
 
   /* Mobile Chrome's collapsible URL bar makes 100vh taller than the
      actually-visible viewport, which centered a too-tall modal off-screen

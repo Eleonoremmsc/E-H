@@ -108,6 +108,10 @@
         <button class="btn btn-primary" id="rsvp-btn" data-i18n="btn_rsvp">Receive my invitation</button>
         <button class="btn btn-secondary" id="save-the-date-btn" data-i18n="btn_save">Save the Date</button>
       </div>
+      <p id="recognition-banner" class="recognition-banner" style="display:none;">
+        <span id="recognition-text"></span>
+        <button type="button" id="recognition-not-you" class="recognition-clear" data-i18n="recognition_not_you">Not you?</button>
+      </p>
     </div>
   </section>
 
@@ -267,7 +271,7 @@
       <div class="section-header">
         <h2 class="section-title" data-i18n="accom_title">Accommodation</h2>
         <div class="section-rule"></div>
-        <p class="section-intro" data-i18n="accom_intro">We have gathered a selection of accommodation options near the venue to suit every preference and budget. We recommend booking early.</p>
+        <p class="section-intro" data-i18n="accom_intro">A curated selection of places to stay near the venue, for every preference and budget.</p>
       </div>
 
       <div class="accom-search">
@@ -278,7 +282,7 @@
           <a href="https://www.booking.com" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Booking.com</a>
           <a href="https://www.abritel.fr" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Abritel</a>
         </div>
-        <p class="accom-search-note" data-i18n="accom_search_note">Most rentals here are booked by the week in summer, and many gîtes charge extra for linen — worth checking before you book. The closest villages are Crillon-le-Brave and Bédoin, with Caromb, Mormoiron and Mazan a short drive further for more options.</p>
+        <p class="accom-search-note" data-i18n="accom_search_note">There are plenty of accommodation options nearby, but we recommend booking early — availability fills up fast at this time of year. The closest villages are Crillon-le-Brave and Bédoin, with Caromb, Mormoiron and Mazan a short drive further for more options. Most rentals here are booked by the week in summer, and many gîtes charge extra for linen — worth checking before you book.</p>
       </div>
 
       <p class="accom-suggestions-intro" data-i18n="accom_suggestions_intro">A few of our own suggestions to get you started:</p>
@@ -818,6 +822,19 @@
 
       <form id="rsvp-form" novalidate>
 
+        <!-- Step 0: guest recognition -->
+        <div id="rsvp-find-step">
+          <p class="rsvp-find-note" data-i18n="rsvp_find_note">First, let's find you on our guest list.</p>
+          <div class="rsvp-find-row">
+            <input type="text" id="rsvp-find-input" class="form-input" data-i18n-placeholder="rsvp_find_placeholder" placeholder="Your name">
+            <button type="button" id="rsvp-find-btn" class="btn btn-outline" data-i18n="rsvp_find_btn">Find me</button>
+          </div>
+          <div id="rsvp-find-results"></div>
+          <button type="button" id="rsvp-find-skip" class="rsvp-find-skip" data-i18n="rsvp_find_skip">I couldn't find myself — add my details manually</button>
+        </div>
+
+        <div id="rsvp-main-fields" style="display:none;">
+
         <!-- 01 Contact person -->
         <div class="rsvp-sub-header">
           <span class="rsvp-sub-num">01</span>
@@ -869,6 +886,8 @@
         <button type="submit" class="btn btn-primary btn-full" id="rsvp-submit-btn">
           <span id="rsvp-submit-label" data-i18n="rsvp_submit">Confirm RSVP</span>
         </button>
+
+        </div>
       </form>
     </div>
 
