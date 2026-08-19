@@ -55,7 +55,7 @@ const T = {
     prog_reception_name: 'Reception',
     prog_reception_location: 'Domaine des Pins',
     accom_title:         'Accommodation',
-    accom_intro:         'Crillon-le-Brave is a small village, so we recommend booking your stay early.',
+    accom_intro:         'A curated selection of places to stay near the venue, for every preference and budget.',
     tier_luxury:         'Luxury',
     tier_boutique:       'Boutique',
     tier_charming:       'Charming',
@@ -112,7 +112,7 @@ const T = {
     note_clos_marceau:   'Well-rated B&B. A solid fallback with good reviews.',
     accom_search_title:      'Search & Book Directly',
     accom_search_intro:      'The fastest way to find a place to stay is to search directly on:',
-    accom_search_note:       "Most rentals here are booked by the week in summer, and many gîtes charge extra for linen — worth checking before you book. The closest villages are Crillon-le-Brave and Bédoin, with Caromb, Mormoiron and Mazan a short drive further for more options.",
+    accom_search_note:       "There are plenty of accommodation options nearby, but we recommend booking early — availability fills up fast at this time of year. The closest villages are Crillon-le-Brave and Bédoin, with Caromb, Mormoiron and Mazan a short drive further for more options. Most rentals here are booked by the week in summer, and many gîtes charge extra for linen — worth checking before you book.",
     accom_suggestions_intro: 'A few of our own suggestions to get you started:',
     activities_title:    'Activities',
     activities_intro:    'A few of our favourite ways to make the most of Provence, whether you arrive early or stay on after the celebrations.',
@@ -222,6 +222,17 @@ const T = {
     rsvp_err_attendance: 'Please select an attendance option',
     rsvp_thanks:         'Thank you.',
     rsvp_success_note:   'A confirmation has been sent to your email address.',
+    rsvp_find_note:      "First, let's find you on our guest list.",
+    rsvp_find_placeholder: 'Your name',
+    rsvp_find_btn:        'Find me',
+    rsvp_find_skip:       "I couldn't find myself — add my details manually",
+    rsvp_find_searching:  'Searching…',
+    rsvp_find_no_matches: "We couldn't find you — no problem, just add your details below.",
+    rsvp_find_prompt:     'Is this you?',
+    rsvp_find_none:       'None of these — add my details manually',
+    recognition_not_you:        'Not you?',
+    recognition_greeting_responded: 'Hi {name} — you’re confirmed for {count}.',
+    recognition_greeting_pending:   'Hi {name} — welcome back, you haven’t RSVP’d yet.',
   },
 
   fr: {
@@ -253,7 +264,7 @@ const T = {
     prog_reception_name: 'Réception',
     prog_reception_location: 'Domaine des Pins',
     accom_title:         'Hébergement',
-    accom_intro:         'Crillon-le-Brave est un petit village, nous vous recommandons donc de réserver votre hébergement tôt.',
+    accom_intro:         'Une sélection de logements près du lieu de réception, pour tous les goûts et tous les budgets.',
     tier_luxury:         'Luxe',
     tier_boutique:       'Boutique',
     tier_charming:       'Charmant',
@@ -310,7 +321,7 @@ const T = {
     note_clos_marceau:   "Chambre d'hôtes bien notée. Bonne option de repli avec de solides avis.",
     accom_search_title:      'Recherchez et réservez directement',
     accom_search_intro:      'Le moyen le plus rapide de trouver un logement est de chercher directement sur :',
-    accom_search_note:       "La plupart des locations se réservent à la semaine en été, et de nombreux gîtes facturent le linge de maison en supplément — mieux vaut vérifier avant de réserver. Les villages les plus proches sont Crillon-le-Brave et Bédoin ; Caromb, Mormoiron et Mazan, à quelques minutes de route, offrent d'autres options.",
+    accom_search_note:       "Il existe de nombreuses options d'hébergement, mais nous vous recommandons de réserver tôt : les disponibilités partent très vite à cette période. Les villages les plus proches sont Crillon-le-Brave et Bédoin ; Caromb, Mormoiron et Mazan, à quelques minutes de route, offrent d'autres options. La plupart des locations se réservent à la semaine en été, et de nombreux gîtes facturent le linge de maison en supplément — mieux vaut vérifier avant de réserver.",
     accom_suggestions_intro: 'Quelques suggestions de notre part pour vous aider à démarrer :',
     activities_title:    'Activités',
     activities_intro:    "Quelques-unes de nos façons préférées de profiter de la Provence, que vous arriviez en avance ou prolongiez votre séjour après les festivités.",
@@ -420,6 +431,17 @@ const T = {
     rsvp_err_attendance: 'Veuillez sélectionner une option de présence',
     rsvp_thanks:         'Merci.',
     rsvp_success_note:   'Une confirmation a été envoyée à votre adresse email.',
+    rsvp_find_note:      "Pour commencer, essayons de vous retrouver dans notre liste d'invités.",
+    rsvp_find_placeholder: 'Votre nom',
+    rsvp_find_btn:        'Me trouver',
+    rsvp_find_skip:       "Je ne me trouve pas — ajouter mes informations manuellement",
+    rsvp_find_searching:  'Recherche…',
+    rsvp_find_no_matches: "Nous ne vous avons pas trouvé(e) — aucun souci, ajoutez simplement vos informations ci-dessous.",
+    rsvp_find_prompt:     "Est-ce vous ?",
+    rsvp_find_none:       'Aucun de ces choix — ajouter mes informations manuellement',
+    recognition_not_you:        "Ce n'est pas vous ?",
+    recognition_greeting_responded: 'Bonjour {name} — votre présence est confirmée pour {count}.',
+    recognition_greeting_pending:   "Bonjour {name} — heureux de vous revoir, vous n'avez pas encore répondu.",
   },
 
   de: {
@@ -451,7 +473,7 @@ const T = {
     prog_reception_name: 'Empfang',
     prog_reception_location: 'Domaine des Pins',
     accom_title:         'Unterkunft',
-    accom_intro:         'Crillon-le-Brave ist ein kleines Dorf — wir empfehlen daher, Ihre Unterkunft frühzeitig zu buchen.',
+    accom_intro:         'Eine Auswahl an Unterkünften in der Nähe des Veranstaltungsorts, für jeden Geschmack und jedes Budget.',
     tier_luxury:         'Luxus',
     tier_boutique:       'Boutique',
     tier_charming:       'Charmant',
@@ -508,7 +530,7 @@ const T = {
     note_clos_marceau:   'Gut bewertetes B&B. Solide Alternative mit guten Bewertungen.',
     accom_search_title:      'Direkt suchen & buchen',
     accom_search_intro:      'Der schnellste Weg, eine Unterkunft zu finden, ist die direkte Suche auf:',
-    accom_search_note:       'Die meisten Unterkünfte werden im Sommer wochenweise vermietet, und viele Gîtes berechnen Bettwäsche extra — am besten vor der Buchung nachfragen. Die nächstgelegenen Dörfer sind Crillon-le-Brave und Bédoin; Caromb, Mormoiron und Mazan liegen wenige Minuten entfernt und bieten weitere Optionen.',
+    accom_search_note:       'In der Umgebung gibt es viele Unterkunftsmöglichkeiten, aber wir empfehlen eine frühzeitige Buchung — zu dieser Jahreszeit sind sie schnell ausgebucht. Die nächstgelegenen Dörfer sind Crillon-le-Brave und Bédoin; Caromb, Mormoiron und Mazan liegen wenige Minuten entfernt und bieten weitere Optionen. Die meisten Unterkünfte werden im Sommer wochenweise vermietet, und viele Gîtes berechnen Bettwäsche extra — am besten vor der Buchung nachfragen.',
     accom_suggestions_intro: 'Ein paar Vorschläge von uns, um Ihnen den Einstieg zu erleichtern:',
     activities_title:    'Aktivitäten',
     activities_intro:    'Ein paar unserer liebsten Möglichkeiten, die Provence zu genießen — ob Sie früher anreisen oder nach den Feierlichkeiten noch bleiben.',
@@ -618,6 +640,17 @@ const T = {
     rsvp_err_attendance: 'Bitte wählen Sie eine Teilnahme-Option',
     rsvp_thanks:         'Vielen Dank.',
     rsvp_success_note:   'Eine Bestätigung wurde an Ihre E-Mail-Adresse gesendet.',
+    rsvp_find_note:      'Lassen Sie uns zunächst prüfen, ob Sie auf unserer Gästeliste stehen.',
+    rsvp_find_placeholder: 'Ihr Name',
+    rsvp_find_btn:        'Mich finden',
+    rsvp_find_skip:       'Ich wurde nicht gefunden — Angaben manuell hinzufügen',
+    rsvp_find_searching:  'Suche…',
+    rsvp_find_no_matches: 'Wir konnten Sie nicht finden — kein Problem, fügen Sie Ihre Angaben einfach unten hinzu.',
+    rsvp_find_prompt:     'Sind Sie das?',
+    rsvp_find_none:       'Keine davon — Angaben manuell hinzufügen',
+    recognition_not_you:        'Nicht Sie?',
+    recognition_greeting_responded: 'Hallo {name} — Sie sind für {count} bestätigt.',
+    recognition_greeting_pending:   'Hallo {name} — willkommen zurück, Sie haben noch nicht geantwortet.',
   },
 };
 
@@ -638,6 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initModal();
   initLangModal();
   initRSVP();
+  initRecognition();
   initFilters();
 });
 
@@ -656,6 +690,11 @@ function applyLang(l) {
   document.querySelectorAll('[data-i18n-aria]').forEach(el => {
     const key = el.dataset.i18nAria;
     if (t[key] != null) el.setAttribute('aria-label', t[key]);
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (t[key] != null) el.setAttribute('placeholder', t[key]);
   });
 
   document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -991,13 +1030,21 @@ function initRSVP() {
   syncContactToGuest1();
 }
 
-function openRSVP() {
+async function openRSVP() {
   const overlay = document.getElementById('rsvp-overlay');
   overlay.classList.add('open');
   overlay.removeAttribute('aria-hidden');
   document.body.style.overflow = 'hidden';
   syncContactToGuest1();
-  if (editToken) fetchExistingRSVP(editToken);
+
+  await recognitionPromise;
+  if (editToken) {
+    revealMainFields();
+    fetchExistingRSVP(editToken);
+  } else if (householdToken && householdPartySize) {
+    scaffoldAttendeesForHousehold();
+    revealMainFields();
+  }
 }
 
 function closeRSVP() {
@@ -1191,8 +1238,8 @@ async function handleRSVPSubmit(e) {
   btn.classList.add('btn-loading');
 
   const payload = editToken
-    ? { action: 'update', token: editToken, ...data }
-    : { action: 'submit', ...data };
+    ? { action: 'update', token: editToken, householdToken: householdToken || '', ...data }
+    : { action: 'submit', householdToken: householdToken || '', ...data };
 
   try {
     const res    = await fetch(RSVP_ENDPOINT, { method: 'POST', body: JSON.stringify(payload) });
@@ -1201,7 +1248,12 @@ async function handleRSVPSubmit(e) {
       document.getElementById('rsvp-form-view').style.display  = 'none';
       document.getElementById('rsvp-success-view').style.display = 'block';
       document.querySelector('.rsvp-modal').scrollTop = 0;
-      if (result.token) editToken = result.token;
+      if (result.token) {
+        editToken = result.token;
+        // Remember this guest for next time, even if they weren't matched
+        // against the guest list (self-added) — same "no login" recognition.
+        localStorage.setItem('weddingEditToken', result.token);
+      }
     } else {
       alert('Something went wrong. Please try again.');
     }
@@ -1241,4 +1293,174 @@ function prefillForm(data) {
   attendees.forEach((att, i) => addAttendee(i === 0, att));
   if (attendees.length === 0) addAttendee(true);
   syncContactToGuest1();
+}
+
+// ══════════════════════════════════════════════════
+// GUEST RECOGNITION — "remember me" without login
+// A guest types their name once; if we find them on the pre-loaded guest
+// list, they confirm it's them and we remember their household in this
+// browser (no link, no account). If we can't find them, they just fill in
+// their own details and get flagged "Self-added" in the sheet.
+// ══════════════════════════════════════════════════
+
+let householdToken     = localStorage.getItem('weddingHouseholdToken') || null;
+let householdPartySize = null;
+let recognitionPromise = Promise.resolve();
+
+const GREETING_SKIP_WORDS = ['mr', 'mrs', 'ms', 'mme', 'melle', 'mlle', 'herr', 'frau', 'and', 'et', 'und', 'the'];
+
+function extractGreetingName(label) {
+  const words = (label || '').split(/\s+/).filter(Boolean);
+  for (const w of words) {
+    const clean = w.replace(/[^\p{L}-]/gu, '');
+    if (clean && GREETING_SKIP_WORDS.indexOf(clean.toLowerCase()) === -1) return clean;
+  }
+  return words[0] || '';
+}
+
+function initRecognition() {
+  const input   = document.getElementById('rsvp-find-input');
+  const findBtn = document.getElementById('rsvp-find-btn');
+  const skipBtn = document.getElementById('rsvp-find-skip');
+  const notYouBtn = document.getElementById('recognition-not-you');
+
+  if (findBtn) findBtn.addEventListener('click', runNameSearch);
+  if (input) input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); runNameSearch(); }
+  });
+  if (skipBtn) skipBtn.addEventListener('click', () => revealMainFields());
+  if (notYouBtn) notYouBtn.addEventListener('click', clearRecognition);
+
+  if (editToken) return; // came via an emailed edit link this load — untouched, no banner
+
+  if (householdToken) {
+    recognitionPromise = silentRecognizeByHousehold(householdToken);
+  } else {
+    const storedEditToken = localStorage.getItem('weddingEditToken');
+    if (storedEditToken) recognitionPromise = silentRecognizeByEditToken(storedEditToken);
+  }
+}
+
+async function silentRecognizeByHousehold(token) {
+  if (!RSVP_ENDPOINT) return;
+  try {
+    const res    = await fetch(RSVP_ENDPOINT, { method: 'POST', body: JSON.stringify({ action: 'lookupByToken', householdToken: token }) });
+    const result = await res.json();
+    if (!result.success) { clearRecognition(); return; }
+
+    const t = T[lang] || T.en;
+    if (result.status === 'responded') {
+      editToken = result.editToken;
+      const name = result.data.firstName || extractGreetingName(result.label);
+      showBanner(t.recognition_greeting_responded
+        .replace('{name}', name)
+        .replace('{count}', String((result.data.attendees || []).length)));
+    } else {
+      householdPartySize = result.partySize;
+      showBanner(t.recognition_greeting_pending.replace('{name}', extractGreetingName(result.label)));
+    }
+  } catch { /* stay silent — treat as unrecognized */ }
+}
+
+async function silentRecognizeByEditToken(token) {
+  if (!RSVP_ENDPOINT) return;
+  try {
+    const res    = await fetch(`${RSVP_ENDPOINT}?token=${encodeURIComponent(token)}`);
+    const result = await res.json();
+    if (!result.success || !result.data) { localStorage.removeItem('weddingEditToken'); return; }
+    editToken = token;
+    const t = T[lang] || T.en;
+    showBanner(t.recognition_greeting_responded
+      .replace('{name}', result.data.firstName || '')
+      .replace('{count}', String((result.data.attendees || []).length)));
+  } catch { /* stay silent */ }
+}
+
+async function runNameSearch() {
+  const input     = document.getElementById('rsvp-find-input');
+  const resultsEl = document.getElementById('rsvp-find-results');
+  const t = T[lang] || T.en;
+  const name = (input.value || '').trim();
+  if (!name || !RSVP_ENDPOINT || !resultsEl) return;
+
+  const staticSkip = document.getElementById('rsvp-find-skip');
+  if (staticSkip) staticSkip.style.display = 'none';
+  resultsEl.innerHTML = `<p class="rsvp-find-status">${t.rsvp_find_searching}</p>`;
+
+  try {
+    const res    = await fetch(RSVP_ENDPOINT, { method: 'POST', body: JSON.stringify({ action: 'lookupByName', name }) });
+    const result = await res.json();
+    renderFindResults(result.matches || []);
+  } catch {
+    resultsEl.innerHTML = '';
+    if (staticSkip) staticSkip.style.display = '';
+  }
+}
+
+function renderFindResults(matches) {
+  const resultsEl = document.getElementById('rsvp-find-results');
+  const t = T[lang] || T.en;
+  if (!resultsEl) return;
+
+  if (matches.length === 0) {
+    resultsEl.innerHTML = `<p class="rsvp-find-status">${t.rsvp_find_no_matches}</p>`;
+    setTimeout(revealMainFields, 1100);
+    return;
+  }
+
+  const items = matches.map(m =>
+    `<button type="button" class="rsvp-find-candidate" data-token="${escHtml(m.token)}" data-party="${escHtml(String(m.partySize || ''))}">${escHtml(m.label)}</button>`
+  ).join('');
+
+  resultsEl.innerHTML = `
+    <p class="rsvp-find-status">${t.rsvp_find_prompt}</p>
+    ${items}
+    <button type="button" class="rsvp-find-skip" id="rsvp-find-none-btn">${t.rsvp_find_none}</button>
+  `;
+
+  resultsEl.querySelectorAll('.rsvp-find-candidate').forEach(btn => {
+    btn.addEventListener('click', () => confirmHousehold(btn.dataset.token, btn.dataset.party));
+  });
+  const noneBtn = document.getElementById('rsvp-find-none-btn');
+  if (noneBtn) noneBtn.addEventListener('click', () => revealMainFields());
+}
+
+async function confirmHousehold(token, partySize) {
+  householdToken = token;
+  householdPartySize = partySize ? parseInt(partySize, 10) : null;
+  localStorage.setItem('weddingHouseholdToken', token);
+  scaffoldAttendeesForHousehold();
+  revealMainFields();
+}
+
+function scaffoldAttendeesForHousehold() {
+  const n = parseInt(householdPartySize, 10);
+  if (!n || n <= 1) return;
+  const existing = document.querySelectorAll('#attendees-list .attendee-block').length;
+  for (let i = existing; i < n; i++) addAttendee();
+}
+
+function revealMainFields() {
+  const step = document.getElementById('rsvp-find-step');
+  const main = document.getElementById('rsvp-main-fields');
+  if (step) step.style.display = 'none';
+  if (main) main.style.display = 'block';
+}
+
+function showBanner(text) {
+  const banner = document.getElementById('recognition-banner');
+  const textEl = document.getElementById('recognition-text');
+  if (!banner || !textEl || !text.trim()) return;
+  textEl.textContent = text;
+  banner.style.display = 'flex';
+}
+
+function clearRecognition() {
+  householdToken = null;
+  householdPartySize = null;
+  editToken = null;
+  localStorage.removeItem('weddingHouseholdToken');
+  localStorage.removeItem('weddingEditToken');
+  const banner = document.getElementById('recognition-banner');
+  if (banner) banner.style.display = 'none';
 }

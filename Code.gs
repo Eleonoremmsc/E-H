@@ -12,11 +12,12 @@
 //    account email (shown in Deploy → Manage deployments)
 // ================================================
 
-const SHEET_ID    = '1DgTfgjqHhAbPp5FPUCfmVoiwKjCCI348BPl_iIcHhDk';
-const SHEET_NAME  = 'RSVPs';
-const GUESTS_NAME = 'Guests';
-const WEBSITE_URL = 'https://eleonorehubert2027.netlify.app';
-const SENDER_NAME = 'Éléonore & Hubert';
+const SHEET_ID       = '1DgTfgjqHhAbPp5FPUCfmVoiwKjCCI348BPl_iIcHhDk';
+const SHEET_NAME     = 'RSVPs';
+const GUESTS_NAME    = 'Guests';
+const GUESTLIST_NAME = 'Sheet1';
+const WEBSITE_URL    = 'https://eleonorehubert2027.netlify.app';
+const SENDER_NAME    = 'Éléonore & Hubert';
 
 // ── Entry points ─────────────────────────────────
 
@@ -31,9 +32,11 @@ function doPost(e) {
     const data   = JSON.parse(e.postData.contents);
     const action = data.action;
     let result;
-    if      (action === 'submit') result = handleSubmit(data);
-    else if (action === 'update') result = handleUpdate(data);
-    else                          result = { error: 'Unknown action' };
+    if      (action === 'submit')        result = handleSubmit(data);
+    else if (action === 'update')        result = handleUpdate(data);
+    else if (action === 'lookupByName')  result = lookupByName(data);
+    else if (action === 'lookupByToken') result = lookupByToken(data);
+    else                                  result = { error: 'Unknown action' };
     return jsonOut(result);
   } catch (err) {
     return jsonOut({ error: err.message });
@@ -49,11 +52,14 @@ function handleSubmit(data) {
   const sheet = getSheet();
   const rows  = sheet.getDataRange().getValues();
   const email = data.email.trim().toLowerCase();
+  const householdToken = (data.householdToken || '').trim();
 
-  // Someone RSVPing again with an email already on file — treat it as an
-  // edit to their existing response rather than creating a duplicate.
+  // Already on file — by recognized household, or by email as a safety
+  // net — treat it as an edit to their existing response, not a duplicate.
   for (let i = 1; i < rows.length; i++) {
-    if ((rows[i][2] || '').toString().trim().toLowerCase() === email) {
+    const rowToken = (rows[i][9] || '').toString().trim();
+    const rowEmail = (rows[i][2] || '').toString().trim().toLowerCase();
+    if ((householdToken && rowToken === householdToken) || rowEmail === email) {
       return handleUpdate(Object.assign({}, data, { token: rows[i][7] }));
     }
   }
@@ -73,9 +79,11 @@ function handleSubmit(data) {
     JSON.stringify(data.attendees || []),
     token,
     now,  // updatedAt
+    householdToken || 'Self-added',
   ]);
 
   writeGuests(id, now, data);
+  markHouseholdResponded(householdToken);
 
   const emailSent = trySendEmail(data, editUrl, false);
   return { success: true, token, editUrl, emailSent };
@@ -95,6 +103,7 @@ function handleUpdate(data) {
       const row = i + 1;
       const id  = rows[i][0];
       const submitted = rows[i][1];
+      const householdToken = (data.householdToken || rows[i][9] || '').toString().trim();
 
       sheet.getRange(row, 3).setValue(data.email);
       sheet.getRange(row, 4).setValue(data.lastName);
@@ -102,8 +111,10 @@ function handleUpdate(data) {
       sheet.getRange(row, 6).setValue(data.address);
       sheet.getRange(row, 7).setValue(JSON.stringify(data.attendees || []));
       sheet.getRange(row, 9).setValue(new Date().toISOString());
+      sheet.getRange(row, 10).setValue(householdToken || 'Self-added');
 
       writeGuests(id, submitted, data, true);
+      markHouseholdResponded(householdToken);
 
       const editUrl = `${WEBSITE_URL}?rsvp=${token}`;
       const emailSent = trySendEmail(data, editUrl, true);
@@ -135,16 +146,187 @@ function getByToken(token) {
       return {
         success: true,
         data: {
-          email:     rows[i][2],
-          lastName:  rows[i][3],
-          firstName: rows[i][4],
-          address:    rows[i][5],
-          attendees:  JSON.parse(rows[i][6] || '[]'),
+          email:          rows[i][2],
+          lastName:       rows[i][3],
+          firstName:      rows[i][4],
+          address:        rows[i][5],
+          attendees:      JSON.parse(rows[i][6] || '[]'),
+          householdToken: rows[i][9] || '',
         },
       };
     }
   }
   return { error: 'Not found' };
+}
+
+// ── Guest recognition (name lookup, no login) ─────
+// Matches a typed name against the pre-loaded household list (Sheet1) so
+// returning visitors can be greeted without an account or an emailed link.
+// Matching is fuzzy (accent/typo tolerant) and returns candidates for the
+// guest to confirm — it never silently assumes a match.
+
+function lookupByName(data) {
+  const qTokens = tokenize(normalizeName(data && data.name));
+  if (qTokens.length === 0) return { success: true, matches: [] };
+
+  const scored = getGuestListRows()
+    .map(function(h) { return { h: h, score: scoreHousehold(qTokens, h.blobTokens) }; })
+    .filter(function(x) { return x.score >= 0.55; });
+
+  scored.sort(function(a, b) { return b.score - a.score; });
+
+  const matches = scored.slice(0, 5).map(function(x) {
+    return {
+      token:     x.h.token,
+      label:     buildHouseholdLabel(x.h),
+      partySize: x.h.partySize,
+    };
+  });
+
+  return { success: true, matches: matches };
+}
+
+function lookupByToken(data) {
+  const token = ((data && data.householdToken) || '').trim();
+  if (!token) return { error: 'Missing token' };
+
+  const household = getGuestListRows().filter(function(h) { return h.token === token; })[0];
+  if (!household) return { error: 'Not found' };
+
+  const sheet = getSheet();
+  const rows  = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i][9] || '').toString().trim() === token) {
+      return {
+        success:   true,
+        status:    'responded',
+        label:     buildHouseholdLabel(household),
+        editToken: rows[i][7],
+        data: {
+          email:     rows[i][2],
+          lastName:  rows[i][3],
+          firstName: rows[i][4],
+          address:   rows[i][5],
+          attendees: JSON.parse(rows[i][6] || '[]'),
+        },
+      };
+    }
+  }
+
+  return {
+    success:   true,
+    status:    'pending',
+    label:     buildHouseholdLabel(household),
+    partySize: household.partySize,
+  };
+}
+
+function markHouseholdResponded(householdToken) {
+  if (!householdToken || householdToken === 'Self-added') return;
+  const sheet = getGuestListSheet();
+  if (!sheet) return;
+  const rows = sheet.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i][8] || '').toString().trim() === householdToken) {
+      sheet.getRange(i + 1, 10).setValue('Responded');
+      return;
+    }
+  }
+}
+
+function buildHouseholdLabel(h) {
+  const names = (h.guestNames || '').trim();
+  return names ? `${names} ${h.lastName}`.trim() : h.lastName;
+}
+
+function getGuestListRows() {
+  const sheet = getGuestListSheet();
+  if (!sheet) return [];
+  const rows = sheet.getDataRange().getValues();
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[0]) continue; // skip blank rows
+    out.push({
+      householdId: r[0],
+      lastName:    r[1],
+      guestNames:  r[2],
+      partySize:   r[3],
+      side:        r[4],
+      language:    r[5],
+      token:       r[8],
+      rsvpStatus:  r[9],
+      blobTokens:  tokenize(normalizeName([r[1], r[2]].join(' '))),
+    });
+  }
+  return out;
+}
+
+// ── Fuzzy matching helpers ────────────────────────
+
+const NAME_STOPWORDS = ['mr', 'mrs', 'ms', 'mme', 'melle', 'mlle', 'herr', 'frau', 'and', 'und', 'et', 'the'];
+
+function normalizeName(str) {
+  return (str || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tokenize(normalized) {
+  return normalized.split(' ').filter(function(t) {
+    return t.length >= 2 && NAME_STOPWORDS.indexOf(t) === -1;
+  });
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = [], curr = [];
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    prev = curr.slice();
+  }
+  return prev[n];
+}
+
+function tokenSimilarity(a, b) {
+  if (a === b) return 1;
+  // Require both tokens to have some real length before granting credit for
+  // one containing the other — otherwise short name particles ("von", "de",
+  // "van") match as a substring of almost anything and cause false positives.
+  const minLen = Math.min(a.length, b.length);
+  if (minLen >= 4 && (a.indexOf(b) !== -1 || b.indexOf(a) !== -1)) return 0.85;
+  const ratio = 1 - levenshtein(a, b) / Math.max(a.length, b.length);
+  return ratio >= 0.72 ? ratio : 0;
+}
+
+function scoreHousehold(queryTokens, blobTokens) {
+  if (queryTokens.length === 0 || blobTokens.length === 0) return 0;
+  // Weight each query token's contribution by its length, so a matched
+  // surname (usually longer, more identifying) outweighs a mismatched or
+  // missing short first name rather than being diluted by a plain average.
+  let weightedTotal = 0, weightSum = 0;
+  queryTokens.forEach(function(qt) {
+    let best = 0;
+    blobTokens.forEach(function(bt) {
+      const sim = tokenSimilarity(qt, bt);
+      if (sim > best) best = sim;
+    });
+    weightedTotal += best * qt.length;
+    weightSum += qt.length;
+  });
+  return weightSum === 0 ? 0 : weightedTotal / weightSum;
 }
 
 // ── Guests sheet ──────────────────────────────────
@@ -232,11 +414,16 @@ function getSheet() {
     sheet = ss.insertSheet(SHEET_NAME);
     sheet.appendRow([
       'ID', 'Submitted', 'Email', 'Last Name', 'First Name(s)',
-      'Address', 'Attendees (JSON)', 'Edit Token', 'Updated',
+      'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
     ]);
     sheet.setFrozenRows(1);
   }
   return sheet;
+}
+
+function getGuestListSheet() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  return ss.getSheetByName(GUESTLIST_NAME) || null;
 }
 
 function getGuestsSheet() {
