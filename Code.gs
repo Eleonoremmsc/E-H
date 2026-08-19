@@ -21,15 +21,22 @@ const SENDER_NAME    = 'Éléonore & Hubert';
 
 // ── Entry points ─────────────────────────────────
 
+// doGet/doPost only ever receive an event object from a real web request.
+// Running them by hand from the editor passes nothing, so guard the access
+// and say so plainly rather than throwing a confusing TypeError.
 function doGet(e) {
+  if (!e) return jsonOut({ error: 'Run checkSetup() or testSearch() instead — ' +
+                                  'doGet only works when called over the web.' });
   const token  = (e.parameter || {}).token;
   const result = token ? getByToken(token) : { error: 'No token' };
   return jsonOut(result);
 }
 
 function doPost(e) {
+  if (!e) return jsonOut({ error: 'Run checkSetup() or testSearch() instead — ' +
+                                  'doPost only works when called over the web.' });
   try {
-    const data   = JSON.parse(e.postData.contents);
+    const data   = JSON.parse((e.postData || {}).contents || '{}');
     const action = data.action;
     let result;
     if      (action === 'submit')        result = handleSubmit(data);
