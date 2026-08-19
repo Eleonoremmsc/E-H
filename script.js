@@ -10,7 +10,10 @@ const CONFIG = {
 };
 
 // Paste your Google Apps Script Web App URL here after deploying Code.gs
-const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbymunneSd_fTcMqOhWV8_ujkc60qa0rJCE6JJJB5PsvXeyn-KDGW80hwSdxd2iFoSqL/exec';
+// Apps Script Web App URL. This changes whenever a NEW deployment is created
+// (rather than editing the existing one and picking "New version"), and the
+// site then silently talks to whichever older deployment this still names.
+const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw5I6qwAYXmzVEtqRG8vpa02-1hwdifOkegQXehHQgER6GwzxD52GXn9BzzzO_s2UWa/exec';
 
 // ── Event Data ──────────────────────────────────
 const EVENT = {
