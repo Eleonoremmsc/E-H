@@ -376,7 +376,7 @@ const T = {
     dress_w_main:        'Robe de soirée, robe de cocktail ou ensemble élégant.',
     dress_wnote:         "La cérémonie se déroule en extérieur — des talons compensés ou blocs sont recommandés.",
     dress_men:           'Pour les hommes',
-    dress_m_main:        'Un costume avec une cravate.',
+    dress_m_main:        'Costume-cravate.',
     map_title:           'Accès',
     map_gmaps:           'Ouvrir dans Google Maps',
     map_abroad_title:    "De l'étranger",
