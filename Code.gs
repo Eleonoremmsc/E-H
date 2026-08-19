@@ -434,35 +434,76 @@ function trySendEmail(data, editUrl, isUpdate) {
   }
 }
 
+// Confirmation emails go out in whichever language the guest filled the form
+// in — `lang` is sent with the submission. Anything unrecognised falls back
+// to English rather than failing.
+const EMAIL_TEXT = {
+  en: {
+    status:   { yes: 'With joy, I will be there',
+                maybe: 'I hope to attend',
+                no: 'Regretfully, I will not be able to join' },
+    subject:  { create: "Your RSVP to Éléonore & Hubert's wedding",
+                update: "Your updated RSVP – Éléonore & Hubert's wedding" },
+    greeting: function(n) { return 'Thank you, ' + n + '.'; },
+    intro:    function(u) {
+      return 'You have successfully ' + (u ? 'updated your RSVP' : "RSVP'd") +
+             " to Éléonore & Hubert's wedding on 26 June 2027 in Crillon-le-Brave, Provence.";
+    },
+    response: 'Your response:',
+    editNote: 'Need to make a change? Use your personal edit link:',
+    signoff:  'With warmth,\nÉléonore & Hubert',
+  },
+  fr: {
+    status:   { yes: 'Avec joie, je serai présent(e)',
+                maybe: "J'espère pouvoir venir",
+                no: 'À mon grand regret, je ne pourrai pas être présent(e)' },
+    subject:  { create: "Votre réponse au mariage d'Éléonore & Hubert",
+                update: "Votre réponse modifiée – mariage d'Éléonore & Hubert" },
+    greeting: function(n) { return 'Merci, ' + n + '.'; },
+    intro:    function(u) {
+      return 'Nous avons bien enregistré ' + (u ? 'la modification de votre réponse' : 'votre réponse') +
+             " pour le mariage d'Éléonore & Hubert, le 26 juin 2027 à Crillon-le-Brave, en Provence.";
+    },
+    response: 'Votre réponse :',
+    editNote: 'Besoin de faire un changement ? Utilisez votre lien personnel :',
+    signoff:  'Avec toute notre affection,\nÉléonore & Hubert',
+  },
+  de: {
+    status:   { yes: 'Mit Freude, ich werde da sein',
+                maybe: 'Ich hoffe, dabei sein zu können',
+                no: 'Leider kann ich nicht teilnehmen' },
+    subject:  { create: 'Ihre Zusage zur Hochzeit von Éléonore & Hubert',
+                update: 'Ihre geänderte Antwort – Hochzeit von Éléonore & Hubert' },
+    greeting: function(n) { return 'Vielen Dank, ' + n + '.'; },
+    intro:    function(u) {
+      return 'Wir haben ' + (u ? 'Ihre geänderte Antwort' : 'Ihre Antwort') +
+             ' zur Hochzeit von Éléonore & Hubert am 26. Juni 2027 in Crillon-le-Brave, Provence, erhalten.';
+    },
+    response: 'Ihre Antwort:',
+    editNote: 'Möchten Sie etwas ändern? Nutzen Sie Ihren persönlichen Link:',
+    signoff:  'Herzliche Grüße,\nÉléonore & Hubert',
+  },
+};
+
 function sendEmail(data, editUrl, isUpdate) {
-  const statusLabel = {
-    yes:   'With joy, I will be there',
-    maybe: 'I hope to attend',
-    no:    'Regretfully, I will not be able to join',
-  };
+  const t = EMAIL_TEXT[(data.lang || 'en').toLowerCase()] || EMAIL_TEXT.en;
 
   const lines = (data.attendees || [])
-    .map(a => `  • ${a.firstName} ${a.lastName} — ${statusLabel[a.status] || a.status}`)
+    .map(function(a) {
+      return '  • ' + a.firstName + ' ' + a.lastName + ' — ' +
+             (t.status[a.status] || a.status);
+    })
     .join('\n');
 
-  const subject = isUpdate
-    ? `Your updated RSVP – Éléonore & Hubert's wedding`
-    : `Your RSVP to Éléonore & Hubert's wedding`;
+  const subject = isUpdate ? t.subject.update : t.subject.create;
 
-  const body = `Thank you, ${data.firstName} ${data.lastName}.
+  const body = t.greeting((data.firstName + ' ' + data.lastName).trim()) + '\n\n' +
+               t.intro(isUpdate) + '\n\n' +
+               t.response + '\n' + lines + '\n\n' +
+               t.editNote + '\n' + editUrl + '\n\n' +
+               t.signoff;
 
-You have successfully ${isUpdate ? 'updated your RSVP' : "RSVP'd"} to Éléonore & Hubert's wedding on 26 June 2027 in Crillon-le-Brave, Provence.
-
-Your response:
-${lines}
-
-Need to make a change? Use your personal edit link:
-${editUrl}
-
-With warmth,
-Éléonore & Hubert`;
-
-  MailApp.sendEmail({ to: data.email, subject, body, name: SENDER_NAME });
+  MailApp.sendEmail({ to: data.email, subject: subject, body: body, name: SENDER_NAME });
 }
 
 // ── Helpers ───────────────────────────────────────

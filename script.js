@@ -224,6 +224,7 @@ const T = {
     rsvp_err_email:      'Please enter a valid email address',
     rsvp_err_attendance: 'Please select an attendance option',
     rsvp_thanks:         'Thank you.',
+    rsvp_edit_again:     'Change my response',
     rsvp_success_note:   'A confirmation has been sent to your email address.',
     rsvp_find_note:      "First, let's find you on our guest list.",
     rsvp_find_placeholder: 'Your name',
@@ -265,7 +266,7 @@ const T = {
     prog_saturday:       'Samedi 26 juin',
     prog_ceremony_name:  'Cérémonie religieuse',
     prog_ceremony_location: 'À déterminer',
-    prog_reception_time: 'À partir de 19h00',
+    prog_reception_time: 'Dès 19h00',
     prog_reception_name: 'Réception',
     prog_reception_location: 'Domaine des Pins',
     accom_title:         'Hébergement',
@@ -435,6 +436,7 @@ const T = {
     rsvp_err_email:      'Veuillez entrer une adresse email valide',
     rsvp_err_attendance: 'Veuillez sélectionner une option de présence',
     rsvp_thanks:         'Merci.',
+    rsvp_edit_again:     'Modifier ma réponse',
     rsvp_success_note:   'Une confirmation a été envoyée à votre adresse email.',
     rsvp_find_note:      "Pour commencer, essayons de vous retrouver dans notre liste d'invités.",
     rsvp_find_placeholder: 'Votre nom',
@@ -646,6 +648,7 @@ const T = {
     rsvp_err_email:      'Bitte geben Sie eine gültige E-Mail-Adresse ein',
     rsvp_err_attendance: 'Bitte wählen Sie eine Teilnahme-Option',
     rsvp_thanks:         'Vielen Dank.',
+    rsvp_edit_again:     'Meine Antwort ändern',
     rsvp_success_note:   'Eine Bestätigung wurde an Ihre E-Mail-Adresse gesendet.',
     rsvp_find_note:      'Lassen Sie uns zunächst prüfen, ob Sie auf unserer Gästeliste stehen.',
     rsvp_find_placeholder: 'Ihr Name',
@@ -1021,6 +1024,13 @@ function initRSVP() {
   document.getElementById('add-attendee-btn').addEventListener('click', () => addAttendee());
   document.getElementById('rsvp-form').addEventListener('submit', handleRSVPSubmit);
 
+  const editBtn = document.getElementById('rsvp-edit-btn');
+  if (editBtn) editBtn.addEventListener('click', () => {
+    showRSVPFormView();
+    revealMainFields();
+    if (editToken) fetchExistingRSVP(editToken);
+  });
+
   // Keep attendee guest labels updated on lang change
   const origApplyLang = window.__origApplyLang;
   if (!origApplyLang) {
@@ -1044,6 +1054,11 @@ async function openRSVP() {
   overlay.classList.add('open');
   overlay.removeAttribute('aria-hidden');
   document.body.style.overflow = 'hidden';
+
+  // Reopening after a submit used to land back on the thank-you screen with
+  // no way forward, so always return to the form and let the branches below
+  // decide what it should contain.
+  showRSVPFormView();
   syncContactToGuest1();
 
   await recognitionPromise;
@@ -1054,6 +1069,15 @@ async function openRSVP() {
     scaffoldAttendeesForHousehold();
     revealMainFields();
   }
+}
+
+function showRSVPFormView() {
+  const form    = document.getElementById('rsvp-form-view');
+  const success = document.getElementById('rsvp-success-view');
+  if (form)    form.style.display = 'block';
+  if (success) success.style.display = 'none';
+  const modal = document.querySelector('.rsvp-modal');
+  if (modal) modal.scrollTop = 0;
 }
 
 function closeRSVP() {
@@ -1247,8 +1271,8 @@ async function handleRSVPSubmit(e) {
   btn.classList.add('btn-loading');
 
   const payload = editToken
-    ? { action: 'update', token: editToken, householdToken: householdToken || '', ...data }
-    : { action: 'submit', householdToken: householdToken || '', ...data };
+    ? { action: 'update', token: editToken, lang, householdToken: householdToken || '', ...data }
+    : { action: 'submit', lang, householdToken: householdToken || '', ...data };
 
   try {
     const res    = await fetch(RSVP_ENDPOINT, { method: 'POST', body: JSON.stringify(payload) });
@@ -1263,6 +1287,12 @@ async function handleRSVPSubmit(e) {
         // against the guest list (self-added) — same "no login" recognition.
         localStorage.setItem('weddingEditToken', result.token);
       }
+      // Reflect the new state on the page straight away, rather than only
+      // after the guest happens to reload.
+      const t = T[lang] || T.en;
+      showBanner(t.recognition_greeting_responded
+        .replace('{name}', data.firstName || '')
+        .replace('{count}', String((data.attendees || []).length)));
     } else {
       alert('Something went wrong. Please try again.');
     }

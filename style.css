@@ -451,6 +451,9 @@ body {
   border: 0.5px solid var(--lavender-line);
   border-radius: 999px;
   padding: 6px 14px;
+  /* Keep every pill on one line, so a longer translation can't wrap and
+     balloon into a two-line block beside its single-line neighbours. */
+  white-space: nowrap;
 }
 .prog-timeline {
   position: relative;
@@ -1439,6 +1442,8 @@ body {
   text-align: center;
   margin-bottom: 14px;
 }
+.success-edit-btn { margin-top: 30px; }
+
 .success-message {
   font-family: var(--serif);
   font-size: 1.05rem; font-weight: 300; font-style: italic;
