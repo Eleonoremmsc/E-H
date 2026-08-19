@@ -15,7 +15,7 @@
 const SHEET_ID       = '1DgTfgjqHhAbPp5FPUCfmVoiwKjCCI348BPl_iIcHhDk';
 const SHEET_NAME     = 'RSVPs';
 const GUESTS_NAME    = 'Guests';
-const GUESTLIST_NAME = 'people';   // tab holding the invited guest list
+const GUESTLIST_NAME = 'Invites';  // tab holding the invited guest list
 const WEBSITE_URL    = 'https://eleonorehubert2027.netlify.app';
 const SENDER_NAME    = 'Éléonore & Hubert';
 
@@ -506,7 +506,7 @@ function getSheet() {
 // The guest-list tab is read-only input that a human maintains, so it is
 // never auto-created — if it is missing or renamed we must fail loudly
 // rather than silently behave as though nobody was invited.
-const GUESTLIST_FALLBACK_NAMES = ['people', 'Sheet1', 'GuestList', 'Guest List'];
+const GUESTLIST_FALLBACK_NAMES = ['Invites', 'people', 'Sheet1', 'GuestList', 'Guest List'];
 
 function getGuestListSheet() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
@@ -537,6 +537,28 @@ function checkSetup() {
              households + ' households, ' + named + ' named, ' +
              noToken + ' rows missing a household_token.');
   Logger.log('Tabs present: ' + tabs.join(', '));
+
+  if (rows.length === 0) {
+    Logger.log('PROBLEM: the tab was found but no guest rows were read. Check that ' +
+               'row 1 is the header and that column A holds guest_id (G001...).');
+    return;
+  }
+  const sample = rows[0];
+  Logger.log('First data row reads as: first_name="' + sample.firstName +
+             '", last_name="' + sample.lastName + '", household_token="' +
+             sample.token + '". If those look shifted, the columns are out of order.');
+}
+
+// Runs the real search inside the editor, with no website and no deployment
+// involved. If this finds names but the site does not, the problem is the
+// deployment URL — not the data and not the matching.
+function testSearch() {
+  ['Albrecht', 'de Reynal', 'Fabre'].forEach(function(q) {
+    const res = lookupByName({ name: q });
+    const matches = res.matches || [];
+    Logger.log('"' + q + '" -> ' + matches.length + ' match(es)' +
+               (matches.length ? ': ' + matches.map(function(m) { return m.label; }).join(' | ') : ''));
+  });
 }
 
 function getGuestsSheet() {
