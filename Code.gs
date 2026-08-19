@@ -160,28 +160,43 @@ function getByToken(token) {
 }
 
 // ── Guest recognition (name lookup, no login) ─────
-// Matches a typed name against the pre-loaded household list (Sheet1) so
-// returning visitors can be greeted without an account or an emailed link.
-// Matching is fuzzy (accent/typo tolerant) and returns candidates for the
-// guest to confirm — it never silently assumes a match.
+// Sheet1 holds ONE ROW PER GUEST. Everyone on the same invitation card
+// shares a household_token, so matching any one person returns their whole
+// household — one RSVP still covers the card. Matching is fuzzy (accent and
+// typo tolerant) and always returns candidates for the guest to confirm; it
+// never silently assumes a match.
+//
+// Sheet1 columns:
+//   0 guest_id        3 household_id     6 side       9  phone
+//   1 first_name      4 household_token  7 language   10 rsvp_status
+//   2 last_name       5 party_size       8 email      11 note
 
 function lookupByName(data) {
   const qTokens = tokenize(normalizeName(data && data.name));
   if (qTokens.length === 0) return { success: true, matches: [] };
 
-  const scored = getGuestListRows()
-    .map(function(h) { return { h: h, score: scoreHousehold(qTokens, h.blobTokens) }; })
-    .filter(function(x) { return x.score >= 0.55; });
-
-  scored.sort(function(a, b) { return b.score - a.score; });
-
-  const matches = scored.slice(0, 5).map(function(x) {
-    return {
-      token:     x.h.token,
-      label:     buildHouseholdLabel(x.h),
-      partySize: x.h.partySize,
-    };
+  // Score every named guest, then keep each household's best-scoring member.
+  const best = {};
+  getGuestListRows().forEach(function(g) {
+    if (!g.token || !g.firstName) return;
+    const score = scoreHousehold(qTokens, g.nameTokens);
+    if (score < 0.55) return;
+    if (!best[g.token] || score > best[g.token]) best[g.token] = score;
   });
+
+  const households = groupHouseholds();
+  const matches = Object.keys(best)
+    .map(function(tok) { return { token: tok, score: best[tok] }; })
+    .sort(function(a, b) { return b.score - a.score; })
+    .slice(0, 5)
+    .map(function(x) {
+      const members = households[x.token] || [];
+      return {
+        token:     x.token,
+        label:     buildHouseholdLabel(members),
+        partySize: members.length,
+      };
+    });
 
   return { success: true, matches: matches };
 }
@@ -190,8 +205,8 @@ function lookupByToken(data) {
   const token = ((data && data.householdToken) || '').trim();
   if (!token) return { error: 'Missing token' };
 
-  const household = getGuestListRows().filter(function(h) { return h.token === token; })[0];
-  if (!household) return { error: 'Not found' };
+  const members = groupHouseholds()[token];
+  if (!members || members.length === 0) return { error: 'Not found' };
 
   const sheet = getSheet();
   const rows  = sheet.getDataRange().getValues();
@@ -200,7 +215,7 @@ function lookupByToken(data) {
       return {
         success:   true,
         status:    'responded',
-        label:     buildHouseholdLabel(household),
+        label:     buildHouseholdLabel(members),
         editToken: rows[i][7],
         data: {
           email:     rows[i][2],
@@ -216,8 +231,11 @@ function lookupByToken(data) {
   return {
     success:   true,
     status:    'pending',
-    label:     buildHouseholdLabel(household),
-    partySize: household.partySize,
+    label:     buildHouseholdLabel(members),
+    partySize: members.length,
+    guests:    members.map(function(m) {
+      return { firstName: m.firstName, lastName: m.lastName };
+    }),
   };
 }
 
@@ -226,17 +244,49 @@ function markHouseholdResponded(householdToken) {
   const sheet = getGuestListSheet();
   if (!sheet) return;
   const rows = sheet.getDataRange().getValues();
+  // One row per guest now, so flag every member of the household.
   for (let i = 1; i < rows.length; i++) {
-    if ((rows[i][8] || '').toString().trim() === householdToken) {
-      sheet.getRange(i + 1, 10).setValue('Responded');
-      return;
+    if ((rows[i][4] || '').toString().trim() === householdToken) {
+      sheet.getRange(i + 1, 11).setValue('Responded');
     }
   }
 }
 
-function buildHouseholdLabel(h) {
-  const names = (h.guestNames || '').trim();
-  return names ? `${names} ${h.lastName}`.trim() : h.lastName;
+// "Barthold & Katrin Albrecht", or "Valérie Huyghues Despointes &
+// Yves-Marie de Malleray" when a card carries two surnames. Unnamed seats
+// are summarised rather than shown as blanks.
+function buildHouseholdLabel(members) {
+  const named   = members.filter(function(m) { return m.firstName; });
+  const unnamed = members.length - named.length;
+
+  let label;
+  if (named.length === 0) {
+    label = members.length ? (members[0].lastName || 'Guest') : 'Guest';
+  } else {
+    const surnames = named.map(function(m) { return m.lastName; });
+    const oneSurname = surnames.every(function(sn) { return sn === surnames[0]; });
+    if (oneSurname) {
+      label = named.map(function(m) { return m.firstName; }).join(' & ');
+      if (surnames[0]) label += ' ' + surnames[0];
+    } else {
+      label = named.map(function(m) {
+        return (m.firstName + ' ' + m.lastName).trim();
+      }).join(' & ');
+    }
+  }
+
+  if (unnamed > 0) label += ' +' + unnamed + (unnamed === 1 ? ' guest' : ' guests');
+  return label;
+}
+
+function groupHouseholds() {
+  const out = {};
+  getGuestListRows().forEach(function(g) {
+    if (!g.token) return;
+    if (!out[g.token]) out[g.token] = [];
+    out[g.token].push(g);
+  });
+  return out;
 }
 
 function getGuestListRows() {
@@ -248,15 +298,18 @@ function getGuestListRows() {
     const r = rows[i];
     if (!r[0]) continue; // skip blank rows
     out.push({
-      householdId: r[0],
-      lastName:    r[1],
-      guestNames:  r[2],
-      partySize:   r[3],
-      side:        r[4],
-      language:    r[5],
-      token:       r[8],
-      rsvpStatus:  r[9],
-      blobTokens:  tokenize(normalizeName([r[1], r[2]].join(' '))),
+      guestId:     r[0],
+      firstName:   (r[1] || '').toString().trim(),
+      lastName:    (r[2] || '').toString().trim(),
+      householdId: r[3],
+      token:       (r[4] || '').toString().trim(),
+      partySize:   r[5],
+      side:        r[6],
+      language:    r[7],
+      email:       r[8],
+      phone:       r[9],
+      rsvpStatus:  r[10],
+      nameTokens:  tokenize(normalizeName([r[1], r[2]].join(' '))),
     });
   }
   return out;
@@ -407,16 +460,45 @@ With warmth,
 
 // ── Helpers ───────────────────────────────────────
 
+const RSVP_HEADERS = [
+  'ID', 'Submitted', 'Email', 'Last Name', 'First Name(s)',
+  'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
+];
+const GUEST_HEADERS = [
+  'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
+  'Household Email', 'Contact First', 'Contact Last', 'Relationship',
+];
+
+// Headers used to be written only when a tab was first created, so tabs that
+// already existed never picked up columns added later (Household Token,
+// Relationship). Top them up in place without touching any guest data.
+function ensureHeaders(sheet, headers) {
+  const width = sheet.getLastColumn();
+  const current = width > 0
+    ? sheet.getRange(1, 1, 1, width).getValues()[0]
+    : [];
+  let changed = false;
+  for (let i = 0; i < headers.length; i++) {
+    if ((current[i] || '').toString().trim() !== headers[i]) {
+      current[i] = headers[i];
+      changed = true;
+    }
+  }
+  if (changed) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+  }
+}
+
 function getSheet() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow([
-      'ID', 'Submitted', 'Email', 'Last Name', 'First Name(s)',
-      'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
-    ]);
+    sheet.appendRow(RSVP_HEADERS);
     sheet.setFrozenRows(1);
+  } else {
+    ensureHeaders(sheet, RSVP_HEADERS);
   }
   return sheet;
 }
@@ -431,11 +513,10 @@ function getGuestsSheet() {
   let sheet = ss.getSheetByName(GUESTS_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(GUESTS_NAME);
-    sheet.appendRow([
-      'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
-      'Household Email', 'Contact First', 'Contact Last', 'Relationship',
-    ]);
+    sheet.appendRow(GUEST_HEADERS);
     sheet.setFrozenRows(1);
+  } else {
+    ensureHeaders(sheet, GUEST_HEADERS);
   }
   return sheet;
 }
