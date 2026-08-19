@@ -1409,6 +1409,18 @@ body {
 }
 .rsvp-find-skip:hover { color: var(--ink); }
 
+.rsvp-find-manual {
+  margin-top: 18px;
+  text-align: center;
+}
+.rsvp-find-retry {
+  font-family: var(--serif);
+  font-size: 0.92rem; font-style: italic;
+  color: var(--ink-mid);
+  text-align: center;
+  margin-top: 12px;
+}
+
 /* ── Submit full-width ─────────────── */
 .btn-full { width: 100%; justify-content: center; }
 .btn-loading { opacity: 0.55; pointer-events: none; }
