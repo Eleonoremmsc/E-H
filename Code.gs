@@ -15,7 +15,7 @@
 const SHEET_ID       = '1DgTfgjqHhAbPp5FPUCfmVoiwKjCCI348BPl_iIcHhDk';
 const SHEET_NAME     = 'RSVPs';
 const GUESTS_NAME    = 'Guests';
-const GUESTLIST_NAME = 'Sheet1';
+const GUESTLIST_NAME = 'people';   // tab holding the invited guest list
 const WEBSITE_URL    = 'https://eleonorehubert2027.netlify.app';
 const SENDER_NAME    = 'Éléonore & Hubert';
 
@@ -503,9 +503,40 @@ function getSheet() {
   return sheet;
 }
 
+// The guest-list tab is read-only input that a human maintains, so it is
+// never auto-created — if it is missing or renamed we must fail loudly
+// rather than silently behave as though nobody was invited.
+const GUESTLIST_FALLBACK_NAMES = ['people', 'Sheet1', 'GuestList', 'Guest List'];
+
 function getGuestListSheet() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
-  return ss.getSheetByName(GUESTLIST_NAME) || null;
+  const names = [GUESTLIST_NAME].concat(GUESTLIST_FALLBACK_NAMES);
+  for (let i = 0; i < names.length; i++) {
+    const sheet = ss.getSheetByName(names[i]);
+    if (sheet) return sheet;
+  }
+  return null;
+}
+
+// Call this from the Apps Script editor after pasting the guest list to
+// confirm the backend can actually see it. Logs a one-line summary.
+function checkSetup() {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const tabs  = ss.getSheets().map(function(s) { return s.getName(); });
+  const sheet = getGuestListSheet();
+  if (!sheet) {
+    Logger.log('PROBLEM: no guest-list tab found. Tabs present: ' + tabs.join(', ') +
+               '. Set GUESTLIST_NAME to whichever holds the guest list.');
+    return;
+  }
+  const rows       = getGuestListRows();
+  const households = Object.keys(groupHouseholds()).length;
+  const named      = rows.filter(function(r) { return r.firstName; }).length;
+  const noToken    = rows.filter(function(r) { return !r.token; }).length;
+  Logger.log('Guest list tab "' + sheet.getName() + '": ' + rows.length + ' guests, ' +
+             households + ' households, ' + named + ' named, ' +
+             noToken + ' rows missing a household_token.');
+  Logger.log('Tabs present: ' + tabs.join(', '));
 }
 
 function getGuestsSheet() {

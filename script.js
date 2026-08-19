@@ -227,7 +227,9 @@ const T = {
     rsvp_find_btn:        'Find me',
     rsvp_find_skip:       "I couldn't find myself — add my details manually",
     rsvp_find_searching:  'Searching…',
-    rsvp_find_no_matches: "We couldn't find you — no problem, just add your details below.",
+    rsvp_find_no_matches: "We couldn't find that name on our list — no problem at all.",
+    rsvp_find_manual_btn: 'Enter my details manually',
+    rsvp_find_retry:      'Or try a different spelling above.',
     rsvp_find_prompt:     'Is this you?',
     rsvp_find_none:       'None of these — add my details manually',
     recognition_not_you:        'Not you?',
@@ -436,7 +438,9 @@ const T = {
     rsvp_find_btn:        'Me trouver',
     rsvp_find_skip:       "Je ne me trouve pas — ajouter mes informations manuellement",
     rsvp_find_searching:  'Recherche…',
-    rsvp_find_no_matches: "Nous ne vous avons pas trouvé(e) — aucun souci, ajoutez simplement vos informations ci-dessous.",
+    rsvp_find_no_matches: "Nous n'avons pas trouvé ce nom dans notre liste — aucun souci.",
+    rsvp_find_manual_btn: 'Saisir mes informations manuellement',
+    rsvp_find_retry:      'Ou essayez une autre orthographe ci-dessus.',
     rsvp_find_prompt:     "Est-ce vous ?",
     rsvp_find_none:       'Aucun de ces choix — ajouter mes informations manuellement',
     recognition_not_you:        "Ce n'est pas vous ?",
@@ -645,7 +649,9 @@ const T = {
     rsvp_find_btn:        'Mich finden',
     rsvp_find_skip:       'Ich wurde nicht gefunden — Angaben manuell hinzufügen',
     rsvp_find_searching:  'Suche…',
-    rsvp_find_no_matches: 'Wir konnten Sie nicht finden — kein Problem, fügen Sie Ihre Angaben einfach unten hinzu.',
+    rsvp_find_no_matches: 'Wir haben diesen Namen nicht in unserer Liste gefunden — kein Problem.',
+    rsvp_find_manual_btn: 'Meine Angaben manuell eingeben',
+    rsvp_find_retry:      'Oder versuchen Sie oben eine andere Schreibweise.',
     rsvp_find_prompt:     'Sind Sie das?',
     rsvp_find_none:       'Keine davon — Angaben manuell hinzufügen',
     recognition_not_you:        'Nicht Sie?',
@@ -1402,9 +1408,16 @@ function renderFindResults(matches) {
   const t = T[lang] || T.en;
   if (!resultsEl) return;
 
+  // Nothing found: never advance on our own — a form appearing by itself
+  // reads as the site having lost their answer. Offer an explicit choice.
   if (matches.length === 0) {
-    resultsEl.innerHTML = `<p class="rsvp-find-status">${t.rsvp_find_no_matches}</p>`;
-    setTimeout(revealMainFields, 1100);
+    resultsEl.innerHTML = `
+      <p class="rsvp-find-status">${t.rsvp_find_no_matches}</p>
+      <button type="button" class="btn btn-primary btn-full rsvp-find-manual" id="rsvp-find-manual-btn">${t.rsvp_find_manual_btn}</button>
+      <p class="rsvp-find-retry">${t.rsvp_find_retry}</p>
+    `;
+    const manualBtn = document.getElementById('rsvp-find-manual-btn');
+    if (manualBtn) manualBtn.addEventListener('click', () => revealMainFields());
     return;
   }
 
@@ -1415,7 +1428,7 @@ function renderFindResults(matches) {
   resultsEl.innerHTML = `
     <p class="rsvp-find-status">${t.rsvp_find_prompt}</p>
     ${items}
-    <button type="button" class="rsvp-find-skip" id="rsvp-find-none-btn">${t.rsvp_find_none}</button>
+    <button type="button" class="btn btn-outline btn-full rsvp-find-manual" id="rsvp-find-none-btn">${t.rsvp_find_none}</button>
   `;
 
   resultsEl.querySelectorAll('.rsvp-find-candidate').forEach(btn => {
