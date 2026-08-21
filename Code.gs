@@ -183,12 +183,18 @@ function lookupByName(data) {
   if (qTokens.length === 0) return { success: true, matches: [] };
 
   // Score every named guest, then keep each household's best-scoring member.
+  // Remember which member that was: they are almost certainly the person
+  // filling the form, so they should be offered as the contact.
   const best = {};
+  const bestMember = {};
   getGuestListRows().forEach(function(g) {
     if (!g.token || !g.firstName) return;
     const score = scoreHousehold(qTokens, g.nameTokens);
     if (score < 0.55) return;
-    if (!best[g.token] || score > best[g.token]) best[g.token] = score;
+    if (!best[g.token] || score > best[g.token]) {
+      best[g.token] = score;
+      bestMember[g.token] = g.guestId;
+    }
   });
 
   const households = groupHouseholds();
@@ -202,10 +208,23 @@ function lookupByName(data) {
         token:     x.token,
         label:     buildHouseholdLabel(members),
         partySize: members.length,
+        guests:    orderGuests(members, bestMember[x.token]),
       };
     });
 
   return { success: true, matches: matches };
+}
+
+// Household members as plain names for the form to pre-fill, with the
+// person who matched the search first so they land in the contact fields.
+function orderGuests(members, firstGuestId) {
+  const head = [], tail = [];
+  members.forEach(function(m) {
+    const entry = { firstName: m.firstName, lastName: m.lastName };
+    if (firstGuestId && m.guestId === firstGuestId) head.push(entry);
+    else tail.push(entry);
+  });
+  return head.concat(tail);
 }
 
 function lookupByToken(data) {
@@ -240,9 +259,7 @@ function lookupByToken(data) {
     status:    'pending',
     label:     buildHouseholdLabel(members),
     partySize: members.length,
-    guests:    members.map(function(m) {
-      return { firstName: m.firstName, lastName: m.lastName };
-    }),
+    guests:    orderGuests(members, null),
   };
 }
 
