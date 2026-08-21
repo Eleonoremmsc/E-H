@@ -1344,6 +1344,8 @@ function prefillForm(data) {
 
 let householdToken     = localStorage.getItem('weddingHouseholdToken') || null;
 let householdPartySize = null;
+let householdGuests    = [];   // names of everyone on the invitation
+let lastMatches        = [];   // candidates from the most recent search
 let recognitionPromise = Promise.resolve();
 
 const GREETING_SKIP_WORDS = ['mr', 'mrs', 'ms', 'mme', 'melle', 'mlle', 'herr', 'frau', 'and', 'et', 'und', 'the'];
@@ -1396,6 +1398,7 @@ async function silentRecognizeByHousehold(token) {
         .replace('{count}', String((result.data.attendees || []).length)));
     } else {
       householdPartySize = result.partySize;
+      householdGuests    = result.guests || [];
       showBanner(t.recognition_greeting_pending.replace('{name}', extractGreetingName(result.label)));
     }
   } catch { /* stay silent — treat as unrecognized */ }
@@ -1454,8 +1457,12 @@ function renderFindResults(matches) {
     return;
   }
 
-  const items = matches.map(m =>
-    `<button type="button" class="rsvp-find-candidate" data-token="${escHtml(m.token)}" data-party="${escHtml(String(m.partySize || ''))}">${escHtml(m.label)}</button>`
+  // Keep the full match objects around so the household's names survive the
+  // trip through the DOM without being stuffed into data- attributes.
+  lastMatches = matches;
+
+  const items = matches.map((m, i) =>
+    `<button type="button" class="rsvp-find-candidate" data-idx="${i}">${escHtml(m.label)}</button>`
   ).join('');
 
   resultsEl.innerHTML = `
@@ -1465,25 +1472,51 @@ function renderFindResults(matches) {
   `;
 
   resultsEl.querySelectorAll('.rsvp-find-candidate').forEach(btn => {
-    btn.addEventListener('click', () => confirmHousehold(btn.dataset.token, btn.dataset.party));
+    btn.addEventListener('click', () => {
+      const m = lastMatches[parseInt(btn.dataset.idx, 10)];
+      if (m) confirmHousehold(m.token, m.partySize, m.guests);
+    });
   });
   const noneBtn = document.getElementById('rsvp-find-none-btn');
   if (noneBtn) noneBtn.addEventListener('click', () => revealMainFields());
 }
 
-async function confirmHousehold(token, partySize) {
+async function confirmHousehold(token, partySize, guests) {
   householdToken = token;
   householdPartySize = partySize ? parseInt(partySize, 10) : null;
+  householdGuests = Array.isArray(guests) ? guests : [];
   localStorage.setItem('weddingHouseholdToken', token);
   scaffoldAttendeesForHousehold();
   revealMainFields();
 }
 
+// Build one attendee block per seat on the invitation, pre-filled with the
+// names we already hold. Seats with no name in the guest list stay blank for
+// the guest to complete.
 function scaffoldAttendeesForHousehold() {
-  const n = parseInt(householdPartySize, 10);
-  if (!n || n <= 1) return;
-  const existing = document.querySelectorAll('#attendees-list .attendee-block').length;
-  for (let i = existing; i < n; i++) addAttendee();
+  const guests = householdGuests || [];
+  const n = parseInt(householdPartySize, 10) || guests.length;
+  if (!n) return;
+
+  // The person who matched the search is offered as the contact.
+  const first = guests[0];
+  if (first) {
+    const fn = document.getElementById('f-firstname');
+    const ln = document.getElementById('f-lastname');
+    if (fn && !fn.value.trim()) fn.value = first.firstName || '';
+    if (ln && !ln.value.trim()) ln.value = first.lastName || '';
+  }
+
+  document.getElementById('attendees-list').innerHTML = '';
+  attendeeCount = 0;
+  for (let i = 0; i < n; i++) {
+    const g = guests[i] || {};
+    addAttendee(i === 0, i === 0 ? null : {
+      firstName: g.firstName || '',
+      lastName:  g.lastName  || '',
+    });
+  }
+  syncContactToGuest1();
 }
 
 function revealMainFields() {
@@ -1504,6 +1537,7 @@ function showBanner(text) {
 function clearRecognition() {
   householdToken = null;
   householdPartySize = null;
+  householdGuests = [];
   editToken = null;
   localStorage.removeItem('weddingHouseholdToken');
   localStorage.removeItem('weddingEditToken');
