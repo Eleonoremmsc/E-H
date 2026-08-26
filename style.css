@@ -777,6 +777,19 @@ body {
 }
 
 /* ── Dress Code ────────────────────────────────── */
+.dress-day-label {
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 0.7rem; font-weight: 500;
+  letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--ink-mid);
+  margin-bottom: 18px;
+}
+.dress-separator {
+  width: 100%; height: 0.5px;
+  background: var(--lavender-line);
+  margin: 56px 0;
+}
 .dress-headline {
   text-align: center;
   font-family: var(--script);
