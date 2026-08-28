@@ -199,12 +199,10 @@ const T = {
     dress_men:           'For Men',
     dress_fri_label:     'Friday 25 June · Cocktail Evening',
     dress_fri_headline:  'Summer Chic',
-    dress_fri_intro:     'A relaxed evening among the vines — put together, but nothing formal.',
     dress_fri_w:         'A summer dress or an elegant ensemble.',
     dress_fri_m:         'Linen or chinos with a shirt. Jacket optional, no tie needed.',
     dress_sat_label:     'Saturday 26 June · Ceremony & Reception',
     dress_sat_headline:  'Formal Attire',
-    dress_sat_intro:     'The church first, then dinner and dancing outdoors.',
     dress_sat_w:         'Evening dress, cocktail dress, or elegant ensemble.',
     dress_sat_wnote:     'The reception after the church is outdoors on grass — block heels or wedges are recommended.',
     dress_sat_m:         'A suit with a tie.',
@@ -274,7 +272,7 @@ const T = {
     rsvp_country_other:          'Please tell us which country',
     rsvp_allergies:              'Allergies or intolerances (optional)',
     rsvp_allergies_placeholder:  'e.g. nuts, gluten, vegetarian',
-    songs_title:         'Add songs you want to hear that night!',
+    songs_title:         "Songs to which you'll be dancing all night long!",
     songs_note:          'One track at a time — we are building the playlist as they come in.',
     songs_placeholder:   'Artist — Song title',
     songs_add:           'Add',
@@ -285,7 +283,6 @@ const T = {
     songs_close:         'Close',
     songs_modal_title:   'The playlist so far',
     songs_empty:         'No songs yet — be the first.',
-    songs_anonymous:     'Anonymous',
     songs_loading:       'Loading…',
     songs_count:         '{count} songs so far',
   },
@@ -440,12 +437,10 @@ const T = {
     dress_men:           'Pour les hommes',
     dress_fri_label:     'Vendredi 25 juin · Soirée cocktail',
     dress_fri_headline:  'Chic estival',
-    dress_fri_intro:     'Une soirée décontractée au milieu des vignes — soignée, mais sans formalité.',
     dress_fri_w:         "Une robe d'été ou un ensemble élégant.",
     dress_fri_m:         'Lin ou chino avec une chemise. Veste facultative, cravate non nécessaire.',
     dress_sat_label:     'Samedi 26 juin · Cérémonie & Réception',
     dress_sat_headline:  'Tenue de soirée',
-    dress_sat_intro:     "L'église d'abord, puis dîner et soirée dansante en extérieur.",
     dress_sat_w:         'Robe de soirée, robe de cocktail ou ensemble élégant.',
     dress_sat_wnote:     "La réception après l'église se déroule en extérieur, sur l'herbe — des talons compensés ou blocs sont recommandés.",
     dress_sat_m:         'Costume-cravate.',
@@ -515,7 +510,7 @@ const T = {
     rsvp_country_other:          'Indiquez votre pays',
     rsvp_allergies:              'Allergies ou intolérances (facultatif)',
     rsvp_allergies_placeholder:  'ex. fruits à coque, gluten, végétarien',
-    songs_title:         'Ajoutez les chansons que vous voulez entendre ce soir-là !',
+    songs_title:         'Les chansons sur lesquelles vous danserez toute la nuit !',
     songs_note:          'Un titre à la fois — la playlist se construit au fur et à mesure.',
     songs_placeholder:   'Artiste — Titre',
     songs_add:           'Ajouter',
@@ -526,7 +521,6 @@ const T = {
     songs_close:         'Fermer',
     songs_modal_title:   'La playlist jusqu’ici',
     songs_empty:         'Aucune chanson pour l’instant — soyez le premier.',
-    songs_anonymous:     'Anonyme',
     songs_loading:       'Chargement…',
     songs_count:         '{count} chansons pour l’instant',
   },
@@ -681,12 +675,10 @@ const T = {
     dress_men:           'Für Herren',
     dress_fri_label:     'Freitag, 25. Juni · Cocktailabend',
     dress_fri_headline:  'Sommerlich schick',
-    dress_fri_intro:     'Ein entspannter Abend zwischen den Reben — gepflegt, aber ohne Förmlichkeit.',
     dress_fri_w:         'Ein Sommerkleid oder ein elegantes Ensemble.',
     dress_fri_m:         'Leinen oder Chino mit Hemd. Sakko optional, Krawatte nicht nötig.',
     dress_sat_label:     'Samstag, 26. Juni · Trauung & Empfang',
     dress_sat_headline:  'Abendgarderobe',
-    dress_sat_intro:     'Zuerst die Kirche, dann Dinner und Tanz im Freien.',
     dress_sat_w:         'Abendkleid, Cocktailkleid oder elegantes Ensemble.',
     dress_sat_wnote:     'Der Empfang nach der Kirche findet draußen auf Rasen statt — Keil- oder Blockabsätze werden empfohlen.',
     dress_sat_m:         'Ein Anzug mit Krawatte.',
@@ -756,7 +748,7 @@ const T = {
     rsvp_country_other:          'Bitte nennen Sie Ihr Land',
     rsvp_allergies:              'Allergien oder Unverträglichkeiten (optional)',
     rsvp_allergies_placeholder:  'z. B. Nüsse, Gluten, vegetarisch',
-    songs_title:         'Fügt Songs hinzu, die ihr an diesem Abend hören wollt!',
+    songs_title:         'Die Songs, zu denen Sie die ganze Nacht tanzen werden!',
     songs_note:          'Ein Titel nach dem anderen — die Playlist wächst mit jedem Vorschlag.',
     songs_placeholder:   'Interpret — Titel',
     songs_add:           'Hinzufügen',
@@ -766,8 +758,7 @@ const T = {
     songs_error:         'Das hat nicht geklappt. Bitte noch einmal versuchen.',
     songs_close:         'Schließen',
     songs_modal_title:   'Die Playlist bisher',
-    songs_empty:         'Noch keine Songs — macht den Anfang.',
-    songs_anonymous:     'Anonym',
+    songs_empty:         'Noch keine Songs — machen Sie den Anfang.',
     songs_loading:       'Wird geladen…',
     songs_count:         '{count} Songs bisher',
   },
@@ -1935,10 +1926,11 @@ function renderSongs() {
     return;
   }
 
+  // Titles only — who suggested what is recorded in the sheet, but the
+  // playlist reads as the couple's, not as a leaderboard of guests.
   list.innerHTML = songsCache.map(s => `
     <li class="songs-item">
       <span class="songs-item-title">${escHtml(s.song)}</span>
-      <span class="songs-item-by">${escHtml(s.name || t.songs_anonymous)}</span>
     </li>`).join('');
   if (count) count.textContent = (t.songs_count || '').replace('{count}', String(songsCache.length));
 }
