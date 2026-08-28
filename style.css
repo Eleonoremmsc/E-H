@@ -359,6 +359,165 @@ body {
 .recognition-clear:hover { color: var(--ink); }
 .recognition-sep { color: var(--lavender); }
 
+/* ── Song suggestions (welcome page) ────────────── */
+.songs-card {
+  position: relative;
+  max-width: 520px;
+  margin: 64px auto 0;
+  padding: 34px 30px 30px;
+  background: var(--cream-alt);
+  border: 0.5px solid var(--lavender-line);
+  border-radius: 2px;
+  text-align: center;
+}
+.songs-note-icon {
+  position: absolute;
+  top: -16px; left: 50%;
+  transform: translateX(-50%);
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--cream);
+  border: 0.5px solid var(--lavender-line);
+  border-radius: 50%;
+  font-size: 1rem;
+  color: var(--olive);
+}
+/* Serif italic rather than the script face — this is a full sentence, and
+   the script only stays legible at the length of a two- or three-word title. */
+.songs-title {
+  font-family: var(--serif);
+  font-size: 1.5rem; font-weight: 300; font-style: italic;
+  color: var(--olive);
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+.songs-note {
+  font-family: var(--serif);
+  font-size: 0.98rem; font-style: italic; font-weight: 300;
+  color: var(--ink-mid);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.songs-form {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.songs-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 12px 14px;
+  background: var(--cream);
+  border: 0.5px solid var(--ink-mid);
+  border-radius: 2px;
+  font-family: var(--serif);
+  font-size: 1.02rem;
+  color: var(--ink);
+}
+.songs-input::placeholder { color: var(--ink-mid); opacity: 0.75; }
+.songs-input:focus { outline: none; border-color: var(--olive); }
+.songs-submit {
+  flex: 0 0 auto;
+  padding: 12px 22px;
+  background: var(--ink);
+  color: var(--cream);
+  border: 0.5px solid var(--ink);
+  border-radius: 2px;
+  font-family: var(--sans);
+  font-size: 0.72rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--ease);
+}
+.songs-submit:hover:not(:disabled) { background: var(--ink-deep); }
+.songs-submit:disabled { opacity: 0.55; cursor: default; }
+.songs-status {
+  font-family: var(--serif);
+  font-size: 0.95rem; font-style: italic;
+  color: var(--olive-deep);
+  min-height: 1.4em;
+  margin-top: 12px;
+  opacity: 0;
+  transition: opacity var(--ease);
+}
+.songs-status.visible { opacity: 1; }
+.songs-view {
+  background: none; border: none;
+  font-family: var(--sans);
+  font-size: 0.72rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--olive-deep);
+  cursor: pointer;
+  padding: 0 0 2px;
+  margin-top: 6px;
+  border-bottom: 0.5px solid currentColor;
+  transition: color var(--ease);
+}
+.songs-view:hover { color: var(--ink); }
+
+.songs-modal {
+  max-width: 460px;
+  max-height: 80vh;
+  max-height: 80dvh;
+  overflow-y: auto;
+  padding: 44px 34px 34px;
+}
+.songs-modal-title {
+  font-family: var(--script);
+  font-size: 2rem; font-weight: 400;
+  color: var(--olive);
+  text-align: center;
+  margin-bottom: 4px;
+}
+.songs-modal-count {
+  font-family: var(--sans);
+  font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-mid);
+  text-align: center;
+  margin-bottom: 22px;
+}
+.songs-list { list-style: none; padding: 0; margin: 0; }
+.songs-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 0.5px solid var(--lavender-line2);
+  text-align: left;
+}
+.songs-item:last-child { border-bottom: none; }
+.songs-item-title {
+  font-family: var(--serif);
+  font-size: 1.04rem;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.songs-item-by {
+  flex: 0 0 auto;
+  font-family: var(--sans);
+  font-size: 0.66rem; font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-mid);
+  white-space: nowrap;
+}
+.songs-empty {
+  font-family: var(--serif);
+  font-size: 1rem; font-style: italic;
+  color: var(--ink-mid);
+  text-align: center;
+  padding: 18px 0;
+  list-style: none;
+}
+
+@media (max-width: 560px) {
+  .songs-card { margin-top: 48px; padding: 30px 20px 26px; }
+  .songs-form { flex-direction: column; }
+  .songs-submit { padding: 13px 22px; }
+  .songs-item { flex-direction: column; gap: 3px; }
+}
+
 .cal-both-note {
   font-family: var(--serif);
   font-size: 0.94rem; font-style: italic; font-weight: 300;
@@ -1259,6 +1418,7 @@ body {
 .req { color: var(--ink-mid); margin-left: 2px; }
 
 .form-input,
+.form-select,
 .form-textarea {
   display: block; width: 100%;
   padding: 10px 0;
@@ -1274,8 +1434,22 @@ body {
   -webkit-appearance: none;
 }
 .form-input:focus,
+.form-select:focus,
 .form-textarea:focus { border-bottom-color: var(--ink); }
 .form-textarea { resize: none; line-height: 1.7; }
+
+/* appearance:none strips the native arrow, so draw one back in. */
+.form-select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 22px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%234B5136' stroke-width='1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+}
+/* The unselected placeholder reads as a prompt, not as an answer. */
+.form-select:has(option[value=""]:checked) { color: var(--ink-mid); }
+.form-country-other { margin-top: 14px; }
 
 .form-row {
   display: grid;

@@ -116,8 +116,33 @@
           <button type="button" id="recognition-not-you" class="recognition-clear" data-i18n="recognition_not_you">Not you?</button>
         </div>
       </div>
+
+      <!-- Playlist suggestions — below the fold, still part of Bienvenue -->
+      <div class="songs-card">
+        <span class="songs-note-icon" aria-hidden="true">♪</span>
+        <h2 class="songs-title" data-i18n="songs_title">Add songs you want to hear that night!</h2>
+        <p class="songs-note" data-i18n="songs_note">One track at a time — we are building the playlist as they come in.</p>
+        <form class="songs-form" id="songs-form" autocomplete="off">
+          <input type="text" id="songs-input" class="songs-input" maxlength="160"
+                 data-i18n-placeholder="songs_placeholder" placeholder="Artist — Song title"
+                 data-i18n-aria="songs_title" aria-label="Add songs you want to hear that night!">
+          <button type="submit" class="songs-submit" id="songs-submit" data-i18n="songs_add">Add</button>
+        </form>
+        <p class="songs-status" id="songs-status" role="status" aria-live="polite"></p>
+        <button type="button" class="songs-view" id="songs-view-btn" data-i18n="songs_view">See the playlist so far</button>
+      </div>
     </div>
   </section>
+
+  <!-- PLAYLIST POPUP -->
+  <div class="modal-overlay songs-overlay" id="songs-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="songs-modal-title">
+    <div class="modal-card songs-modal">
+      <button type="button" class="modal-close" id="songs-close" data-i18n-aria="songs_close" aria-label="Close">&times;</button>
+      <h3 class="songs-modal-title" id="songs-modal-title" data-i18n="songs_modal_title">The playlist so far</h3>
+      <p class="songs-modal-count" id="songs-modal-count"></p>
+      <ul class="songs-list" id="songs-list"></ul>
+    </div>
+  </div>
 
   <!-- PROGRAMME -->
   <section id="programme" class="section-content">
@@ -895,6 +920,15 @@
           <label class="form-label" for="f-address"><span data-i18n="rsvp_address">Postal address</span> <span class="req">*</span></label>
           <textarea id="f-address" name="address" class="form-textarea" rows="3" autocomplete="street-address"></textarea>
           <div class="form-error" id="err-address"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="f-country"><span data-i18n="rsvp_country">Country</span> <span class="req">*</span></label>
+          <select id="f-country" name="country" class="form-select" autocomplete="country-name"></select>
+          <input type="text" id="f-country-other" name="countryOther" class="form-input form-country-other"
+                 autocomplete="country-name" style="display:none;"
+                 data-i18n-placeholder="rsvp_country_other" placeholder="Please tell us which country">
+          <div class="form-error" id="err-country"></div>
         </div>
 
         <div class="rsvp-divider"></div>

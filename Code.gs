@@ -16,6 +16,7 @@ const SHEET_ID       = '1DgTfgjqHhAbPp5FPUCfmVoiwKjCCI348BPl_iIcHhDk';
 const SHEET_NAME     = 'RSVPs';
 const GUESTS_NAME    = 'Guests';
 const GUESTLIST_NAME = 'Invites';  // tab holding the invited guest list
+const SONGS_NAME     = 'Songs';    // playlist suggestions from the welcome page
 const WEBSITE_URL    = 'https://eleonorehubert2027.netlify.app';
 const SENDER_NAME    = 'Éléonore & Hubert';
 
@@ -43,6 +44,8 @@ function doPost(e) {
     else if (action === 'update')        result = handleUpdate(data);
     else if (action === 'lookupByName')  result = lookupByName(data);
     else if (action === 'lookupByToken') result = lookupByToken(data);
+    else if (action === 'addSong')       result = addSong(data);
+    else if (action === 'listSongs')     result = listSongs();
     else                                  result = { error: 'Unknown action' };
     return jsonOut(result);
   } catch (err) {
@@ -87,6 +90,7 @@ function handleSubmit(data) {
     token,
     now,  // updatedAt
     householdToken || 'Self-added',
+    data.country || '',
   ]);
 
   writeGuests(id, now, data);
@@ -119,6 +123,7 @@ function handleUpdate(data) {
       sheet.getRange(row, 7).setValue(JSON.stringify(data.attendees || []));
       sheet.getRange(row, 9).setValue(new Date().toISOString());
       sheet.getRange(row, 10).setValue(householdToken || 'Self-added');
+      sheet.getRange(row, 11).setValue(data.country || '');
 
       writeGuests(id, submitted, data, true);
       markHouseholdResponded(householdToken);
@@ -157,6 +162,7 @@ function getByToken(token) {
           lastName:       rows[i][3],
           firstName:      rows[i][4],
           address:        rows[i][5],
+          country:        rows[i][10] || '',
           attendees:      JSON.parse(rows[i][6] || '[]'),
           householdToken: rows[i][9] || '',
         },
@@ -177,6 +183,8 @@ function getByToken(token) {
 //   0 guest_id        3 household_id     6 side       9  phone
 //   1 first_name      4 household_token  7 language   10 rsvp_status
 //   2 last_name       5 party_size       8 email      11 note
+//                                                     12 address
+//                                                     13 country
 
 function lookupByName(data) {
   const qTokens = tokenize(normalizeName(data && data.name));
@@ -209,10 +217,20 @@ function lookupByName(data) {
         label:     buildHouseholdLabel(members),
         partySize: members.length,
         guests:    orderGuests(members, bestMember[x.token]),
+        address:   householdField(members, 'address'),
+        country:   householdField(members, 'country'),
       };
     });
 
   return { success: true, matches: matches };
+}
+
+// One address per invitation: take the first one recorded against any member.
+function householdField(members, key) {
+  for (let i = 0; i < members.length; i++) {
+    if (members[i][key]) return members[i][key];
+  }
+  return '';
 }
 
 // Household members as plain names for the form to pre-fill, with the
@@ -248,6 +266,7 @@ function lookupByToken(data) {
           lastName:  rows[i][3],
           firstName: rows[i][4],
           address:   rows[i][5],
+          country:   rows[i][10] || '',
           attendees: JSON.parse(rows[i][6] || '[]'),
         },
       };
@@ -260,6 +279,8 @@ function lookupByToken(data) {
     label:     buildHouseholdLabel(members),
     partySize: members.length,
     guests:    orderGuests(members, null),
+    address:   householdField(members, 'address'),
+    country:   householdField(members, 'country'),
   };
 }
 
@@ -333,6 +354,9 @@ function getGuestListRows() {
       email:       r[8],
       phone:       r[9],
       rsvpStatus:  r[10],
+      note:        r[11],
+      address:     (r[12] || '').toString().trim(),
+      country:     (r[13] || '').toString().trim(),
       nameTokens:  tokenize(normalizeName([r[1], r[2]].join(' '))),
     });
   }
@@ -351,18 +375,52 @@ function getGuestListRows() {
 // It only ever reads. Nothing on Invites is changed.
 // ══════════════════════════════════════════════════
 
+// The NAME OF YOUR TAB goes inside the quotes below — "CARTONS_TAB" is this
+// setting's name in the script, not a name to give the tab. If your tab is
+// called something else, either rename it to match or change the quoted text.
+// Failing that, any tab whose row 1 has Prénom / Nom / Nb is found anyway.
 const CARTONS_TAB = 'Cartons';        // tab with the updated per-card list
 const COMPARE_REPORT_TAB = 'List comparison';
 
+// Finds the updated per-card list. Tries the configured name first, then
+// falls back to recognising the tab by its headers, so the comparison does
+// not depend on what the tab happens to be called.
+function getCartonsSheet() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const named = ss.getSheetByName(CARTONS_TAB);
+  if (named) return named;
+
+  const reserved = [SHEET_NAME, GUESTS_NAME, GUESTLIST_NAME, COMPARE_REPORT_TAB];
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const sheet = sheets[i];
+    if (reserved.indexOf(sheet.getName()) !== -1) continue;
+    if (sheet.getLastRow() < 2 || sheet.getLastColumn() < 2) continue;
+    const header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+      .map(function(h) { return (h || '').toString().toLowerCase().trim(); });
+    const hasFirst = header.indexOf('prénom') !== -1 || header.indexOf('prenom') !== -1;
+    const hasLast  = header.indexOf('nom') !== -1;
+    const hasCount = header.indexOf('nb') !== -1;
+    if (hasFirst && hasLast && hasCount) return sheet;
+  }
+  return null;
+}
+
 function compareGuestLists() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
-  const cartons = ss.getSheetByName(CARTONS_TAB);
+  const cartons = getCartonsSheet();
   if (!cartons) {
-    Logger.log('PROBLEM: no tab named "' + CARTONS_TAB + '". Tabs present: ' +
-               ss.getSheets().map(function(s) { return s.getName(); }).join(', ') +
-               '. Set CARTONS_TAB to the right name.');
+    Logger.log('PROBLEM: could not find the updated card list.');
+    Logger.log('Tabs present: ' + ss.getSheets().map(function(s) { return s.getName(); }).join(', '));
+    Logger.log('CARTONS_TAB is a setting in this script, not the name of the tab. ' +
+               'Either rename your tab to "' + CARTONS_TAB + '", or edit line ' +
+               '`const CARTONS_TAB = \'' + CARTONS_TAB + '\';` so the quoted text ' +
+               'matches your tab\'s real name.');
+    Logger.log('The tab is also found automatically if row 1 contains the ' +
+               'headers Prénom, Nom and Nb.');
     return;
   }
+  Logger.log('Reading updated card list from tab "' + cartons.getName() + '".');
 
   const wanted  = expandCartons(cartons);            // from the updated list
   const current = getGuestListRows().filter(function(g) { return g.firstName || g.lastName; });
@@ -553,6 +611,7 @@ function expandCartons(sheet) {
   });
 
   const out = [];
+  let cardCounter = 0;
   rows.slice(1).forEach(function(r) {
     if (S(r[cTag]) !== 'Invit') return;
     const first = S(r[cFirst]), extra = S(r[cExtra]), wife = S(r[cWife]);
@@ -588,6 +647,7 @@ function expandCartons(sheet) {
     names = names.filter(Boolean);
 
     const cardLabel = (names[0] ? names[0] + ' ' : '') + last;
+    cardCounter += 1;
     for (let seat = 0; seat < nb; seat++) {
       let fn = (names[seat] || '').replace(/[\s?]+$/, '').trim();
       let ln = surnames ? (surnames[Math.min(seat, surnames.length - 1)]) : last;
@@ -596,7 +656,8 @@ function expandCartons(sheet) {
         fn = bits[0];
         ln = bits.slice(1).join(' ');
       }
-      out.push({ firstName: fn, lastName: ln, card: cardLabel.trim() });
+      out.push({ firstName: fn, lastName: ln, card: cardLabel.trim(),
+                 cardIndex: cardCounter, partySize: nb });
     }
   });
   return out;
@@ -683,7 +744,8 @@ function scoreHousehold(queryTokens, blobTokens) {
 // ── Guests sheet ──────────────────────────────────
 // One row per attendee — easy to filter/sort for headcount.
 // Columns: RSVP ID | Submitted | First Name | Last Name | Status |
-//          Household Email | Contact First | Contact Last | Relationship
+//          Household Email | Contact First | Contact Last | Relationship |
+//          Allergies
 
 function writeGuests(id, submitted, data, isUpdate) {
   const sheet = getGuestsSheet();
@@ -708,6 +770,7 @@ function writeGuests(id, submitted, data, isUpdate) {
       data.firstName,
       data.lastName,
       a.relationship || '',
+      a.allergies || '',
     ]);
   });
 }
@@ -799,13 +862,17 @@ function sendEmail(data, editUrl, isUpdate) {
 
 // ── Helpers ───────────────────────────────────────
 
+// Country is appended rather than slotted in next to Address on purpose:
+// inserting a column mid-row would shift Edit Token and Household Token,
+// which are read by index and already hold live values.
 const RSVP_HEADERS = [
   'ID', 'Submitted', 'Email', 'Last Name', 'First Name(s)',
   'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
+  'Country',
 ];
 const GUEST_HEADERS = [
   'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
-  'Household Email', 'Contact First', 'Contact Last', 'Relationship',
+  'Household Email', 'Contact First', 'Contact Last', 'Relationship', 'Allergies',
 ];
 
 // Headers used to be written only when a tab was first created, so tabs that
@@ -888,6 +955,275 @@ function checkSetup() {
              sample.token + '". If those look shifted, the columns are out of order.');
 }
 
+// ══════════════════════════════════════════════════
+// FILLING IN NEW GUESTS
+//
+// Add new people to the Invites tab typing ONLY first_name and last_name.
+// To put several people on one invitation, write the same short label in
+// household_id for each of them — anything at all ("new1", "Dupont", "a").
+// Leave household_id blank and the person becomes their own household.
+//
+// Then run fillNewGuests(). It assigns the next guest_id (G609, G610…), the
+// next household_id (H370…), one shared household_token per invitation,
+// party_size, and rsvp_status = Pending. Rows that already have a token are
+// never touched, so it is safe to run repeatedly.
+// ══════════════════════════════════════════════════
+
+function fillNewGuests() {
+  const sheet = getGuestListSheet();
+  if (!sheet) { Logger.log('PROBLEM: no guest-list tab found.'); return; }
+
+  const rows = sheet.getDataRange().getValues();
+  const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+
+  // Continue the existing numbering rather than restarting it.
+  let maxG = 0, maxH = 0;
+  const usedTokens = {};
+  rows.slice(1).forEach(function(r) {
+    const g = S(r[0]).match(/^G(\d+)$/i);
+    if (g) maxG = Math.max(maxG, parseInt(g[1], 10));
+    const h = S(r[3]).match(/^H(\d+)$/i);
+    if (h) maxH = Math.max(maxH, parseInt(h[1], 10));
+    if (S(r[4])) usedTokens[S(r[4])] = true;
+  });
+
+  // Group the new rows by whatever label was typed in household_id.
+  const groups = {};
+  const order = [];
+  let loose = 0;
+  rows.forEach(function(r, i) {
+    if (i === 0) return;                              // header
+    if (S(r[4])) return;                              // already has a token
+    if (!S(r[1]) && !S(r[2])) return;                 // blank row
+    const label = S(r[3]) || ('__own_' + (loose++));  // blank = its own household
+    if (!groups[label]) { groups[label] = []; order.push(label); }
+    groups[label].push(i);                            // 0-based row index
+  });
+
+  if (order.length === 0) {
+    Logger.log('Nothing to do — every named row already has a household_token.');
+    return;
+  }
+
+  const summary = [];
+  order.forEach(function(label) {
+    const idxs = groups[label];
+    maxH += 1;
+    const householdId = 'H' + ('00' + maxH).slice(-3);
+
+    let token;
+    do { token = generateToken(); } while (usedTokens[token]);
+    usedTokens[token] = true;
+
+    idxs.forEach(function(rowIdx) {
+      maxG += 1;
+      const guestId = 'G' + ('00' + maxG).slice(-3);
+      const r = rowIdx + 1;                            // 1-based for getRange
+      sheet.getRange(r, 1).setValue(guestId);          // guest_id
+      sheet.getRange(r, 4).setValue(householdId);      // household_id
+      sheet.getRange(r, 5).setValue(token);            // household_token
+      sheet.getRange(r, 6).setValue(idxs.length);      // party_size
+      if (!S(rows[rowIdx][10])) sheet.getRange(r, 11).setValue('Pending');
+    });
+
+    const names = idxs.map(function(i) {
+      return (S(rows[i][1]) + ' ' + S(rows[i][2])).trim();
+    }).join(' & ');
+    summary.push(householdId + ' (' + idxs.length + '): ' + names);
+  });
+
+  Logger.log('Filled ' + order.length + ' new household(s):');
+  summary.forEach(function(line) { Logger.log('  ' + line); });
+  Logger.log('Now run checkInvites() to confirm the list is still consistent.');
+}
+
+// ══════════════════════════════════════════════════
+// REBUILDING THE GUEST LIST FROM THE CARD LIST
+//
+// Treats the carton tab as the single source of truth and regenerates
+// Invites from it. Tokens are preserved for every household that still has
+// a member in common with the old list, so nobody who has already been
+// recognised loses that. Any email, phone or rsvp_status already recorded
+// against a person is carried across by name.
+//
+// This REPLACES the Invites tab. Run compareGuestLists() first to see what
+// will change, and duplicate the tab if you want a manual backup.
+// ══════════════════════════════════════════════════
+
+// If any member of a rebuilt household already had an address or country
+// recorded, reuse it for the whole household rather than losing it.
+function householdKnownField(members, perPerson, key) {
+  for (let i = 0; i < members.length; i++) {
+    if (!members[i].firstName) continue;
+    const k = normalizeName(members[i].firstName + ' ' + members[i].lastName);
+    const known = k && perPerson[k];
+    if (known && known[key]) return known[key];
+  }
+  return '';
+}
+
+function rebuildInvitesFromCartons() {
+  const cartons = getCartonsSheet();
+  if (!cartons) { Logger.log('PROBLEM: could not find the updated card list.'); return; }
+  const sheet = getGuestListSheet();
+  if (!sheet) { Logger.log('PROBLEM: no guest-list tab found.'); return; }
+
+  const people = expandCartons(cartons);
+  if (people.length === 0) {
+    Logger.log('PROBLEM: read 0 guests from "' + cartons.getName() + '". Nothing written.');
+    return;
+  }
+
+  // What we already know, keyed by person and by household.
+  // Keyed on named people only. An unnamed placeholder normalises to just a
+  // surname, which several households share — matching on that would hand one
+  // family's token to another and silently merge them. Names that map to more
+  // than one household are dropped for the same reason.
+  const existing = getGuestListRows();
+  const perPerson = {};
+  const tokenByName = {};
+  const ambiguous = {};
+  existing.forEach(function(g) {
+    if (!g.firstName) return;
+    const k = normalizeName(g.firstName + ' ' + g.lastName);
+    if (!k) return;
+    perPerson[k] = { email: g.email, phone: g.phone, rsvpStatus: g.rsvpStatus,
+                     side: g.side, language: g.language, address: g.address,
+                     country: g.country };
+    if (!g.token) return;
+    if (tokenByName[k] && tokenByName[k] !== g.token) ambiguous[k] = true;
+    else tokenByName[k] = g.token;
+  });
+  Object.keys(ambiguous).forEach(function(k) { delete tokenByName[k]; });
+  const usedTokens = {};
+  existing.forEach(function(g) { if (g.token) usedTokens[g.token] = true; });
+
+  // Group the freshly parsed people into households.
+  const cards = {};
+  const cardOrder = [];
+  people.forEach(function(p) {
+    if (!cards[p.cardIndex]) { cards[p.cardIndex] = []; cardOrder.push(p.cardIndex); }
+    cards[p.cardIndex].push(p);
+  });
+
+  const out = [[
+    'guest_id', 'first_name', 'last_name', 'household_id', 'household_token',
+    'party_size', 'side', 'language', 'email', 'phone', 'rsvp_status', 'note',
+    'address', 'country',
+  ]];
+  let gid = 0, hid = 0, reused = 0, fresh = 0;
+
+  cardOrder.forEach(function(ci) {
+    const members = cards[ci];
+    hid += 1;
+
+    // Reuse the token of any household that still shares a member, so
+    // recognition survives edits elsewhere on the card.
+    let token = '';
+    for (let i = 0; i < members.length && !token; i++) {
+      if (!members[i].firstName) continue;   // placeholders identify nobody
+      const k = normalizeName(members[i].firstName + ' ' + members[i].lastName);
+      if (k && tokenByName[k]) token = tokenByName[k];
+    }
+    if (token) { reused += 1; }
+    else {
+      do { token = generateToken(); } while (usedTokens[token]);
+      fresh += 1;
+    }
+    usedTokens[token] = true;
+
+    members.forEach(function(m) {
+      gid += 1;
+      const k = normalizeName(m.firstName + ' ' + m.lastName);
+      const known = (k && perPerson[k]) || {};
+      out.push([
+        'G' + ('00' + gid).slice(-3),
+        m.firstName,
+        m.lastName,
+        'H' + ('00' + hid).slice(-3),
+        token,
+        members.length,
+        known.side || '',
+        known.language || '',
+        known.email || '',
+        known.phone || '',
+        known.rsvpStatus || 'Pending',
+        m.firstName ? '' : 'name not in source',
+        known.address || householdKnownField(members, perPerson, 'address'),
+        known.country || householdKnownField(members, perPerson, 'country'),
+      ]);
+    });
+  });
+
+  sheet.clear();
+  sheet.getRange(1, 1, out.length, out[0].length).setValues(out);
+  sheet.setFrozenRows(1);
+
+  Logger.log('Rebuilt "' + sheet.getName() + '": ' + (out.length - 1) + ' guests across ' +
+             hid + ' households.');
+  Logger.log('Tokens reused: ' + reused + ' household(s) · newly generated: ' + fresh + '.');
+  Logger.log('Carried over email/phone/status for ' + Object.keys(perPerson).length +
+             ' previously-known people where the name still matches.');
+  Logger.log('Side, language and address are not in the card list; existing values were kept.');
+  Logger.log('Run checkInvites() to confirm.');
+}
+
+// Sanity check for the guest list — run after any manual editing.
+function checkInvites() {
+  const sheet = getGuestListSheet();
+  if (!sheet) { Logger.log('PROBLEM: no guest-list tab found.'); return; }
+
+  const rows = sheet.getDataRange().getValues();
+  const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+  const problems = [];
+  const seenGuestIds = {};
+  const households = {};
+
+  rows.forEach(function(r, i) {
+    if (i === 0) return;
+    const line = i + 1;
+    const named = S(r[1]) || S(r[2]);
+    const id = S(r[0]), token = S(r[4]);
+
+    if (!named && !id && !token) return;               // genuinely blank row
+
+    if (!id)          problems.push('Row ' + line + ': no guest_id — this row is ignored by the site.');
+    else if (seenGuestIds[id]) problems.push('Row ' + line + ': duplicate guest_id "' + id + '".');
+    seenGuestIds[id] = true;
+
+    if (!token)       problems.push('Row ' + line + ': no household_token — this person cannot be found by search.');
+    if (!named)       problems.push('Row ' + line + ': has an id but no name.');
+
+    if (token) {
+      if (!households[token]) households[token] = { rows: [], sizes: {} };
+      households[token].rows.push(line);
+      households[token].sizes[S(r[5])] = true;
+    }
+  });
+
+  Object.keys(households).forEach(function(tok) {
+    const h = households[tok];
+    const sizes = Object.keys(h.sizes);
+    if (sizes.length > 1) {
+      problems.push('Token …' + tok.slice(-6) + ' (rows ' + h.rows.join(', ') +
+                    '): party_size disagrees between members (' + sizes.join(' vs ') + ').');
+    } else if (sizes[0] && parseInt(sizes[0], 10) !== h.rows.length) {
+      problems.push('Token …' + tok.slice(-6) + ': party_size says ' + sizes[0] +
+                    ' but ' + h.rows.length + ' row(s) carry that token (rows ' + h.rows.join(', ') + ').');
+    }
+  });
+
+  const guests = getGuestListRows();
+  Logger.log(guests.length + ' guests · ' + Object.keys(households).length + ' households · ' +
+             guests.filter(function(g) { return g.firstName; }).length + ' named.');
+  if (problems.length === 0) {
+    Logger.log('No problems found.');
+  } else {
+    Logger.log(problems.length + ' problem(s):');
+    problems.forEach(function(p) { Logger.log('  ' + p); });
+  }
+}
+
 // Runs the real search inside the editor, with no website and no deployment
 // involved. If this finds names but the site does not, the problem is the
 // deployment URL — not the data and not the matching.
@@ -911,6 +1247,85 @@ function getGuestsSheet() {
     ensureHeaders(sheet, GUEST_HEADERS);
   }
   return sheet;
+}
+
+// ── Song suggestions ──────────────────────────────
+//
+// Anyone on the site can suggest a track from the welcome page. The name is
+// whatever the recogniser already knows about them; unrecognised visitors
+// suggest anonymously, which is fine — we only ever display the list.
+//
+// Songs columns:
+//   0 Submitted   1 Title   2 Suggested By   3 Household Token
+
+const SONG_HEADERS = ['Submitted', 'Song', 'Suggested By', 'Household Token'];
+
+const SONG_MAX_LEN   = 160;  // long enough for "Artist — Title (Live at …)"
+const SONG_LIST_MAX  = 200;  // most recent suggestions returned to the page
+
+function getSongsSheet() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sheet = ss.getSheetByName(SONGS_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SONGS_NAME);
+    sheet.appendRow(SONG_HEADERS);
+    sheet.setFrozenRows(1);
+  } else {
+    ensureHeaders(sheet, SONG_HEADERS);
+  }
+  return sheet;
+}
+
+// Trim, collapse whitespace and cap the length so one guest cannot paste an
+// essay into the sheet or the popup.
+function cleanSongText(v, max) {
+  return (v || '').toString().replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+function songKey(title) {
+  return normalizeName(title).replace(/[^a-z0-9]+/g, '');
+}
+
+function addSong(data) {
+  const title = cleanSongText(data.song, SONG_MAX_LEN);
+  if (!title) return { error: 'Empty song' };
+
+  const sheet = getSongsSheet();
+  const rows  = sheet.getDataRange().getValues();
+  const key   = songKey(title);
+
+  // Two people asking for the same track is common; keep the first entry so
+  // the list stays a list of songs rather than a tally.
+  for (let i = 1; i < rows.length; i++) {
+    if (songKey(rows[i][1]) === key) {
+      return { success: true, duplicate: true, songs: readSongs(rows) };
+    }
+  }
+
+  const row = [
+    new Date(),
+    title,
+    cleanSongText(data.name, 80),
+    (data.householdToken || '').toString().trim(),
+  ];
+  sheet.appendRow(row);
+  rows.push(row);
+  return { success: true, songs: readSongs(rows) };
+}
+
+function listSongs() {
+  return { success: true, songs: readSongs(getSongsSheet().getDataRange().getValues()) };
+}
+
+// Newest first, and only the fields the page actually shows — the household
+// token stays in the sheet so we can trace an entry, but is never sent back.
+function readSongs(rows) {
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    const title = cleanSongText(rows[i][1], SONG_MAX_LEN);
+    if (title) out.push({ song: title, name: cleanSongText(rows[i][2], 80) });
+  }
+  return out.reverse().slice(0, SONG_LIST_MAX);
 }
 
 function generateToken() {
