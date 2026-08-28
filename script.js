@@ -270,6 +270,22 @@ const T = {
     cal_friday_btn:             "＋ Also add Friday's cocktail",
     recognition_greeting_responded: 'Hi {name} — you’re confirmed for {count}.',
     recognition_greeting_pending:   'Hi {name} — welcome back, you haven’t RSVP’d yet.',
+    rsvp_allergies:              'Allergies or intolerances (optional)',
+    rsvp_allergies_placeholder:  'e.g. nuts, gluten, vegetarian',
+    songs_title:         'Add songs you want to hear that night!',
+    songs_note:          'One track at a time — we are building the playlist as they come in.',
+    songs_placeholder:   'Artist — Song title',
+    songs_add:           'Add',
+    songs_view:          'See the playlist so far',
+    songs_thanks:        'Added to the playlist. Another one?',
+    songs_duplicate:     'Already on the list — great minds.',
+    songs_error:         'That did not go through. Please try again.',
+    songs_close:         'Close',
+    songs_modal_title:   'The playlist so far',
+    songs_empty:         'No songs yet — be the first.',
+    songs_anonymous:     'Anonymous',
+    songs_loading:       'Loading…',
+    songs_count:         '{count} songs so far',
   },
 
   fr: {
@@ -493,6 +509,22 @@ const T = {
     cal_friday_btn:             '＋ Ajouter aussi le cocktail du vendredi',
     recognition_greeting_responded: 'Bonjour {name} — votre présence est confirmée pour {count}.',
     recognition_greeting_pending:   "Bonjour {name} — heureux de vous revoir, vous n'avez pas encore répondu.",
+    rsvp_allergies:              'Allergies ou intolérances (facultatif)',
+    rsvp_allergies_placeholder:  'ex. fruits à coque, gluten, végétarien',
+    songs_title:         'Ajoutez les chansons que vous voulez entendre ce soir-là !',
+    songs_note:          'Un titre à la fois — la playlist se construit au fur et à mesure.',
+    songs_placeholder:   'Artiste — Titre',
+    songs_add:           'Ajouter',
+    songs_view:          'Voir la playlist',
+    songs_thanks:        'Ajouté à la playlist. Un autre ?',
+    songs_duplicate:     'Déjà dans la liste — les grands esprits se rencontrent.',
+    songs_error:         "Ça n'a pas fonctionné. Veuillez réessayer.",
+    songs_close:         'Fermer',
+    songs_modal_title:   'La playlist jusqu’ici',
+    songs_empty:         'Aucune chanson pour l’instant — soyez le premier.',
+    songs_anonymous:     'Anonyme',
+    songs_loading:       'Chargement…',
+    songs_count:         '{count} chansons pour l’instant',
   },
 
   de: {
@@ -716,6 +748,22 @@ const T = {
     cal_friday_btn:             '＋ Cocktail am Freitag ebenfalls hinzufügen',
     recognition_greeting_responded: 'Hallo {name} — Sie sind für {count} bestätigt.',
     recognition_greeting_pending:   'Hallo {name} — willkommen zurück, Sie haben noch nicht geantwortet.',
+    rsvp_allergies:              'Allergien oder Unverträglichkeiten (optional)',
+    rsvp_allergies_placeholder:  'z. B. Nüsse, Gluten, vegetarisch',
+    songs_title:         'Fügt Songs hinzu, die ihr an diesem Abend hören wollt!',
+    songs_note:          'Ein Titel nach dem anderen — die Playlist wächst mit jedem Vorschlag.',
+    songs_placeholder:   'Interpret — Titel',
+    songs_add:           'Hinzufügen',
+    songs_view:          'Playlist ansehen',
+    songs_thanks:        'Zur Playlist hinzugefügt. Noch einer?',
+    songs_duplicate:     'Steht schon auf der Liste — guter Geschmack.',
+    songs_error:         'Das hat nicht geklappt. Bitte noch einmal versuchen.',
+    songs_close:         'Schließen',
+    songs_modal_title:   'Die Playlist bisher',
+    songs_empty:         'Noch keine Songs — macht den Anfang.',
+    songs_anonymous:     'Anonym',
+    songs_loading:       'Wird geladen…',
+    songs_count:         '{count} Songs bisher',
   },
 };
 
@@ -737,6 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLangModal();
   initRSVP();
   initRecognition();
+  initSongs();
   initFilters();
 });
 
@@ -767,6 +816,8 @@ function applyLang(l) {
   });
 
   renderBanner();
+  renderSongStatus();
+  renderSongs();
 }
 
 document.addEventListener('click', e => {
@@ -1184,6 +1235,17 @@ function addAttendee(isFirst = false, prefill = null) {
 
   const checked = s => prefill && prefill.status === s ? 'checked' : '';
 
+  const allergiesField = `
+    <div class="form-group">
+      <label class="form-label">
+        <span data-i18n="rsvp_allergies">${t.rsvp_allergies}</span>
+      </label>
+      <input type="text" name="att_allergies_${idx}" class="form-input att-allergies"
+             data-i18n-placeholder="rsvp_allergies_placeholder"
+             placeholder="${t.rsvp_allergies_placeholder}"
+             value="${prefill ? escHtml(prefill.allergies || '') : ''}">
+    </div>`;
+
   const nameFields = isFirst
     ? `<div class="form-group">
         <div class="att-contact-name"></div>
@@ -1211,6 +1273,7 @@ function addAttendee(isFirst = false, prefill = null) {
           <span data-i18n="rsvp_relationship">${t.rsvp_relationship}</span>
         </label>
         <input type="text" name="att_relationship_${idx}" class="form-input att-relationship"
+               data-i18n-placeholder="rsvp_relationship_placeholder"
                placeholder="${t.rsvp_relationship_placeholder}"
                value="${prefill ? escHtml(prefill.relationship || '') : ''}">
       </div>`;
@@ -1244,6 +1307,7 @@ function addAttendee(isFirst = false, prefill = null) {
       </div>
       <div class="form-error att-err-status"></div>
     </div>
+    ${allergiesField}
   `;
 
   const removeBtn = block.querySelector('.attendee-remove');
@@ -1288,7 +1352,8 @@ function collectFormData() {
       lastName  = (block.querySelector('.att-lastname')  || {}).value?.trim() || '';
       relationship = (block.querySelector('.att-relationship') || {}).value?.trim() || '';
     }
-    attendees.push({ firstName, lastName, relationship, status: statusEl ? statusEl.value : '' });
+    const allergies = (block.querySelector('.att-allergies') || {}).value?.trim() || '';
+    attendees.push({ firstName, lastName, relationship, allergies, status: statusEl ? statusEl.value : '' });
   });
   return {
     email:     form.email.value.trim(),
@@ -1426,6 +1491,7 @@ function prefillForm(data) {
 let householdToken     = localStorage.getItem('weddingHouseholdToken') || null;
 let householdPartySize = null;
 let householdGuests    = [];   // names of everyone on the invitation
+let householdAddress   = '';   // postal address already on the guest list, if any
 let lastMatches        = [];   // candidates from the most recent search
 let recognition        = null; // {status, name, count} for the greeting banner
 let recognitionPromise = Promise.resolve();
@@ -1483,6 +1549,7 @@ async function silentRecognizeByHousehold(token) {
     } else {
       householdPartySize = result.partySize;
       householdGuests    = result.guests || [];
+      householdAddress   = result.address || '';
       setRecognition('pending', extractGreetingName(result.label), result.partySize || 0);
     }
   } catch { /* stay silent — treat as unrecognized */ }
@@ -1556,17 +1623,18 @@ function renderFindResults(matches) {
   resultsEl.querySelectorAll('.rsvp-find-candidate').forEach(btn => {
     btn.addEventListener('click', () => {
       const m = lastMatches[parseInt(btn.dataset.idx, 10)];
-      if (m) confirmHousehold(m.token, m.partySize, m.guests);
+      if (m) confirmHousehold(m.token, m.partySize, m.guests, m.address);
     });
   });
   const noneBtn = document.getElementById('rsvp-find-none-btn');
   if (noneBtn) noneBtn.addEventListener('click', () => revealMainFields());
 }
 
-async function confirmHousehold(token, partySize, guests) {
+async function confirmHousehold(token, partySize, guests, address) {
   householdToken = token;
   householdPartySize = partySize ? parseInt(partySize, 10) : null;
   householdGuests = Array.isArray(guests) ? guests : [];
+  householdAddress = address || '';
   localStorage.setItem('weddingHouseholdToken', token);
   scaffoldAttendeesForHousehold();
   revealMainFields();
@@ -1588,6 +1656,11 @@ function scaffoldAttendeesForHousehold() {
     if (fn && !fn.value.trim()) fn.value = first.firstName || '';
     if (ln && !ln.value.trim()) ln.value = first.lastName || '';
   }
+
+  // The address we hold is only a starting point — it may be years old, so
+  // it goes in as an ordinary editable value the guest can correct.
+  const addr = document.getElementById('f-address');
+  if (addr && householdAddress && !addr.value.trim()) addr.value = householdAddress;
 
   document.getElementById('attendees-list').innerHTML = '';
   attendeeCount = 0;
@@ -1638,10 +1711,151 @@ function renderBanner() {
   banner.style.display = 'block';
 }
 
+// ══════════════════════════════════════════════════
+// SONG SUGGESTIONS
+// Anyone can add a track from the welcome page. If the recogniser already
+// knows who they are we credit them by name; otherwise the suggestion goes
+// in anonymously rather than asking for a name they've already given us.
+// ══════════════════════════════════════════════════
+
+let songsCache     = null;  // last list from the backend, newest first
+let songsStatusKey = '';    // stored as a key so it survives a language switch
+
+function initSongs() {
+  const form    = document.getElementById('songs-form');
+  const viewBtn = document.getElementById('songs-view-btn');
+  const overlay = document.getElementById('songs-overlay');
+  const closeBtn = document.getElementById('songs-close');
+
+  if (form) form.addEventListener('submit', handleSongSubmit);
+  if (viewBtn) viewBtn.addEventListener('click', openSongs);
+  if (closeBtn) closeBtn.addEventListener('click', closeSongs);
+  if (overlay) overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeSongs();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay && overlay.classList.contains('open')) closeSongs();
+  });
+}
+
+// Whatever we already know them by — the guest-list name first, since it is
+// a full name, falling back to the greeting name from the banner.
+function suggesterName() {
+  const g = (householdGuests || [])[0];
+  if (g && (g.firstName || g.lastName)) {
+    return [g.firstName, g.lastName].filter(Boolean).join(' ');
+  }
+  return (recognition && recognition.name) || '';
+}
+
+async function handleSongSubmit(e) {
+  e.preventDefault();
+  const input = document.getElementById('songs-input');
+  const btn   = document.getElementById('songs-submit');
+  const song  = (input.value || '').trim();
+  if (!song) return;
+
+  if (!RSVP_ENDPOINT) { setSongStatus('songs_error'); return; }
+
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch(RSVP_ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'addSong',
+        song,
+        name: suggesterName(),
+        householdToken: householdToken || '',
+      }),
+    });
+    const result = await res.json();
+    if (result.success) {
+      input.value = '';
+      songsCache = result.songs || songsCache;
+      setSongStatus(result.duplicate ? 'songs_duplicate' : 'songs_thanks');
+    } else {
+      setSongStatus('songs_error');
+    }
+  } catch {
+    setSongStatus('songs_error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function setSongStatus(key) {
+  songsStatusKey = key || '';
+  renderSongStatus();
+}
+
+function renderSongStatus() {
+  const el = document.getElementById('songs-status');
+  if (!el) return;
+  const t = T[lang] || T.en;
+  el.textContent = songsStatusKey ? (t[songsStatusKey] || '') : '';
+  el.classList.toggle('visible', !!songsStatusKey);
+}
+
+async function openSongs() {
+  const overlay = document.getElementById('songs-overlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+  overlay.removeAttribute('aria-hidden');
+  document.body.style.overflow = 'hidden';
+
+  // Show whatever we already have straight away, then refresh behind it so
+  // reopening the popup never looks empty while the fetch is in flight.
+  renderSongs();
+  if (!RSVP_ENDPOINT) return;
+  try {
+    const res = await fetch(RSVP_ENDPOINT, {
+      method: 'POST', body: JSON.stringify({ action: 'listSongs' }),
+    });
+    const result = await res.json();
+    if (result.success) { songsCache = result.songs || []; renderSongs(); }
+  } catch {
+    if (!songsCache) { songsCache = []; renderSongs(); }
+  }
+}
+
+function closeSongs() {
+  const overlay = document.getElementById('songs-overlay');
+  if (!overlay) return;
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+function renderSongs() {
+  const list  = document.getElementById('songs-list');
+  const count = document.getElementById('songs-modal-count');
+  if (!list) return;
+  const t = T[lang] || T.en;
+
+  if (songsCache === null) {
+    list.innerHTML = `<li class="songs-empty">${t.songs_loading}</li>`;
+    if (count) count.textContent = '';
+    return;
+  }
+  if (songsCache.length === 0) {
+    list.innerHTML = `<li class="songs-empty">${t.songs_empty}</li>`;
+    if (count) count.textContent = '';
+    return;
+  }
+
+  list.innerHTML = songsCache.map(s => `
+    <li class="songs-item">
+      <span class="songs-item-title">${escHtml(s.song)}</span>
+      <span class="songs-item-by">${escHtml(s.name || t.songs_anonymous)}</span>
+    </li>`).join('');
+  if (count) count.textContent = (t.songs_count || '').replace('{count}', String(songsCache.length));
+}
+
 function clearRecognition() {
   householdToken = null;
   householdPartySize = null;
   householdGuests = [];
+  householdAddress = '';
   editToken = null;
   localStorage.removeItem('weddingHouseholdToken');
   localStorage.removeItem('weddingEditToken');
