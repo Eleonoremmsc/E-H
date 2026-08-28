@@ -510,7 +510,7 @@ const T = {
     rsvp_country_other:          'Indiquez votre pays',
     rsvp_allergies:              'Allergies ou intolérances (facultatif)',
     rsvp_allergies_placeholder:  'ex. fruits à coque, gluten, végétarien',
-    songs_title:         'Les chansons sur lesquelles vous danserez toute la nuit !',
+    songs_title:         'Les chansons pour danser toute la nuit !',
     songs_note:          'Un titre à la fois — la playlist se construit au fur et à mesure.',
     songs_placeholder:   'Artiste — Titre',
     songs_add:           'Ajouter',
@@ -748,19 +748,19 @@ const T = {
     rsvp_country_other:          'Bitte nennen Sie Ihr Land',
     rsvp_allergies:              'Allergien oder Unverträglichkeiten (optional)',
     rsvp_allergies_placeholder:  'z. B. Nüsse, Gluten, vegetarisch',
-    songs_title:         'Die Songs, zu denen Sie die ganze Nacht tanzen werden!',
-    songs_note:          'Ein Titel nach dem anderen — die Playlist wächst mit jedem Vorschlag.',
+    songs_title:         'Lieder, zu denen wir tanzen werden!',
+    songs_note:          'Ein Lied nach dem anderen — die Playlist wächst mit jedem Vorschlag.',
     songs_placeholder:   'Interpret — Titel',
     songs_add:           'Hinzufügen',
     songs_view:          'Playlist ansehen',
-    songs_thanks:        'Zur Playlist hinzugefügt. Noch einer?',
+    songs_thanks:        'Zur Playlist hinzugefügt. Noch ein Lied?',
     songs_duplicate:     'Steht schon auf der Liste — guter Geschmack.',
     songs_error:         'Das hat nicht geklappt. Bitte noch einmal versuchen.',
     songs_close:         'Schließen',
     songs_modal_title:   'Die Playlist bisher',
-    songs_empty:         'Noch keine Songs — machen Sie den Anfang.',
+    songs_empty:         'Noch keine Lieder — machen Sie den Anfang.',
     songs_loading:       'Wird geladen…',
-    songs_count:         '{count} Songs bisher',
+    songs_count:         '{count} Lieder bisher',
   },
 };
 
@@ -1569,8 +1569,6 @@ function prefillForm(data) {
 let householdToken     = localStorage.getItem('weddingHouseholdToken') || null;
 let householdPartySize = null;
 let householdGuests    = [];   // names of everyone on the invitation
-let householdAddress   = '';   // postal address already on the guest list, if any
-let householdCountry   = '';   // country already on the guest list, if any
 let lastMatches        = [];   // candidates from the most recent search
 let recognition        = null; // {status, name, count} for the greeting banner
 let recognitionPromise = Promise.resolve();
@@ -1628,8 +1626,6 @@ async function silentRecognizeByHousehold(token) {
     } else {
       householdPartySize = result.partySize;
       householdGuests    = result.guests || [];
-      householdAddress   = result.address || '';
-      householdCountry   = result.country || '';
       setRecognition('pending', extractGreetingName(result.label), result.partySize || 0);
     }
   } catch { /* stay silent — treat as unrecognized */ }
@@ -1703,19 +1699,17 @@ function renderFindResults(matches) {
   resultsEl.querySelectorAll('.rsvp-find-candidate').forEach(btn => {
     btn.addEventListener('click', () => {
       const m = lastMatches[parseInt(btn.dataset.idx, 10)];
-      if (m) confirmHousehold(m.token, m.partySize, m.guests, m.address, m.country);
+      if (m) confirmHousehold(m.token, m.partySize, m.guests);
     });
   });
   const noneBtn = document.getElementById('rsvp-find-none-btn');
   if (noneBtn) noneBtn.addEventListener('click', () => revealMainFields());
 }
 
-async function confirmHousehold(token, partySize, guests, address, country) {
+async function confirmHousehold(token, partySize, guests) {
   householdToken = token;
   householdPartySize = partySize ? parseInt(partySize, 10) : null;
   householdGuests = Array.isArray(guests) ? guests : [];
-  householdAddress = address || '';
-  householdCountry = country || '';
   localStorage.setItem('weddingHouseholdToken', token);
   scaffoldAttendeesForHousehold();
   revealMainFields();
@@ -1737,13 +1731,6 @@ function scaffoldAttendeesForHousehold() {
     if (fn && !fn.value.trim()) fn.value = first.firstName || '';
     if (ln && !ln.value.trim()) ln.value = first.lastName || '';
   }
-
-  // The address we hold is only a starting point — it may be years old, so
-  // it goes in as an ordinary editable value the guest can correct.
-  const addr = document.getElementById('f-address');
-  if (addr && householdAddress && !addr.value.trim()) addr.value = householdAddress;
-  const ctry = document.getElementById('f-country');
-  if (ctry && householdCountry && !ctry.value) setCountry(householdCountry);
 
   document.getElementById('attendees-list').innerHTML = '';
   attendeeCount = 0;
@@ -1939,8 +1926,6 @@ function clearRecognition() {
   householdToken = null;
   householdPartySize = null;
   householdGuests = [];
-  householdAddress = '';
-  householdCountry = '';
   editToken = null;
   localStorage.removeItem('weddingHouseholdToken');
   localStorage.removeItem('weddingEditToken');

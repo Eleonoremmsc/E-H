@@ -190,6 +190,10 @@ function lookupByName(data) {
   const qTokens = tokenize(normalizeName(data && data.name));
   if (qTokens.length === 0) return { success: true, matches: [] };
 
+  // Deliberately returns names only, never the address or country on file:
+  // clicking "that's me" is not proof of identity, so a name search must not
+  // be able to read back where somebody lives. Guests type their own address.
+  //
   // Score every named guest, then keep each household's best-scoring member.
   // Remember which member that was: they are almost certainly the person
   // filling the form, so they should be offered as the contact.
@@ -217,8 +221,6 @@ function lookupByName(data) {
         label:     buildHouseholdLabel(members),
         partySize: members.length,
         guests:    orderGuests(members, bestMember[x.token]),
-        address:   householdField(members, 'address'),
-        country:   householdField(members, 'country'),
       };
     });
 
@@ -279,8 +281,6 @@ function lookupByToken(data) {
     label:     buildHouseholdLabel(members),
     partySize: members.length,
     guests:    orderGuests(members, null),
-    address:   householdField(members, 'address'),
-    country:   householdField(members, 'country'),
   };
 }
 
