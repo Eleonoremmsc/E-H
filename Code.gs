@@ -351,18 +351,52 @@ function getGuestListRows() {
 // It only ever reads. Nothing on Invites is changed.
 // ══════════════════════════════════════════════════
 
+// The NAME OF YOUR TAB goes inside the quotes below — "CARTONS_TAB" is this
+// setting's name in the script, not a name to give the tab. If your tab is
+// called something else, either rename it to match or change the quoted text.
+// Failing that, any tab whose row 1 has Prénom / Nom / Nb is found anyway.
 const CARTONS_TAB = 'Cartons';        // tab with the updated per-card list
 const COMPARE_REPORT_TAB = 'List comparison';
 
+// Finds the updated per-card list. Tries the configured name first, then
+// falls back to recognising the tab by its headers, so the comparison does
+// not depend on what the tab happens to be called.
+function getCartonsSheet() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const named = ss.getSheetByName(CARTONS_TAB);
+  if (named) return named;
+
+  const reserved = [SHEET_NAME, GUESTS_NAME, GUESTLIST_NAME, COMPARE_REPORT_TAB];
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const sheet = sheets[i];
+    if (reserved.indexOf(sheet.getName()) !== -1) continue;
+    if (sheet.getLastRow() < 2 || sheet.getLastColumn() < 2) continue;
+    const header = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+      .map(function(h) { return (h || '').toString().toLowerCase().trim(); });
+    const hasFirst = header.indexOf('prénom') !== -1 || header.indexOf('prenom') !== -1;
+    const hasLast  = header.indexOf('nom') !== -1;
+    const hasCount = header.indexOf('nb') !== -1;
+    if (hasFirst && hasLast && hasCount) return sheet;
+  }
+  return null;
+}
+
 function compareGuestLists() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
-  const cartons = ss.getSheetByName(CARTONS_TAB);
+  const cartons = getCartonsSheet();
   if (!cartons) {
-    Logger.log('PROBLEM: no tab named "' + CARTONS_TAB + '". Tabs present: ' +
-               ss.getSheets().map(function(s) { return s.getName(); }).join(', ') +
-               '. Set CARTONS_TAB to the right name.');
+    Logger.log('PROBLEM: could not find the updated card list.');
+    Logger.log('Tabs present: ' + ss.getSheets().map(function(s) { return s.getName(); }).join(', '));
+    Logger.log('CARTONS_TAB is a setting in this script, not the name of the tab. ' +
+               'Either rename your tab to "' + CARTONS_TAB + '", or edit line ' +
+               '`const CARTONS_TAB = \'' + CARTONS_TAB + '\';` so the quoted text ' +
+               'matches your tab\'s real name.');
+    Logger.log('The tab is also found automatically if row 1 contains the ' +
+               'headers Prénom, Nom and Nb.');
     return;
   }
+  Logger.log('Reading updated card list from tab "' + cartons.getName() + '".');
 
   const wanted  = expandCartons(cartons);            // from the updated list
   const current = getGuestListRows().filter(function(g) { return g.firstName || g.lastName; });
