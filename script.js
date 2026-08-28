@@ -16,15 +16,35 @@ const CONFIG = {
 const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw5I6qwAYXmzVEtqRG8vpa02-1hwdifOkegQXehHQgER6GwzxD52GXn9BzzzO_s2UWa/exec';
 
 // ── Event Data ──────────────────────────────────
+// The weekend is two separate events. A downloaded .ics carries both at
+// once; the web-calendar providers below take one event per link, so the
+// Friday cocktail is offered as its own explicit second click.
 const EVENT = {
   title:       'Eléonore & Hubert',
   startUtc:    '20270626T143000Z',   // 16:30 CEST = 14:30 UTC
   endUtc:      '20270626T215900Z',   // 23:59 CEST = 21:59 UTC
   startLocal:  '20270626T163000',
   endLocal:    '20270626T235900',
+  startPlain:  '2027-06-26T16:30:00',
+  endPlain:    '2027-06-26T23:59:00',
   timezone:    'Europe/Paris',
   location:    'Domaine des Pins, 1100 Chemin de Mormoiron par les Mourands, 84410 Crillon-le-Brave, France',
   description: 'Wedding celebration in Provence.',
+  uid:         'eleonore-hubert-2027-06-26@wedding',
+};
+
+const EVENT_FRIDAY = {
+  title:       'Eléonore & Hubert — Cocktail',
+  startUtc:    '20270625T170000Z',   // 19:00 CEST = 17:00 UTC
+  endUtc:      '20270625T200000Z',   // 22:00 CEST = 20:00 UTC
+  startLocal:  '20270625T190000',
+  endLocal:    '20270625T220000',
+  startPlain:  '2027-06-25T19:00:00',
+  endPlain:    '2027-06-25T22:00:00',
+  timezone:    'Europe/Paris',
+  location:    'Château Pesquié, Mormoiron, France',
+  description: 'Cocktail evening the night before the wedding.',
+  uid:         'eleonore-hubert-2027-06-25-cocktail@wedding',
 };
 
 // ── Translations ────────────────────────────────
@@ -175,13 +195,19 @@ const T = {
     act_islesorgue_distance:   '~35 min drive',
     activities_map_note:  'A rough guide to distances from the estate — not to scale.',
     dress_title:         'Dress Code',
-    dress_headline:      'Formal Attire',
-    dress_intro:         'We invite our guests to dress elegantly for a Provençal summer evening.',
     dress_women:         'For Women',
-    dress_w_main:        'Evening dress, cocktail dress, or elegant ensemble.',
-    dress_wnote:         'The ceremony will take place outdoors — block heels or wedges are recommended.',
     dress_men:           'For Men',
-    dress_m_main:        'A suit with a tie.',
+    dress_fri_label:     'Friday 25 June · Cocktail Evening',
+    dress_fri_headline:  'Summer Chic',
+    dress_fri_intro:     'A relaxed evening among the vines — put together, but nothing formal.',
+    dress_fri_w:         'A summer dress or an elegant ensemble.',
+    dress_fri_m:         'Linen or chinos with a shirt. Jacket optional, no tie needed.',
+    dress_sat_label:     'Saturday 26 June · Ceremony & Reception',
+    dress_sat_headline:  'Formal Attire',
+    dress_sat_intro:     'The church first, then dinner and dancing outdoors.',
+    dress_sat_w:         'Evening dress, cocktail dress, or elegant ensemble.',
+    dress_sat_wnote:     'The reception after the church is outdoors on grass — block heels or wedges are recommended.',
+    dress_sat_m:         'A suit with a tie.',
     map_title:           'Getting There',
     map_gmaps:           'Open in Google Maps',
     map_abroad_title:    'Flying In From Abroad',
@@ -237,6 +263,11 @@ const T = {
     rsvp_find_prompt:     'Is this you?',
     rsvp_find_none:       'None of these — add my details manually',
     recognition_not_you:        'Not you?',
+    recognition_edit:           'View or change my response',
+    recognition_rsvp:           'Receive my invitation',
+    cal_both_note:              "Apple Calendar and the iCal file add both evenings at once — Friday's cocktail and Saturday's wedding.",
+    cal_friday_note:            "Saturday is added. Friday's cocktail is a separate event:",
+    cal_friday_btn:             "＋ Also add Friday's cocktail",
     recognition_greeting_responded: 'Hi {name} — you’re confirmed for {count}.',
     recognition_greeting_pending:   'Hi {name} — welcome back, you haven’t RSVP’d yet.',
   },
@@ -387,13 +418,19 @@ const T = {
     act_islesorgue_distance:   '~35 min en voiture',
     activities_map_note:  "Un aperçu approximatif des distances depuis le domaine — sans échelle précise.",
     dress_title:         'Code vestimentaire',
-    dress_headline:      'Tenue formelle',
-    dress_intro:         "Nous invitons nos invités à s'habiller avec élégance pour une soirée d'été provençale.",
     dress_women:         'Pour les femmes',
-    dress_w_main:        'Robe de soirée, robe de cocktail ou ensemble élégant.',
-    dress_wnote:         "La cérémonie se déroule en extérieur — des talons compensés ou blocs sont recommandés.",
     dress_men:           'Pour les hommes',
-    dress_m_main:        'Costume-cravate.',
+    dress_fri_label:     'Vendredi 25 juin · Soirée cocktail',
+    dress_fri_headline:  'Chic estival',
+    dress_fri_intro:     'Une soirée décontractée au milieu des vignes — soignée, mais sans formalité.',
+    dress_fri_w:         "Une robe d'été ou un ensemble élégant.",
+    dress_fri_m:         'Lin ou chino avec une chemise. Veste facultative, cravate non nécessaire.',
+    dress_sat_label:     'Samedi 26 juin · Cérémonie & Réception',
+    dress_sat_headline:  'Tenue de soirée',
+    dress_sat_intro:     "L'église d'abord, puis dîner et soirée dansante en extérieur.",
+    dress_sat_w:         'Robe de soirée, robe de cocktail ou ensemble élégant.',
+    dress_sat_wnote:     "La réception après l'église se déroule en extérieur, sur l'herbe — des talons compensés ou blocs sont recommandés.",
+    dress_sat_m:         'Costume-cravate.',
     map_title:           'Accès',
     map_gmaps:           'Ouvrir dans Google Maps',
     map_abroad_title:    "De l'étranger",
@@ -449,6 +486,11 @@ const T = {
     rsvp_find_prompt:     "Est-ce vous ?",
     rsvp_find_none:       'Aucun de ces choix — ajouter mes informations manuellement',
     recognition_not_you:        "Ce n'est pas vous ?",
+    recognition_edit:           'Voir ou modifier ma réponse',
+    recognition_rsvp:           'Recevoir mon invitation',
+    cal_both_note:              "Apple Calendar et le fichier iCal ajoutent les deux soirées d'un coup — le cocktail du vendredi et le mariage du samedi.",
+    cal_friday_note:            'Le samedi est ajouté. Le cocktail du vendredi est un événement distinct :',
+    cal_friday_btn:             '＋ Ajouter aussi le cocktail du vendredi',
     recognition_greeting_responded: 'Bonjour {name} — votre présence est confirmée pour {count}.',
     recognition_greeting_pending:   "Bonjour {name} — heureux de vous revoir, vous n'avez pas encore répondu.",
   },
@@ -599,13 +641,19 @@ const T = {
     act_islesorgue_distance:   '~35 Min. mit dem Auto',
     activities_map_note:  'Eine ungefähre Orientierung zu den Entfernungen ab dem Anwesen — nicht maßstabsgetreu.',
     dress_title:         'Dresscode',
-    dress_headline:      'Formelle Kleidung',
-    dress_intro:         'Wir laden unsere Gäste ein, sich elegant für einen provenzalischen Sommerabend zu kleiden.',
     dress_women:         'Für Damen',
-    dress_w_main:        'Abendkleid, Cocktailkleid oder elegantes Ensemble.',
-    dress_wnote:         'Die Zeremonie findet im Freien statt — Keilabsätze oder Blockabsätze werden empfohlen.',
     dress_men:           'Für Herren',
-    dress_m_main:        'Ein Anzug mit Krawatte.',
+    dress_fri_label:     'Freitag, 25. Juni · Cocktailabend',
+    dress_fri_headline:  'Sommerlich schick',
+    dress_fri_intro:     'Ein entspannter Abend zwischen den Reben — gepflegt, aber ohne Förmlichkeit.',
+    dress_fri_w:         'Ein Sommerkleid oder ein elegantes Ensemble.',
+    dress_fri_m:         'Leinen oder Chino mit Hemd. Sakko optional, Krawatte nicht nötig.',
+    dress_sat_label:     'Samstag, 26. Juni · Trauung & Empfang',
+    dress_sat_headline:  'Abendgarderobe',
+    dress_sat_intro:     'Zuerst die Kirche, dann Dinner und Tanz im Freien.',
+    dress_sat_w:         'Abendkleid, Cocktailkleid oder elegantes Ensemble.',
+    dress_sat_wnote:     'Der Empfang nach der Kirche findet draußen auf Rasen statt — Keil- oder Blockabsätze werden empfohlen.',
+    dress_sat_m:         'Ein Anzug mit Krawatte.',
     map_title:           'Anreise',
     map_gmaps:           'In Google Maps öffnen',
     map_abroad_title:    'Aus dem Ausland anreisen',
@@ -661,6 +709,11 @@ const T = {
     rsvp_find_prompt:     'Sind Sie das?',
     rsvp_find_none:       'Keine davon — Angaben manuell hinzufügen',
     recognition_not_you:        'Nicht Sie?',
+    recognition_edit:           'Antwort ansehen oder ändern',
+    recognition_rsvp:           'Meine Einladung erhalten',
+    cal_both_note:              'Apple Calendar und die iCal-Datei fügen beide Abende auf einmal hinzu — den Cocktail am Freitag und die Hochzeit am Samstag.',
+    cal_friday_note:            'Samstag ist eingetragen. Der Cocktail am Freitag ist ein eigener Termin:',
+    cal_friday_btn:             '＋ Cocktail am Freitag ebenfalls hinzufügen',
     recognition_greeting_responded: 'Hallo {name} — Sie sind für {count} bestätigt.',
     recognition_greeting_pending:   'Hallo {name} — willkommen zurück, Sie haben noch nicht geantwortet.',
   },
@@ -712,6 +765,8 @@ function applyLang(l) {
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === l);
   });
+
+  renderBanner();
 }
 
 document.addEventListener('click', e => {
@@ -926,37 +981,58 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
-function addToCalendar(type) {
-  const e  = EVENT;
+function calendarUrls(e) {
   const enc = encodeURIComponent;
-
-  const urls = {
+  return {
     google: `https://calendar.google.com/calendar/render?action=TEMPLATE` +
              `&text=${enc(e.title)}&dates=${e.startUtc}/${e.endUtc}` +
              `&details=${enc(e.description)}&location=${enc(e.location)}`,
 
     outlook: `https://outlook.live.com/calendar/0/deeplink/compose?` +
-              `subject=${enc(e.title)}&startdt=2027-06-26T16:30:00` +
-              `&enddt=2027-06-26T23:59:00&location=${enc(e.location)}&body=${enc(e.description)}`,
+              `subject=${enc(e.title)}&startdt=${e.startPlain}` +
+              `&enddt=${e.endPlain}&location=${enc(e.location)}&body=${enc(e.description)}`,
 
     office365: `https://outlook.office.com/calendar/0/deeplink/compose?` +
-                `subject=${enc(e.title)}&startdt=2027-06-26T16:30:00` +
-                `&enddt=2027-06-26T23:59:00&location=${enc(e.location)}&body=${enc(e.description)}`,
+                `subject=${enc(e.title)}&startdt=${e.startPlain}` +
+                `&enddt=${e.endPlain}&location=${enc(e.location)}&body=${enc(e.description)}`,
 
     yahoo: `https://calendar.yahoo.com/?v=60&title=${enc(e.title)}` +
-            `&st=20270626T163000&et=20270626T235900` +
+            `&st=${e.startLocal}&et=${e.endLocal}` +
             `&desc=${enc(e.description)}&in_loc=${enc(e.location)}`,
   };
+}
 
+function addToCalendar(type) {
+  // A downloaded file can hold both days, so give them both in one click.
   if (type === 'apple' || type === 'ical') {
-    downloadICS();
-  } else if (urls[type]) {
+    downloadICS([EVENT_FRIDAY, EVENT]);
+    return;
+  }
+  // Web calendars accept one event per link, and opening a second window
+  // would be swallowed by popup blockers — so add Saturday now and offer
+  // Friday as its own deliberate click.
+  const urls = calendarUrls(EVENT);
+  if (urls[type]) {
     window.open(urls[type], '_blank', 'noopener,noreferrer');
+    showFridayFollowUp(type);
   }
 }
 
-function downloadICS() {
-  const e = EVENT;
+function showFridayFollowUp(type) {
+  const host = document.getElementById('cal-friday-followup');
+  if (!host) return;
+  const t = T[lang] || T.en;
+  const url = calendarUrls(EVENT_FRIDAY)[type];
+  if (!url) return;
+  host.innerHTML =
+    `<p class="cal-followup-note">${escHtml(t.cal_friday_note)}</p>` +
+    `<a class="btn btn-outline btn-full" href="${escHtml(url)}" target="_blank" rel="noopener noreferrer">` +
+    `${escHtml(t.cal_friday_btn)}</a>`;
+  host.style.display = 'block';
+}
+
+function downloadICS(events) {
+  const list = Array.isArray(events) ? events : [events || EVENT];
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -982,18 +1058,26 @@ function downloadICS() {
     'RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10',
     'END:STANDARD',
     'END:VTIMEZONE',
-    'BEGIN:VEVENT',
-    `DTSTART;TZID=Europe/Paris:${e.startLocal}`,
-    `DTEND;TZID=Europe/Paris:${e.endLocal}`,
-    `SUMMARY:${e.title}`,
-    `LOCATION:${e.location.replace(/,/g, '\\,')}`,
-    `DESCRIPTION:${e.description}`,
-    'STATUS:CONFIRMED',
-    'SEQUENCE:0',
-    'UID:eleonore-hubert-2027-06-26@wedding',
-    'END:VEVENT',
+  ].concat(
+    // One VEVENT per day, each with its own UID so calendars treat them as
+    // separate entries rather than overwriting one another.
+    list.reduce(function(acc, e) {
+      return acc.concat([
+        'BEGIN:VEVENT',
+        `DTSTART;TZID=Europe/Paris:${e.startLocal}`,
+        `DTEND;TZID=Europe/Paris:${e.endLocal}`,
+        `SUMMARY:${e.title}`,
+        `LOCATION:${e.location.replace(/,/g, '\\,')}`,
+        `DESCRIPTION:${e.description}`,
+        'STATUS:CONFIRMED',
+        'SEQUENCE:0',
+        `UID:${e.uid}`,
+        'END:VEVENT',
+      ]);
+    }, [])
+  ).concat([
     'END:VCALENDAR',
-  ].join('\r\n');
+  ]).join('\r\n');
 
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
   const url  = URL.createObjectURL(blob);
@@ -1289,10 +1373,7 @@ async function handleRSVPSubmit(e) {
       }
       // Reflect the new state on the page straight away, rather than only
       // after the guest happens to reload.
-      const t = T[lang] || T.en;
-      showBanner(t.recognition_greeting_responded
-        .replace('{name}', data.firstName || '')
-        .replace('{count}', String((data.attendees || []).length)));
+      setRecognition('responded', data.firstName || '', (data.attendees || []).length);
     } else {
       alert('Something went wrong. Please try again.');
     }
@@ -1346,6 +1427,7 @@ let householdToken     = localStorage.getItem('weddingHouseholdToken') || null;
 let householdPartySize = null;
 let householdGuests    = [];   // names of everyone on the invitation
 let lastMatches        = [];   // candidates from the most recent search
+let recognition        = null; // {status, name, count} for the greeting banner
 let recognitionPromise = Promise.resolve();
 
 const GREETING_SKIP_WORDS = ['mr', 'mrs', 'ms', 'mme', 'melle', 'mlle', 'herr', 'frau', 'and', 'et', 'und', 'the'];
@@ -1372,6 +1454,9 @@ function initRecognition() {
   if (skipBtn) skipBtn.addEventListener('click', () => revealMainFields());
   if (notYouBtn) notYouBtn.addEventListener('click', clearRecognition);
 
+  const actionBtn = document.getElementById('recognition-action');
+  if (actionBtn) actionBtn.addEventListener('click', openRSVP);
+
   if (editToken) return; // came via an emailed edit link this load — untouched, no banner
 
   if (householdToken) {
@@ -1392,14 +1477,13 @@ async function silentRecognizeByHousehold(token) {
     const t = T[lang] || T.en;
     if (result.status === 'responded') {
       editToken = result.editToken;
-      const name = result.data.firstName || extractGreetingName(result.label);
-      showBanner(t.recognition_greeting_responded
-        .replace('{name}', name)
-        .replace('{count}', String((result.data.attendees || []).length)));
+      setRecognition('responded',
+        result.data.firstName || extractGreetingName(result.label),
+        (result.data.attendees || []).length);
     } else {
       householdPartySize = result.partySize;
       householdGuests    = result.guests || [];
-      showBanner(t.recognition_greeting_pending.replace('{name}', extractGreetingName(result.label)));
+      setRecognition('pending', extractGreetingName(result.label), result.partySize || 0);
     }
   } catch { /* stay silent — treat as unrecognized */ }
 }
@@ -1411,10 +1495,8 @@ async function silentRecognizeByEditToken(token) {
     const result = await res.json();
     if (!result.success || !result.data) { localStorage.removeItem('weddingEditToken'); return; }
     editToken = token;
-    const t = T[lang] || T.en;
-    showBanner(t.recognition_greeting_responded
-      .replace('{name}', result.data.firstName || '')
-      .replace('{count}', String((result.data.attendees || []).length)));
+    setRecognition('responded', result.data.firstName || '',
+                   (result.data.attendees || []).length);
   } catch { /* stay silent */ }
 }
 
@@ -1526,12 +1608,34 @@ function revealMainFields() {
   if (main) main.style.display = 'block';
 }
 
-function showBanner(text) {
+// The banner is stored as state, not as a finished string, so switching
+// language re-renders it. Writing the text once left it stuck in whichever
+// language happened to be active when the guest was first recognised.
+function setRecognition(status, name, count) {
+  recognition = { status: status, name: name || '', count: count || 0 };
+  renderBanner();
+}
+
+function renderBanner() {
   const banner = document.getElementById('recognition-banner');
   const textEl = document.getElementById('recognition-text');
-  if (!banner || !textEl || !text.trim()) return;
-  textEl.textContent = text;
-  banner.style.display = 'flex';
+  const actionBtn = document.getElementById('recognition-action');
+  if (!banner || !textEl) return;
+
+  if (!recognition) { banner.style.display = 'none'; return; }
+
+  const t = T[lang] || T.en;
+  const key = recognition.status === 'responded'
+    ? 'recognition_greeting_responded' : 'recognition_greeting_pending';
+  textEl.textContent = (t[key] || '')
+    .replace('{name}', recognition.name)
+    .replace('{count}', String(recognition.count));
+
+  if (actionBtn) {
+    actionBtn.textContent = recognition.status === 'responded'
+      ? t.recognition_edit : t.recognition_rsvp;
+  }
+  banner.style.display = 'block';
 }
 
 function clearRecognition() {
@@ -1541,6 +1645,6 @@ function clearRecognition() {
   editToken = null;
   localStorage.removeItem('weddingHouseholdToken');
   localStorage.removeItem('weddingEditToken');
-  const banner = document.getElementById('recognition-banner');
-  if (banner) banner.style.display = 'none';
+  recognition = null;
+  renderBanner();
 }
