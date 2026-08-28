@@ -339,6 +339,269 @@ function getGuestListRows() {
   return out;
 }
 
+// ══════════════════════════════════════════════════
+// COMPARING AN UPDATED CARTON LIST AGAINST THE LIVE ONE
+//
+// Set CARTONS_TAB to the tab holding the corrected invitation list in its
+// original per-card form (Prénom / Nom / Supplément / Prénom Femme / Nb,
+// with an "Invit" tag), then run compareGuestLists() from the editor. It
+// expands those cards into individual people the same way the first import
+// did and writes a report tab listing who to add and who to remove.
+//
+// It only ever reads. Nothing on Invites is changed.
+// ══════════════════════════════════════════════════
+
+const CARTONS_TAB = 'Cartons';        // tab with the updated per-card list
+const COMPARE_REPORT_TAB = 'List comparison';
+
+function compareGuestLists() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const cartons = ss.getSheetByName(CARTONS_TAB);
+  if (!cartons) {
+    Logger.log('PROBLEM: no tab named "' + CARTONS_TAB + '". Tabs present: ' +
+               ss.getSheets().map(function(s) { return s.getName(); }).join(', ') +
+               '. Set CARTONS_TAB to the right name.');
+    return;
+  }
+
+  const wanted  = expandCartons(cartons);            // from the updated list
+  const current = getGuestListRows().filter(function(g) { return g.firstName || g.lastName; });
+
+  if (wanted.length === 0) {
+    Logger.log('PROBLEM: read 0 guests from "' + CARTONS_TAB + '". Expected columns ' +
+               'Prénom / Nom / Supplément / Prénom Femme / Nb with an "Invit" tag.');
+    return;
+  }
+
+  const key = function(o) { return normalizeName((o.firstName || '') + ' ' + (o.lastName || '')); };
+
+  const currentByKey = {};
+  current.forEach(function(g) {
+    const k = key(g);
+    if (!currentByKey[k]) currentByKey[k] = [];
+    currentByKey[k].push(g);
+  });
+  const wantedByKey = {};
+  wanted.forEach(function(g) {
+    const k = key(g);
+    if (!wantedByKey[k]) wantedByKey[k] = [];
+    wantedByKey[k].push(g);
+  });
+
+  // Unnamed placeholder seats can't be compared by name; count them instead.
+  const toAdd    = wanted.filter(function(g)  { return g.firstName && !currentByKey[key(g)]; });
+  const toRemove = current.filter(function(g) { return g.firstName && !wantedByKey[key(g)]; });
+
+  // A corrected spelling shows up as one removal plus one addition. Pair
+  // those up so they aren't actioned as a delete and a re-add.
+  // Anchor on the surname: same family plus a recognisably similar first
+  // name is a corrected spelling, whereas two different people in one family
+  // ("Marcus" vs "Anne-Françoise" Zuhorn) share a surname and nothing else.
+  // A blended score over the whole name cannot separate those two cases.
+  const renames = [];
+  const addedUsed = {};
+  toRemove.forEach(function(gone) {
+    let best = null, bestScore = 0;
+    toAdd.forEach(function(added, i) {
+      if (addedUsed[i]) return;
+      const surnameSim = nameRatio(normalizeName(gone.lastName),  normalizeName(added.lastName));
+      const firstSim   = nameRatio(normalizeName(gone.firstName), normalizeName(added.firstName));
+      if (surnameSim < 0.85 || firstSim < 0.5) return;
+      const s = (surnameSim + firstSim) / 2;
+      if (s > bestScore) { bestScore = s; best = { added: added, i: i }; }
+    });
+    if (best) {
+      addedUsed[best.i] = true;
+      renames.push({ from: gone, to: best.added, score: bestScore });
+    }
+  });
+  const renamedFrom = {}, renamedTo = {};
+  renames.forEach(function(r) { renamedFrom[key(r.from)] = true; renamedTo[key(r.to)] = true; });
+
+  const realAdds    = toAdd.filter(function(g)    { return !renamedTo[key(g)]; });
+  const realRemoves = toRemove.filter(function(g) { return !renamedFrom[key(g)]; });
+
+  // ── write the report ──────────────────────────────
+  let out = ss.getSheetByName(COMPARE_REPORT_TAB);
+  if (out) out.clear(); else out = ss.insertSheet(COMPARE_REPORT_TAB);
+
+  const rows = [['Action', 'First name', 'Last name', 'Household / context', 'Note']];
+  realAdds.forEach(function(g) {
+    rows.push(['ADD', g.firstName, g.lastName, g.card || '', 'in updated list, not on the site']);
+  });
+  realRemoves.forEach(function(g) {
+    rows.push(['REMOVE', g.firstName, g.lastName, g.householdId || '',
+               'on the site, not in the updated list']);
+  });
+  renames.forEach(function(r) {
+    rows.push(['CHECK — renamed?', r.to.firstName, r.to.lastName, r.to.card || '',
+               'was "' + r.from.firstName + ' ' + r.from.lastName + '" on the site']);
+  });
+
+  const wantedNamed  = wanted.filter(function(g) { return g.firstName; }).length;
+  const currentNamed = current.filter(function(g) { return g.firstName; }).length;
+  rows.push([]);
+  rows.push(['SUMMARY', '', '', '',
+             'updated list: ' + wanted.length + ' seats (' + wantedNamed + ' named) · ' +
+             'site: ' + current.length + ' seats (' + currentNamed + ' named)']);
+
+  out.getRange(1, 1, rows.length, 5).setValues(rows.map(function(r) {
+    while (r.length < 5) r.push('');
+    return r;
+  }));
+  out.setFrozenRows(1);
+
+  Logger.log('To add: ' + realAdds.length + ' · to remove: ' + realRemoves.length +
+             ' · possible renames: ' + renames.length);
+  Logger.log('Updated list: ' + wanted.length + ' seats (' + wantedNamed + ' named). ' +
+             'Site: ' + current.length + ' seats (' + currentNamed + ' named).');
+  Logger.log('Full report written to the "' + COMPARE_REPORT_TAB + '" tab.');
+}
+
+// ── Carton parsing (mirrors the original import) ──
+
+const CARTON_COUPLE_TITLES = ['mr et mme', 'm et mme', 'mr and mrs', 'herr und frau',
+                              'monsieur et madame', 'mr & mme'];
+const CARTON_SOLO_TITLES   = ['mademoiselle', 'monsieur', 'madame', 'melle', 'mlle', 'mrs',
+                              'miss', 'herr', 'frau', 'mme', 'mr.', 'mr', 'ms', 'm.', 'dr'];
+// French/English only: German "Frau Tina" is simply Ms Tina, not a husband's name.
+const CARTON_WIFE_TITLES   = ['mme', 'madame', 'mrs'];
+const CARTON_SEPARATORS    = /\s*(?:,|\+|\/|&|\bet\b|\band\b|\bund\b)\s*/i;
+const CARTON_VAGUE         = /(et leurs enfants|and family|leurs enfants|^enfants\b|copine|\bamie?\b|xyz|nouvelle femme|soeur de pere)/i;
+
+function cartonLeadingTitle(text) {
+  const low = (text || '').toLowerCase().trim();
+  for (let i = 0; i < CARTON_COUPLE_TITLES.length; i++) {
+    if (low.indexOf(CARTON_COUPLE_TITLES[i]) === 0) return CARTON_COUPLE_TITLES[i];
+  }
+  for (let j = 0; j < CARTON_SOLO_TITLES.length; j++) {
+    const t = CARTON_SOLO_TITLES[j];
+    if (low.indexOf(t + ' ') === 0 || low === t) return t;
+  }
+  return '';
+}
+
+function cartonStripTitles(text) {
+  let out = (text || '').trim();
+  for (;;) {
+    const t = cartonLeadingTitle(out);
+    if (!t) return out.replace(/^[\s.,]+|[\s.,]+$/g, '');
+    out = out.substring(t.length).replace(/^[\s.,]+/, '');
+  }
+}
+
+function cartonSplitNames(text) {
+  if (!text) return [];
+  return text.split(CARTON_SEPARATORS)
+    .map(function(p) { return cartonStripTitles(p); })
+    .filter(function(n) { return n && !CARTON_VAGUE.test(n); });
+}
+
+function cartonHasCoupleTitle(text) {
+  const low = (text || '').toLowerCase();
+  for (let i = 0; i < CARTON_COUPLE_TITLES.length; i++) {
+    if (low.indexOf(CARTON_COUPLE_TITLES[i]) !== -1) return true;
+  }
+  return false;
+}
+
+// Expand per-card rows into one entry per seat, matching the original import.
+function expandCartons(sheet) {
+  const rows = sheet.getDataRange().getValues();
+  if (rows.length < 2) return [];
+
+  // Locate columns by header name so a shifted layout still works.
+  const header = rows[0].map(function(h) { return (h || '').toString().toLowerCase().trim(); });
+  const taken = {};
+  // Exact header matches first: "prénom" contains "nom", so a substring
+  // search would resolve the surname column onto the first-name column.
+  const find = function(names, fallback) {
+    for (let j = 0; j < names.length; j++) {
+      for (let i = 0; i < header.length; i++) {
+        if (!taken[i] && header[i] === names[j]) { taken[i] = true; return i; }
+      }
+    }
+    for (let j = 0; j < names.length; j++) {
+      for (let i = 0; i < header.length; i++) {
+        if (!taken[i] && header[i].indexOf(names[j]) !== -1) { taken[i] = true; return i; }
+      }
+    }
+    taken[fallback] = true;
+    return fallback;
+  };
+  const cTag   = find(['invite', 'invité'], 3);
+  const cFirst = find(['prénom', 'prenom', 'first name', 'first'], 4);
+  const cWife  = find(['prénom femme', 'prenom femme', 'femme', 'wife'], 7);
+  const cLast  = find(['nom', 'last name', 'last', 'surname'], 5);
+  const cExtra = find(['supplément', 'supplement'], 6);
+  const cNb    = find(['nb', 'nombre', 'count'], 8);
+
+  const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+
+  // Learn which given names this sheet uses after a masculine title, to
+  // resolve "Mme <name> + <name>" single-seat cards.
+  const masculine = {};
+  rows.slice(1).forEach(function(r) {
+    const f = S(r[cFirst]).toLowerCase();
+    if (/^(mr |monsieur |herr |m\. )/.test(f) && !cartonHasCoupleTitle(f)) {
+      // Only the name directly after the title belongs to the man. Cards
+      // like "Mr Gabriel + Margot" list a partner too, and counting those
+      // would mark plainly feminine names as masculine.
+      const parts = cartonSplitNames(cartonStripTitles(S(r[cFirst])));
+      if (parts.length) masculine[parts[0].toLowerCase()] = true;
+    }
+  });
+
+  const out = [];
+  rows.slice(1).forEach(function(r) {
+    if (S(r[cTag]) !== 'Invit') return;
+    const first = S(r[cFirst]), extra = S(r[cExtra]), wife = S(r[cWife]);
+    let last = S(r[cLast]);
+    const nb = parseInt(S(r[cNb]), 10);
+    if (!nb || nb < 1) return;
+
+    let surnames = null;
+    if (last.indexOf('/') !== -1) {
+      const halves = last.split('/').map(function(h) { return h.trim(); }).filter(Boolean);
+      if (halves.length === 2 && nb === 2) surnames = halves;
+    }
+    if (/\(/.test(last)) last = last.replace(/\s*\(.*?\)/g, '').trim();
+    if (/^vient de se marier/i.test(last)) last = '';
+
+    let names = [];
+    if (nb === 1 && wife) {
+      const t = cartonLeadingTitle(first);
+      const titleName = cartonStripTitles(first);
+      if (CARTON_WIFE_TITLES.indexOf(t) !== -1) {
+        names = (masculine[wife.toLowerCase()] && !masculine[titleName.toLowerCase()])
+          ? [titleName] : [wife];
+      } else {
+        names = cartonSplitNames(first);
+      }
+    } else {
+      names = (surnames && first.indexOf('/') !== -1)
+        ? first.split('/').map(function(h) { return cartonStripTitles(h); })
+        : cartonSplitNames(first);
+      if (wife && names.indexOf(wife) === -1) names = names.concat(cartonSplitNames(wife));
+    }
+    if (extra && !CARTON_VAGUE.test(extra)) names = names.concat(cartonSplitNames(extra));
+    names = names.filter(Boolean);
+
+    const cardLabel = (names[0] ? names[0] + ' ' : '') + last;
+    for (let seat = 0; seat < nb; seat++) {
+      let fn = (names[seat] || '').replace(/[\s?]+$/, '').trim();
+      let ln = surnames ? (surnames[Math.min(seat, surnames.length - 1)]) : last;
+      if (fn && !ln && fn.indexOf(' ') !== -1) {
+        const bits = fn.split(/\s+/);
+        fn = bits[0];
+        ln = bits.slice(1).join(' ');
+      }
+      out.push({ firstName: fn, lastName: ln, card: cardLabel.trim() });
+    }
+  });
+  return out;
+}
+
 // ── Fuzzy matching helpers ────────────────────────
 
 const NAME_STOPWORDS = ['mr', 'mrs', 'ms', 'mme', 'melle', 'mlle', 'herr', 'frau', 'and', 'und', 'et', 'the'];
@@ -375,6 +638,17 @@ function levenshtein(a, b) {
     prev = curr.slice();
   }
   return prev[n];
+}
+
+// Plain edit-distance ratio with no cutoff, for judging how close two single
+// names are. tokenSimilarity() zeroes anything under 0.72, which is right for
+// search but hides the near-misses that a spelling correction produces.
+function nameRatio(a, b) {
+  a = (a || '').toLowerCase();
+  b = (b || '').toLowerCase();
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  return 1 - levenshtein(a, b) / Math.max(a.length, b.length);
 }
 
 function tokenSimilarity(a, b) {
