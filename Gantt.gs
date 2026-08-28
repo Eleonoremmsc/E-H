@@ -28,13 +28,10 @@ const GANTT_URL      = 'https://docs.google.com/spreadsheets/d/' +
                        GANTT_SHEET_ID + '/edit#gid=0';
 const WEDDING_DATE   = new Date(2027, 5, 26);   // 26 June 2027
 
-// Calendar the events land on. '' means the default calendar of whichever
-// account runs the script — and that is the account the planning sheet is
-// opened from (eleonorehubert2027@gmail.com), not necessarily the one you
-// live in day to day. To send them somewhere else, put that calendar's id
-// here and give the running account edit rights on it:
-//   const CALENDAR_ID = 'eleonore@metanow.energy';
-const CALENDAR_ID    = '';
+// Calendar the events land on. Named outright rather than left to the
+// default, so the reminders go here even if the script is ever installed
+// or re-run from another account.
+const CALENDAR_ID    = 'eleonorehubert2027@gmail.com';
 
 // Fill colours that are NOT a highlight: the empty default and the grey
 // used on the header band. Anything else in a week column marks the task
@@ -53,6 +50,12 @@ const SEND_EMAIL_COPY = false;
 // ── Triggers ──────────────────────────────────────
 
 function installTriggers() {
+  // Fail here rather than falling back to email every week without saying so.
+  if (!targetCalendar()) {
+    throw new Error('Cannot reach the calendar "' + CALENDAR_ID + '" as ' +
+      Session.getEffectiveUser().getEmail() + '. Open the planning sheet from ' +
+      'that account, or share the calendar with this one.');
+  }
   removeTriggers();
   const days = [
     ['runWednesday', ScriptApp.WeekDay.WEDNESDAY],
@@ -213,9 +216,8 @@ function deliverRaw(when, kind, title, body) {
 
   let onCalendar = false;
   try {
-    const cal = CALENDAR_ID ? CalendarApp.getCalendarById(CALENDAR_ID)
-                            : CalendarApp.getDefaultCalendar();
-    if (!cal) throw new Error('No calendar available.');
+    const cal = targetCalendar();
+    if (!cal) throw new Error('Cannot reach the calendar "' + CALENDAR_ID + '".');
     if (!alreadyThere(cal, when, marker)) {
       cal.createAllDayEvent(title, when, { description: full });
     }
@@ -226,6 +228,17 @@ function deliverRaw(when, kind, title, body) {
 
   if (!onCalendar || SEND_EMAIL_COPY) {
     MailApp.sendEmail(Session.getEffectiveUser().getEmail(), title, full);
+  }
+}
+
+// Returns null rather than throwing when the calendar is out of reach, so
+// callers can decide whether that is a setup error or a reason to email.
+function targetCalendar() {
+  try {
+    return CALENDAR_ID ? CalendarApp.getCalendarById(CALENDAR_ID)
+                       : CalendarApp.getDefaultCalendar();
+  } catch (err) {
+    return null;
   }
 }
 
