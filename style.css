@@ -13,6 +13,10 @@
 :root {
   --cream:      #F7F1E6;
   --cream-alt:  #F0E8D9;
+  /* Lifts a panel off the cream instead of sinking it. A darker tint fills
+     a narrow phone screen and reads heavy; a lighter one stays airy at any
+     width, and the blue edge does the separating. */
+  --cream-lift: #FDFAF5;
 
   /* Ink — dark, ~11:1 contrast on cream. Used for all body copy, menus, labels, form fields. */
   --ink:       #363B26;
@@ -21,8 +25,8 @@
 
   /* Olive — the lighter sage-green brand color, reserved for display type only
      (names, section titles, the wordmark) where a softer tone reads elegant. */
-  --olive:      #67704f;
-  --olive-deep: #545C40;
+  --olive:      #657252;
+  --olive-deep: #525C42;
 
   /* Dusty blue — the one saturated accent, used sparingly and only to mark
      structure (the numbered steps of the RSVP, the rule between one guest and
@@ -517,7 +521,7 @@ body {
 }
 
 @media (max-width: 560px) {
-  .songs-card { margin-top: 0; padding: 30px 20px 26px; }
+  .songs-card { padding: 30px 20px 26px; }
   .songs-form { flex-direction: column; }
   .songs-submit { padding: 13px 22px; }
 }
@@ -1342,7 +1346,11 @@ body {
 @media (max-width: 640px) {
   .section-content { padding: 72px 20px; }
   .section-welcome { padding: 0 20px 72px; }
-  .welcome-hero { padding: 80px 0 32px; }
+  /* Centring works on a wide screen but strands the portrait mid-page on a
+     tall narrow one. On a phone the hero flows from the top as it did
+     before, and the card carries its own gap to stay below the fold. */
+  .welcome-hero { min-height: 0; display: block; padding: 92px 0 36px; }
+  .songs-card { margin-top: clamp(170px, 32vh, 260px); }
 
   .hotel-grid { grid-template-columns: 1fr; }
   .activities-grid { grid-template-columns: 1fr; }
@@ -1493,7 +1501,7 @@ body {
   position: relative;
   padding: 22px 22px 24px;
   margin-bottom: 20px;
-  background: var(--cream-alt);
+  background: var(--cream-lift);
   border: 0.5px solid var(--lavender-line2);
   border-left: 3px solid var(--blue);
   border-radius: 2px;
