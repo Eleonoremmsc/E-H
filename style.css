@@ -1418,6 +1418,7 @@ body {
 .req { color: var(--ink-mid); margin-left: 2px; }
 
 .form-input,
+.form-select,
 .form-textarea {
   display: block; width: 100%;
   padding: 10px 0;
@@ -1433,8 +1434,22 @@ body {
   -webkit-appearance: none;
 }
 .form-input:focus,
+.form-select:focus,
 .form-textarea:focus { border-bottom-color: var(--ink); }
 .form-textarea { resize: none; line-height: 1.7; }
+
+/* appearance:none strips the native arrow, so draw one back in. */
+.form-select {
+  appearance: none;
+  cursor: pointer;
+  padding-right: 22px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%234B5136' stroke-width='1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+}
+/* The unselected placeholder reads as a prompt, not as an answer. */
+.form-select:has(option[value=""]:checked) { color: var(--ink-mid); }
+.form-country-other { margin-top: 14px; }
 
 .form-row {
   display: grid;

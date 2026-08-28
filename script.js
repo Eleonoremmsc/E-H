@@ -270,6 +270,8 @@ const T = {
     cal_friday_btn:             "＋ Also add Friday's cocktail",
     recognition_greeting_responded: 'Hi {name} — you’re confirmed for {count}.',
     recognition_greeting_pending:   'Hi {name} — welcome back, you haven’t RSVP’d yet.',
+    rsvp_country:                'Country',
+    rsvp_country_other:          'Please tell us which country',
     rsvp_allergies:              'Allergies or intolerances (optional)',
     rsvp_allergies_placeholder:  'e.g. nuts, gluten, vegetarian',
     songs_title:         'Add songs you want to hear that night!',
@@ -509,6 +511,8 @@ const T = {
     cal_friday_btn:             '＋ Ajouter aussi le cocktail du vendredi',
     recognition_greeting_responded: 'Bonjour {name} — votre présence est confirmée pour {count}.',
     recognition_greeting_pending:   "Bonjour {name} — heureux de vous revoir, vous n'avez pas encore répondu.",
+    rsvp_country:                'Pays',
+    rsvp_country_other:          'Indiquez votre pays',
     rsvp_allergies:              'Allergies ou intolérances (facultatif)',
     rsvp_allergies_placeholder:  'ex. fruits à coque, gluten, végétarien',
     songs_title:         'Ajoutez les chansons que vous voulez entendre ce soir-là !',
@@ -748,6 +752,8 @@ const T = {
     cal_friday_btn:             '＋ Cocktail am Freitag ebenfalls hinzufügen',
     recognition_greeting_responded: 'Hallo {name} — Sie sind für {count} bestätigt.',
     recognition_greeting_pending:   'Hallo {name} — willkommen zurück, Sie haben noch nicht geantwortet.',
+    rsvp_country:                'Land',
+    rsvp_country_other:          'Bitte nennen Sie Ihr Land',
     rsvp_allergies:              'Allergien oder Unverträglichkeiten (optional)',
     rsvp_allergies_placeholder:  'z. B. Nüsse, Gluten, vegetarisch',
     songs_title:         'Fügt Songs hinzu, die ihr an diesem Abend hören wollt!',
@@ -766,6 +772,33 @@ const T = {
     songs_count:         '{count} Songs bisher',
   },
 };
+
+// ── Countries ────────────────────────────────────
+// Kept as a data table rather than i18n keys: the guest picks in their own
+// language, but `value` is what reaches the sheet, so "Deutschland" and
+// "Germany" both land as `Germany` and the column stays sortable.
+// '' is the unselected placeholder and 'Other' reveals a free-text box.
+const COUNTRIES = [
+  { value: '',               en: 'Select…',           fr: 'Choisissez…',        de: 'Bitte wählen…' },
+  { value: 'France',         en: 'France',            fr: 'France',             de: 'Frankreich' },
+  { value: 'Germany',        en: 'Germany',           fr: 'Allemagne',          de: 'Deutschland' },
+  { value: 'Belgium',        en: 'Belgium',           fr: 'Belgique',           de: 'Belgien' },
+  { value: 'Switzerland',    en: 'Switzerland',       fr: 'Suisse',             de: 'Schweiz' },
+  { value: 'United Kingdom', en: 'United Kingdom',    fr: 'Royaume-Uni',        de: 'Vereinigtes Königreich' },
+  { value: 'Netherlands',    en: 'Netherlands',       fr: 'Pays-Bas',           de: 'Niederlande' },
+  { value: 'Luxembourg',     en: 'Luxembourg',        fr: 'Luxembourg',         de: 'Luxemburg' },
+  { value: 'Austria',        en: 'Austria',           fr: 'Autriche',           de: 'Österreich' },
+  { value: 'Spain',          en: 'Spain',             fr: 'Espagne',            de: 'Spanien' },
+  { value: 'Italy',          en: 'Italy',             fr: 'Italie',             de: 'Italien' },
+  { value: 'Portugal',       en: 'Portugal',          fr: 'Portugal',           de: 'Portugal' },
+  { value: 'Ireland',        en: 'Ireland',           fr: 'Irlande',            de: 'Irland' },
+  { value: 'United States',  en: 'United States',     fr: 'États-Unis',         de: 'Vereinigte Staaten' },
+  { value: 'Canada',         en: 'Canada',            fr: 'Canada',             de: 'Kanada' },
+  { value: 'Hungary',        en: 'Hungary',           fr: 'Hongrie',            de: 'Ungarn' },
+  { value: 'Martinique',     en: 'Martinique',        fr: 'Martinique',         de: 'Martinique' },
+  { value: 'Guadeloupe',     en: 'Guadeloupe',        fr: 'Guadeloupe',         de: 'Guadeloupe' },
+  { value: 'Other',          en: 'Other',             fr: 'Autre',              de: 'Andere' },
+];
 
 // ── State ────────────────────────────────────────
 let lang      = localStorage.getItem('weddingLang') || CONFIG.defaultLang;
@@ -818,6 +851,7 @@ function applyLang(l) {
   renderBanner();
   renderSongStatus();
   renderSongs();
+  renderCountrySelect();
 }
 
 document.addEventListener('click', e => {
@@ -1176,6 +1210,10 @@ function initRSVP() {
   }
 
   addAttendee(true);
+  renderCountrySelect();
+
+  const country = document.getElementById('f-country');
+  if (country) country.addEventListener('change', syncCountryOther);
 
   ['f-firstname', 'f-lastname'].forEach(id => {
     const el = document.getElementById(id);
@@ -1317,6 +1355,52 @@ function addAttendee(isFirst = false, prefill = null) {
   renumberAttendees();
 }
 
+// ── Country ───────────────────────────────────────
+// Rebuilt on every language change. The selected value is restored after,
+// so switching language re-labels the list without losing the choice.
+function renderCountrySelect() {
+  const sel = document.getElementById('f-country');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = COUNTRIES.map(c =>
+    `<option value="${escHtml(c.value)}">${escHtml(c[lang] || c.en)}</option>`
+  ).join('');
+  sel.value = current;
+  syncCountryOther();
+}
+
+function syncCountryOther() {
+  const sel   = document.getElementById('f-country');
+  const other = document.getElementById('f-country-other');
+  if (!sel || !other) return;
+  const show = sel.value === 'Other';
+  other.style.display = show ? '' : 'none';
+  if (!show) other.value = '';
+}
+
+// Put a stored country back into the form. Anything not on the list — an
+// older sheet entry, or something typed into "Other" — selects Other and
+// goes in the free-text box rather than being silently dropped.
+function setCountry(value) {
+  const sel   = document.getElementById('f-country');
+  const other = document.getElementById('f-country-other');
+  if (!sel) return;
+  const v = (value || '').trim();
+  const known = COUNTRIES.some(c => c.value && c.value !== 'Other' && c.value === v);
+  if (!v)          { sel.value = '';      if (other) other.value = ''; }
+  else if (known)  { sel.value = v;       if (other) other.value = ''; }
+  else             { sel.value = 'Other'; if (other) other.value = v; }
+  syncCountryOther();
+}
+
+function collectCountry() {
+  const sel   = document.getElementById('f-country');
+  const other = document.getElementById('f-country-other');
+  if (!sel) return '';
+  if (sel.value === 'Other') return ((other && other.value) || '').trim();
+  return sel.value;
+}
+
 function syncContactToGuest1() {
   const fn = (document.getElementById('f-firstname') || {}).value?.trim() || '';
   const ln = (document.getElementById('f-lastname')  || {}).value?.trim() || '';
@@ -1360,6 +1444,7 @@ function collectFormData() {
     firstName: form.firstName.value.trim(),
     lastName:  form.lastName.value.trim(),
     address:   form.address.value.trim(),
+    country:   collectCountry(),
     attendees,
   };
 }
@@ -1383,6 +1468,7 @@ function validateForm(data) {
   if (!data.firstName) showErr('err-firstName', t.rsvp_err_required);
   if (!data.lastName)  showErr('err-lastName',  t.rsvp_err_required);
   if (!data.address)   showErr('err-address',   t.rsvp_err_required);
+  if (!data.country)   showErr('err-country',   t.rsvp_err_required);
 
   document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
     const fnEl      = block.querySelector('.att-firstname');
@@ -1470,6 +1556,7 @@ function prefillForm(data) {
   form.firstName.value = data.firstName || '';
   form.lastName.value  = data.lastName  || '';
   form.address.value   = data.address   || '';
+  setCountry(data.country);
 
   document.getElementById('attendees-list').innerHTML = '';
   attendeeCount = 0;
@@ -1492,6 +1579,7 @@ let householdToken     = localStorage.getItem('weddingHouseholdToken') || null;
 let householdPartySize = null;
 let householdGuests    = [];   // names of everyone on the invitation
 let householdAddress   = '';   // postal address already on the guest list, if any
+let householdCountry   = '';   // country already on the guest list, if any
 let lastMatches        = [];   // candidates from the most recent search
 let recognition        = null; // {status, name, count} for the greeting banner
 let recognitionPromise = Promise.resolve();
@@ -1550,6 +1638,7 @@ async function silentRecognizeByHousehold(token) {
       householdPartySize = result.partySize;
       householdGuests    = result.guests || [];
       householdAddress   = result.address || '';
+      householdCountry   = result.country || '';
       setRecognition('pending', extractGreetingName(result.label), result.partySize || 0);
     }
   } catch { /* stay silent — treat as unrecognized */ }
@@ -1623,18 +1712,19 @@ function renderFindResults(matches) {
   resultsEl.querySelectorAll('.rsvp-find-candidate').forEach(btn => {
     btn.addEventListener('click', () => {
       const m = lastMatches[parseInt(btn.dataset.idx, 10)];
-      if (m) confirmHousehold(m.token, m.partySize, m.guests, m.address);
+      if (m) confirmHousehold(m.token, m.partySize, m.guests, m.address, m.country);
     });
   });
   const noneBtn = document.getElementById('rsvp-find-none-btn');
   if (noneBtn) noneBtn.addEventListener('click', () => revealMainFields());
 }
 
-async function confirmHousehold(token, partySize, guests, address) {
+async function confirmHousehold(token, partySize, guests, address, country) {
   householdToken = token;
   householdPartySize = partySize ? parseInt(partySize, 10) : null;
   householdGuests = Array.isArray(guests) ? guests : [];
   householdAddress = address || '';
+  householdCountry = country || '';
   localStorage.setItem('weddingHouseholdToken', token);
   scaffoldAttendeesForHousehold();
   revealMainFields();
@@ -1661,6 +1751,8 @@ function scaffoldAttendeesForHousehold() {
   // it goes in as an ordinary editable value the guest can correct.
   const addr = document.getElementById('f-address');
   if (addr && householdAddress && !addr.value.trim()) addr.value = householdAddress;
+  const ctry = document.getElementById('f-country');
+  if (ctry && householdCountry && !ctry.value) setCountry(householdCountry);
 
   document.getElementById('attendees-list').innerHTML = '';
   attendeeCount = 0;
@@ -1856,6 +1948,7 @@ function clearRecognition() {
   householdPartySize = null;
   householdGuests = [];
   householdAddress = '';
+  householdCountry = '';
   editToken = null;
   localStorage.removeItem('weddingHouseholdToken');
   localStorage.removeItem('weddingEditToken');

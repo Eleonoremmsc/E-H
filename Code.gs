@@ -90,6 +90,7 @@ function handleSubmit(data) {
     token,
     now,  // updatedAt
     householdToken || 'Self-added',
+    data.country || '',
   ]);
 
   writeGuests(id, now, data);
@@ -122,6 +123,7 @@ function handleUpdate(data) {
       sheet.getRange(row, 7).setValue(JSON.stringify(data.attendees || []));
       sheet.getRange(row, 9).setValue(new Date().toISOString());
       sheet.getRange(row, 10).setValue(householdToken || 'Self-added');
+      sheet.getRange(row, 11).setValue(data.country || '');
 
       writeGuests(id, submitted, data, true);
       markHouseholdResponded(householdToken);
@@ -160,6 +162,7 @@ function getByToken(token) {
           lastName:       rows[i][3],
           firstName:      rows[i][4],
           address:        rows[i][5],
+          country:        rows[i][10] || '',
           attendees:      JSON.parse(rows[i][6] || '[]'),
           householdToken: rows[i][9] || '',
         },
@@ -181,6 +184,7 @@ function getByToken(token) {
 //   1 first_name      4 household_token  7 language   10 rsvp_status
 //   2 last_name       5 party_size       8 email      11 note
 //                                                     12 address
+//                                                     13 country
 
 function lookupByName(data) {
   const qTokens = tokenize(normalizeName(data && data.name));
@@ -213,7 +217,8 @@ function lookupByName(data) {
         label:     buildHouseholdLabel(members),
         partySize: members.length,
         guests:    orderGuests(members, bestMember[x.token]),
-        address:   householdAddress(members),
+        address:   householdField(members, 'address'),
+        country:   householdField(members, 'country'),
       };
     });
 
@@ -221,9 +226,9 @@ function lookupByName(data) {
 }
 
 // One address per invitation: take the first one recorded against any member.
-function householdAddress(members) {
+function householdField(members, key) {
   for (let i = 0; i < members.length; i++) {
-    if (members[i].address) return members[i].address;
+    if (members[i][key]) return members[i][key];
   }
   return '';
 }
@@ -261,6 +266,7 @@ function lookupByToken(data) {
           lastName:  rows[i][3],
           firstName: rows[i][4],
           address:   rows[i][5],
+          country:   rows[i][10] || '',
           attendees: JSON.parse(rows[i][6] || '[]'),
         },
       };
@@ -273,7 +279,8 @@ function lookupByToken(data) {
     label:     buildHouseholdLabel(members),
     partySize: members.length,
     guests:    orderGuests(members, null),
-    address:   householdAddress(members),
+    address:   householdField(members, 'address'),
+    country:   householdField(members, 'country'),
   };
 }
 
@@ -349,6 +356,7 @@ function getGuestListRows() {
       rsvpStatus:  r[10],
       note:        r[11],
       address:     (r[12] || '').toString().trim(),
+      country:     (r[13] || '').toString().trim(),
       nameTokens:  tokenize(normalizeName([r[1], r[2]].join(' '))),
     });
   }
@@ -854,9 +862,13 @@ function sendEmail(data, editUrl, isUpdate) {
 
 // ── Helpers ───────────────────────────────────────
 
+// Country is appended rather than slotted in next to Address on purpose:
+// inserting a column mid-row would shift Edit Token and Household Token,
+// which are read by index and already hold live values.
 const RSVP_HEADERS = [
   'ID', 'Submitted', 'Email', 'Last Name', 'First Name(s)',
   'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
+  'Country',
 ];
 const GUEST_HEADERS = [
   'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
@@ -1038,14 +1050,14 @@ function fillNewGuests() {
 // will change, and duplicate the tab if you want a manual backup.
 // ══════════════════════════════════════════════════
 
-// If any member of a rebuilt household already had an address recorded,
-// reuse it for the whole household rather than losing it.
-function householdKnownAddress(members, perPerson) {
+// If any member of a rebuilt household already had an address or country
+// recorded, reuse it for the whole household rather than losing it.
+function householdKnownField(members, perPerson, key) {
   for (let i = 0; i < members.length; i++) {
     if (!members[i].firstName) continue;
     const k = normalizeName(members[i].firstName + ' ' + members[i].lastName);
     const known = k && perPerson[k];
-    if (known && known.address) return known.address;
+    if (known && known[key]) return known[key];
   }
   return '';
 }
@@ -1076,7 +1088,8 @@ function rebuildInvitesFromCartons() {
     const k = normalizeName(g.firstName + ' ' + g.lastName);
     if (!k) return;
     perPerson[k] = { email: g.email, phone: g.phone, rsvpStatus: g.rsvpStatus,
-                     side: g.side, language: g.language, address: g.address };
+                     side: g.side, language: g.language, address: g.address,
+                     country: g.country };
     if (!g.token) return;
     if (tokenByName[k] && tokenByName[k] !== g.token) ambiguous[k] = true;
     else tokenByName[k] = g.token;
@@ -1096,7 +1109,7 @@ function rebuildInvitesFromCartons() {
   const out = [[
     'guest_id', 'first_name', 'last_name', 'household_id', 'household_token',
     'party_size', 'side', 'language', 'email', 'phone', 'rsvp_status', 'note',
-    'address',
+    'address', 'country',
   ]];
   let gid = 0, hid = 0, reused = 0, fresh = 0;
 
@@ -1136,7 +1149,8 @@ function rebuildInvitesFromCartons() {
         known.phone || '',
         known.rsvpStatus || 'Pending',
         m.firstName ? '' : 'name not in source',
-        known.address || householdKnownAddress(members, perPerson),
+        known.address || householdKnownField(members, perPerson, 'address'),
+        known.country || householdKnownField(members, perPerson, 'country'),
       ]);
     });
   });
