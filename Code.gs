@@ -1038,6 +1038,236 @@ function fillNewGuests() {
 }
 
 // ══════════════════════════════════════════════════
+// IMPORTING ADDRESSES FROM A SEPARATE PER-HOUSEHOLD LIST
+//
+// Paste the other address list into its own tab (call it "Addresses"), one
+// row per household, with a header row. Column names are read rather than
+// assumed, so any reasonable spelling works:
+//
+//   name      — nom / last name / famille / household   (and prénom / first)
+//   address   — adresse / address / rue / street
+//   postcode  — code postal / cp / postal / zip
+//   city      — ville / city / town
+//   country   — pays / country                          (optional)
+//
+// Address, postcode and city are joined into the single address cell; a
+// country column feeds the country cell.
+//
+// Run previewAddressImport() FIRST. It writes a report and changes nothing.
+// Run importAddresses() once the report looks right.
+// ══════════════════════════════════════════════════
+
+const ADDRESS_TAB        = 'Addresses';
+const ADDRESS_REPORT_TAB = 'Address import report';
+
+// A row is only written without anyone confirming it, so the bar is higher
+// than the interactive search: a good score AND a clear gap to the runner-up.
+const ADDR_MIN_SCORE = 0.62;
+const ADDR_MIN_GAP   = 0.08;
+
+function getAddressSheet() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const named = ss.getSheetByName(ADDRESS_TAB);
+  if (named) return named;
+
+  // Otherwise: any non-reserved tab whose header row names both somebody
+  // and somewhere.
+  const reserved = [SHEET_NAME, GUESTS_NAME, GUESTLIST_NAME, SONGS_NAME,
+                    CARTONS_TAB, COMPARE_REPORT_TAB, ADDRESS_REPORT_TAB];
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const sheet = sheets[i];
+    if (reserved.indexOf(sheet.getName()) !== -1) continue;
+    if (sheet.getLastRow() < 2 || sheet.getLastColumn() < 2) continue;
+    const cols = mapAddressColumns(readHeader(sheet));
+    if (cols.name.length && cols.address.length) return sheet;
+  }
+  return null;
+}
+
+function readHeader(sheet) {
+  return sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    .map(function(h) { return (h || '').toString().toLowerCase().trim(); });
+}
+
+// Which columns hold what. Exact matches are claimed first so that "prénom",
+// which contains "nom", cannot steal the surname column from it.
+function mapAddressColumns(header) {
+  const taken = {};
+  const cols  = { name: [], address: [], country: -1 };
+
+  const GROUPS = [
+    { key: 'first',    exact: ['prénom', 'prenom', 'first name', 'firstname'],
+                       fuzzy: ['prénom', 'prenom', 'first'] },
+    { key: 'last',     exact: ['nom', 'last name', 'lastname', 'surname', 'famille',
+                               'nom de famille', 'household', 'foyer'],
+                       fuzzy: ['last name', 'surname', 'famille', 'household'] },
+    { key: 'address',  exact: ['adresse', 'address', 'rue', 'street', 'adresse 1',
+                               'address 1', 'address line 1', 'ligne 1'],
+                       fuzzy: ['adresse', 'address', 'rue', 'street', 'ligne'] },
+    { key: 'postcode', exact: ['code postal', 'cp', 'postal code', 'postcode', 'zip',
+                               'zip code'],
+                       fuzzy: ['code postal', 'postal', 'postcode', 'zip'] },
+    { key: 'city',     exact: ['ville', 'city', 'town', 'commune'],
+                       fuzzy: ['ville', 'city', 'town', 'commune'] },
+    { key: 'country',  exact: ['pays', 'country'],
+                       fuzzy: ['pays', 'country'] },
+  ];
+  const found = {};
+  GROUPS.forEach(function(g) { found[g.key] = []; });
+
+  // Two passes: exact header names win, then looser contains-matching picks
+  // up anything left over.
+  [true, false].forEach(function(exactPass) {
+    GROUPS.forEach(function(g) {
+      const needles = exactPass ? g.exact : g.fuzzy;
+      for (let i = 0; i < header.length; i++) {
+        if (taken[i] || !header[i]) continue;
+        const hit = exactPass
+          ? needles.indexOf(header[i]) !== -1
+          : needles.some(function(n) { return header[i].indexOf(n) !== -1; });
+        if (hit) { taken[i] = true; found[g.key].push(i); }
+      }
+    });
+  });
+
+  // Everything naming a person feeds the search; everything naming a place,
+  // in reading order, is joined into the one address cell.
+  cols.name    = found.first.concat(found.last);
+  cols.address = found.address.concat(found.postcode, found.city);
+  cols.country = found.country.length ? found.country[0] : -1;
+  return cols;
+}
+
+function previewAddressImport() { runAddressImport(false); }
+function importAddresses()      { runAddressImport(true); }
+
+function runAddressImport(apply) {
+  const ss    = SpreadsheetApp.openById(SHEET_ID);
+  const src   = getAddressSheet();
+  const sheet = getGuestListSheet();
+  if (!sheet) { Logger.log('PROBLEM: no guest-list tab found.'); return; }
+  if (!src) {
+    Logger.log('PROBLEM: could not find the address list.');
+    Logger.log('Tabs present: ' + ss.getSheets().map(function(s) { return s.getName(); }).join(', '));
+    Logger.log('Paste it into a tab named "' + ADDRESS_TAB + '" with a header row. ' +
+               'It is also found automatically if row 1 names a person (Nom / Prénom / ' +
+               'Last name) and a place (Adresse / Address / Rue).');
+    return;
+  }
+
+  const header = readHeader(src);
+  const cols   = mapAddressColumns(header);
+  if (!cols.name.length || !cols.address.length) {
+    Logger.log('PROBLEM: tab "' + src.getName() + '" has headers: ' + header.join(' | '));
+    Logger.log('Could not tell which column is the name and which is the address. ' +
+               'Rename them to Nom / Prénom and Adresse (plus Code postal, Ville, Pays).');
+    return;
+  }
+  Logger.log('Reading addresses from tab "' + src.getName() + '".');
+  Logger.log('Name column(s): ' + cols.name.map(function(i) { return header[i]; }).join(', ') +
+             '  |  Address column(s): ' + cols.address.map(function(i) { return header[i]; }).join(', ') +
+             (cols.country >= 0 ? '  |  Country: ' + header[cols.country] : '  |  no country column'));
+
+  // Current guest list, indexed for matching and for writing back.
+  const guests     = getGuestListRows();
+  const households = groupHouseholds();
+  const invRows    = sheet.getDataRange().getValues();
+
+  const srcRows = src.getDataRange().getValues();
+  const report  = [['source row', 'name in list', 'address in list', 'result',
+                    'matched household', 'score']];
+  let filled = 0, already = 0, conflict = 0, unmatched = 0, ambiguous = 0;
+
+  for (let r = 1; r < srcRows.length; r++) {
+    const row  = srcRows[r];
+    const name = cols.name.map(function(i) { return (row[i] || '').toString().trim(); })
+                          .filter(Boolean).join(' ');
+    const addr = cols.address.map(function(i) { return (row[i] || '').toString().trim(); })
+                             .filter(Boolean).join(', ');
+    const country = cols.country >= 0 ? (row[cols.country] || '').toString().trim() : '';
+    if (!name && !addr) continue;
+
+    if (!name || !addr) {
+      report.push([r + 1, name, addr, name ? 'no address in this row' : 'no name in this row', '', '']);
+      unmatched += 1;
+      continue;
+    }
+
+    // Best-scoring household, and how far ahead of the next one it is.
+    const qTokens = tokenize(normalizeName(name));
+    const best = {};
+    guests.forEach(function(g) {
+      if (!g.token || !g.firstName) return;
+      const score = scoreHousehold(qTokens, g.nameTokens);
+      if (!best[g.token] || score > best[g.token]) best[g.token] = score;
+    });
+    const ranked = Object.keys(best)
+      .map(function(t) { return { token: t, score: best[t] }; })
+      .sort(function(a, b) { return b.score - a.score; });
+
+    const top  = ranked[0];
+    const gap  = top && ranked[1] ? top.score - ranked[1].score : 1;
+    const label = top ? buildHouseholdLabel(households[top.token] || []) : '';
+
+    if (!top || top.score < ADDR_MIN_SCORE) {
+      report.push([r + 1, name, addr, 'no match on the guest list', '',
+                   top ? top.score.toFixed(2) : '']);
+      unmatched += 1;
+      continue;
+    }
+    if (gap < ADDR_MIN_GAP) {
+      report.push([r + 1, name, addr, 'AMBIGUOUS — matches more than one household equally well, skipped',
+                   label + '  /  ' + buildHouseholdLabel(households[ranked[1].token] || []),
+                   top.score.toFixed(2)]);
+      ambiguous += 1;
+      continue;
+    }
+
+    // What the guest list already holds for this household.
+    const existing = householdField(households[top.token] || [], 'address');
+    if (existing && normalizeName(existing) === normalizeName(addr)) {
+      report.push([r + 1, name, addr, 'already on the guest list', label, top.score.toFixed(2)]);
+      already += 1;
+      continue;
+    }
+    if (existing) {
+      // Never silently replace an address that is already recorded — the
+      // existing one may be the more recent of the two.
+      report.push([r + 1, name, addr,
+                   'CONFLICT — guest list already has "' + existing + '", left unchanged',
+                   label, top.score.toFixed(2)]);
+      conflict += 1;
+      continue;
+    }
+
+    if (apply) {
+      for (let i = 1; i < invRows.length; i++) {
+        if ((invRows[i][4] || '').toString().trim() !== top.token) continue;
+        sheet.getRange(i + 1, 13).setValue(addr);
+        if (country) sheet.getRange(i + 1, 14).setValue(country);
+      }
+    }
+    report.push([r + 1, name, addr, apply ? 'filled in' : 'would be filled in',
+                 label, top.score.toFixed(2)]);
+    filled += 1;
+  }
+
+  let out = ss.getSheetByName(ADDRESS_REPORT_TAB);
+  if (!out) out = ss.insertSheet(ADDRESS_REPORT_TAB);
+  out.clear();
+  out.getRange(1, 1, report.length, report[0].length).setValues(report);
+  out.setFrozenRows(1);
+
+  Logger.log((apply ? 'Imported.' : 'PREVIEW ONLY — nothing was written.') +
+             ' ' + filled + (apply ? ' filled in' : ' would be filled in') +
+             ', ' + already + ' already correct, ' + conflict + ' conflicts left alone, ' +
+             ambiguous + ' ambiguous, ' + unmatched + ' unmatched.');
+  Logger.log('Row-by-row detail is in the "' + ADDRESS_REPORT_TAB + '" tab.');
+  if (!apply) Logger.log('Run importAddresses() to write these in.');
+}
+
+// ══════════════════════════════════════════════════
 // REBUILDING THE GUEST LIST FROM THE CARD LIST
 //
 // Treats the carton tab as the single source of truth and regenerates
@@ -1317,13 +1547,14 @@ function listSongs() {
   return { success: true, songs: readSongs(getSongsSheet().getDataRange().getValues()) };
 }
 
-// Newest first, and only the fields the page actually shows — the household
-// token stays in the sheet so we can trace an entry, but is never sent back.
+// Newest first, titles only. The suggester's name and household token are
+// recorded in the sheet for the couple, but the playlist is anonymous to
+// guests, so neither is ever sent to the page.
 function readSongs(rows) {
   const out = [];
   for (let i = 1; i < rows.length; i++) {
     const title = cleanSongText(rows[i][1], SONG_MAX_LEN);
-    if (title) out.push({ song: title, name: cleanSongText(rows[i][2], 80) });
+    if (title) out.push({ song: title });
   }
   return out.reverse().slice(0, SONG_LIST_MAX);
 }
