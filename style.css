@@ -321,25 +321,59 @@ body {
 }
 
 .recognition-banner {
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 22px;
-  font-family: var(--serif);
-  font-size: 1rem; font-style: italic; font-weight: 300;
-  color: var(--ink-mid);
+  display: block;
+  max-width: 520px;
+  margin: 30px auto 0;
+  padding: 20px 26px;
+  background: var(--cream-alt);
+  border: 0.5px solid var(--olive);
+  border-radius: 2px;
+  text-align: center;
+  animation: fadeUp 0.6s ease both;
 }
+.recognition-text {
+  font-family: var(--serif);
+  font-size: 1.12rem; font-style: italic; font-weight: 400;
+  color: var(--ink);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.recognition-actions {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; flex-wrap: wrap;
+}
+.recognition-action,
 .recognition-clear {
   background: none; border: none;
   font-family: var(--sans);
-  font-size: 0.7rem; font-weight: 500;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--ink-mid);
+  font-size: 0.72rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
   cursor: pointer; padding: 0;
   border-bottom: 0.5px solid currentColor;
-  padding-bottom: 1px;
+  padding-bottom: 2px;
   transition: color var(--ease);
 }
+.recognition-action { color: var(--olive-deep); }
+.recognition-action:hover { color: var(--ink); }
+.recognition-clear { color: var(--ink-mid); font-weight: 500; }
 .recognition-clear:hover { color: var(--ink); }
+.recognition-sep { color: var(--lavender); }
+
+.cal-both-note {
+  font-family: var(--serif);
+  font-size: 0.94rem; font-style: italic; font-weight: 300;
+  color: var(--ink-mid);
+  text-align: center;
+  line-height: 1.6;
+  margin-top: 18px;
+}
+.cal-followup-note {
+  font-family: var(--serif);
+  font-size: 0.96rem; font-style: italic;
+  color: var(--ink);
+  text-align: center;
+  margin: 22px 0 12px;
+}
 
 /* ── Buttons ────────────────────────────────────── */
 .btn {

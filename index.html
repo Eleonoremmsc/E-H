@@ -108,10 +108,14 @@
         <button class="btn btn-primary" id="rsvp-btn" data-i18n="btn_rsvp">Receive my invitation</button>
         <button class="btn btn-secondary" id="save-the-date-btn" data-i18n="btn_save">Save the Date</button>
       </div>
-      <p id="recognition-banner" class="recognition-banner" style="display:none;">
-        <span id="recognition-text"></span>
-        <button type="button" id="recognition-not-you" class="recognition-clear" data-i18n="recognition_not_you">Not you?</button>
-      </p>
+      <div id="recognition-banner" class="recognition-banner" style="display:none;">
+        <p class="recognition-text" id="recognition-text"></p>
+        <div class="recognition-actions">
+          <button type="button" id="recognition-action" class="recognition-action"></button>
+          <span class="recognition-sep">·</span>
+          <button type="button" id="recognition-not-you" class="recognition-clear" data-i18n="recognition_not_you">Not you?</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -830,6 +834,8 @@
         <span class="cal-mark">↓</span> iCal File
       </button>
     </div>
+    <p class="cal-both-note" data-i18n="cal_both_note">Apple Calendar and the iCal file add both evenings at once — Friday's cocktail and Saturday's wedding.</p>
+    <div id="cal-friday-followup" style="display:none;"></div>
   </div>
 </div>
 
