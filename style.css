@@ -16,7 +16,7 @@
   /* Lifts a panel off the cream instead of sinking it. A darker tint fills
      a narrow phone screen and reads heavy; a lighter one stays airy at any
      width, and the blue edge does the separating. */
-  --cream-lift: #FDFAF5;
+  --cream-lift: #FAF6EE;
 
   /* Ink — dark, ~11:1 contrast on cream. Used for all body copy, menus, labels, form fields. */
   --ink:       #363B26;
