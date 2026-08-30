@@ -93,10 +93,19 @@ function handleSubmit(data) {
     data.country || '',
   ]);
 
+  // Captured straight after the append so the confirmation result lands on
+  // the row we just wrote.
+  const row = sheet.getLastRow();
+
   writeGuests(id, now, data);
   markHouseholdResponded(householdToken);
 
+  // Recorded because the send is allowed to fail without failing the RSVP —
+  // this column is the only way to see afterwards who never got their
+  // confirmation and needs chasing by hand.
   const emailSent = trySendEmail(data, editUrl, false);
+  sheet.getRange(row, 12).setValue(emailSent ? 'sent' : 'NOT SENT');
+
   return { success: true, token, editUrl, emailSent };
 }
 
@@ -130,6 +139,7 @@ function handleUpdate(data) {
 
       const editUrl = `${WEBSITE_URL}?rsvp=${token}`;
       const emailSent = trySendEmail(data, editUrl, true);
+      sheet.getRange(row, 12).setValue(emailSent ? 'sent' : 'NOT SENT');
       return { success: true, token, editUrl, emailSent };
     }
   }
@@ -804,6 +814,49 @@ function writeGuests(id, submitted, data, isUpdate) {
   });
 }
 
+// ── Email quota ───────────────────────────────────
+//
+// A consumer Gmail account may send 100 emails a day; a Workspace account
+// 1,500. Confirmations are the only thing this script sends, so the ceiling
+// only bites if a great many households reply on the same day.
+//
+// Checking costs nothing — getRemainingDailyQuota() reads a counter, it does
+// not send anything — so run checkEmailQuota() as often as you like.
+
+function checkEmailQuota() {
+  const left = MailApp.getRemainingDailyQuota();
+  Logger.log('Confirmation emails still sendable today: ' + left);
+  if (left === 0) {
+    Logger.log('The daily limit is used up. RSVPs will still save correctly — ' +
+               'guests simply will not get a confirmation until it resets ' +
+               '(midnight Pacific time). Run listMissedConfirmations() to see who.');
+  } else if (left < 25) {
+    Logger.log('Running low. Anyone who replies past the limit still gets ' +
+               'recorded; only their confirmation email is skipped.');
+  }
+  return left;
+}
+
+// Who replied but never got their confirmation, so you can follow up.
+function listMissedConfirmations() {
+  const rows = getSheet().getDataRange().getValues();
+  const missed = [];
+  for (let i = 1; i < rows.length; i++) {
+    if (!rows[i][0]) continue;
+    if ((rows[i][11] || '').toString().trim() === 'NOT SENT') {
+      missed.push([rows[i][4], rows[i][3], rows[i][2]].join(' ').trim());
+    }
+  }
+  if (missed.length === 0) {
+    Logger.log('Every RSVP on file got its confirmation email.');
+  } else {
+    Logger.log(missed.length + ' guest(s) never got a confirmation:');
+    missed.forEach(function(m) { Logger.log('  ' + m); });
+    Logger.log('Their answers are saved — only the email was skipped.');
+  }
+  return missed;
+}
+
 // ── Email ─────────────────────────────────────────
 // Wrapped so a mail-quota hiccup or bad address never masks a save that
 // already succeeded — the RSVP is safe in the sheet either way.
@@ -897,7 +950,7 @@ function sendEmail(data, editUrl, isUpdate) {
 const RSVP_HEADERS = [
   'ID', 'Submitted', 'Email', 'Last Name', 'First Name(s)',
   'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
-  'Country',
+  'Country', 'Confirmation email',
 ];
 const GUEST_HEADERS = [
   'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
