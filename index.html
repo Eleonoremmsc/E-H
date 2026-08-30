@@ -89,6 +89,10 @@
 
   <!-- WELCOME -->
   <section id="welcome" class="section-welcome">
+    <!-- The hero owns the first viewport on its own; the playlist card sits
+         below it rather than inside the centred block, which would drag the
+         portrait upward as the card grows. -->
+    <div class="welcome-hero">
     <div class="welcome-inner">
       <div class="welcome-portrait">
         <img src="images/hero-centerpiece.jpg" alt="Eléonore and Hubert at sunset">
@@ -116,21 +120,22 @@
           <button type="button" id="recognition-not-you" class="recognition-clear" data-i18n="recognition_not_you">Not you?</button>
         </div>
       </div>
+    </div>
+    </div>
 
-      <!-- Playlist suggestions — below the fold, still part of Bienvenue -->
-      <div class="songs-card">
-        <span class="songs-note-icon" aria-hidden="true">♪</span>
-        <h2 class="songs-title" data-i18n="songs_title">Songs to which you'll be dancing all night long!</h2>
-        <p class="songs-note" data-i18n="songs_note">One track at a time — we are building the playlist as they come in.</p>
-        <form class="songs-form" id="songs-form" autocomplete="off">
-          <input type="text" id="songs-input" class="songs-input" maxlength="160"
-                 data-i18n-placeholder="songs_placeholder" placeholder="Artist — Song title"
-                 data-i18n-aria="songs_title" aria-label="Songs to which you'll be dancing all night long!">
-          <button type="submit" class="songs-submit" id="songs-submit" data-i18n="songs_add">Add</button>
-        </form>
-        <p class="songs-status" id="songs-status" role="status" aria-live="polite"></p>
-        <button type="button" class="songs-view" id="songs-view-btn" data-i18n="songs_view">See the playlist so far</button>
-      </div>
+    <!-- Playlist suggestions — below the fold, still part of Bienvenue -->
+    <div class="songs-card">
+      <span class="songs-note-icon" aria-hidden="true">♪</span>
+      <h2 class="songs-title" data-i18n="songs_title">Songs to which you'll be dancing all night long!</h2>
+      <p class="songs-note" data-i18n="songs_note">One track at a time — we are building the playlist as they come in.</p>
+      <form class="songs-form" id="songs-form" autocomplete="off">
+        <input type="text" id="songs-input" class="songs-input" maxlength="160"
+               data-i18n-placeholder="songs_placeholder" placeholder="Artist — Song title"
+               data-i18n-aria="songs_title" aria-label="Songs to which you'll be dancing all night long!">
+        <button type="submit" class="songs-submit" id="songs-submit" data-i18n="songs_add">Add</button>
+      </form>
+      <p class="songs-status" id="songs-status" role="status" aria-live="polite"></p>
+      <button type="button" class="songs-view" id="songs-view-btn" data-i18n="songs_view">See the playlist so far</button>
     </div>
   </section>
 

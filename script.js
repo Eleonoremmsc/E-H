@@ -267,6 +267,8 @@ const T = {
     cal_friday_note:            "Saturday is added. Friday's cocktail is a separate event:",
     cal_friday_btn:             "＋ Also add Friday's cocktail",
     recognition_greeting_responded: 'Hi {name} — you’re confirmed for {count}.',
+    recognition_greeting_cleared:   'No problem — let’s find you on the guest list.',
+    recognition_find:               'Find me on the list',
     recognition_greeting_pending:   'Hi {name} — welcome back, you haven’t RSVP’d yet.',
     rsvp_country:                'Country',
     rsvp_country_other:          'Please tell us which country',
@@ -505,12 +507,14 @@ const T = {
     cal_friday_note:            'Le samedi est ajouté. Le cocktail du vendredi est un événement distinct :',
     cal_friday_btn:             '＋ Ajouter aussi le cocktail du vendredi',
     recognition_greeting_responded: 'Bonjour {name} — votre présence est confirmée pour {count}.',
+    recognition_greeting_cleared:   'Pas de souci — retrouvons-vous sur la liste des invités.',
+    recognition_find:               'Me trouver sur la liste',
     recognition_greeting_pending:   "Bonjour {name} — heureux de vous revoir, vous n'avez pas encore répondu.",
     rsvp_country:                'Pays',
     rsvp_country_other:          'Indiquez votre pays',
     rsvp_allergies:              'Allergies ou intolérances (facultatif)',
     rsvp_allergies_placeholder:  'ex. fruits à coque, gluten, végétarien',
-    songs_title:         'Les chansons sur lesquelles vous danserez toute la nuit !',
+    songs_title:         'Les chansons pour danser toute la nuit !',
     songs_note:          'Un titre à la fois — la playlist se construit au fur et à mesure.',
     songs_placeholder:   'Artiste — Titre',
     songs_add:           'Ajouter',
@@ -743,24 +747,26 @@ const T = {
     cal_friday_note:            'Samstag ist eingetragen. Der Cocktail am Freitag ist ein eigener Termin:',
     cal_friday_btn:             '＋ Cocktail am Freitag ebenfalls hinzufügen',
     recognition_greeting_responded: 'Hallo {name} — Sie sind für {count} bestätigt.',
+    recognition_greeting_cleared:   'Kein Problem — finden wir Sie auf der Gästeliste.',
+    recognition_find:               'Mich auf der Liste finden',
     recognition_greeting_pending:   'Hallo {name} — willkommen zurück, Sie haben noch nicht geantwortet.',
     rsvp_country:                'Land',
     rsvp_country_other:          'Bitte nennen Sie Ihr Land',
     rsvp_allergies:              'Allergien oder Unverträglichkeiten (optional)',
     rsvp_allergies_placeholder:  'z. B. Nüsse, Gluten, vegetarisch',
-    songs_title:         'Die Songs, zu denen Sie die ganze Nacht tanzen werden!',
-    songs_note:          'Ein Titel nach dem anderen — die Playlist wächst mit jedem Vorschlag.',
+    songs_title:         'Lieder, zu denen wir tanzen werden!',
+    songs_note:          'Ein Lied nach dem anderen — die Playlist wächst mit jedem Vorschlag.',
     songs_placeholder:   'Interpret — Titel',
     songs_add:           'Hinzufügen',
     songs_view:          'Playlist ansehen',
-    songs_thanks:        'Zur Playlist hinzugefügt. Noch einer?',
+    songs_thanks:        'Zur Playlist hinzugefügt. Noch ein Lied?',
     songs_duplicate:     'Steht schon auf der Liste — guter Geschmack.',
     songs_error:         'Das hat nicht geklappt. Bitte noch einmal versuchen.',
     songs_close:         'Schließen',
     songs_modal_title:   'Die Playlist bisher',
-    songs_empty:         'Noch keine Songs — machen Sie den Anfang.',
+    songs_empty:         'Noch keine Lieder — machen Sie den Anfang.',
     songs_loading:       'Wird geladen…',
-    songs_count:         '{count} Songs bisher',
+    songs_count:         '{count} Lieder bisher',
   },
 };
 
@@ -1569,8 +1575,6 @@ function prefillForm(data) {
 let householdToken     = localStorage.getItem('weddingHouseholdToken') || null;
 let householdPartySize = null;
 let householdGuests    = [];   // names of everyone on the invitation
-let householdAddress   = '';   // postal address already on the guest list, if any
-let householdCountry   = '';   // country already on the guest list, if any
 let lastMatches        = [];   // candidates from the most recent search
 let recognition        = null; // {status, name, count} for the greeting banner
 let recognitionPromise = Promise.resolve();
@@ -1597,7 +1601,7 @@ function initRecognition() {
     if (e.key === 'Enter') { e.preventDefault(); runNameSearch(); }
   });
   if (skipBtn) skipBtn.addEventListener('click', () => revealMainFields());
-  if (notYouBtn) notYouBtn.addEventListener('click', clearRecognition);
+  if (notYouBtn) notYouBtn.addEventListener('click', () => clearRecognition(true));
 
   const actionBtn = document.getElementById('recognition-action');
   if (actionBtn) actionBtn.addEventListener('click', openRSVP);
@@ -1628,8 +1632,6 @@ async function silentRecognizeByHousehold(token) {
     } else {
       householdPartySize = result.partySize;
       householdGuests    = result.guests || [];
-      householdAddress   = result.address || '';
-      householdCountry   = result.country || '';
       setRecognition('pending', extractGreetingName(result.label), result.partySize || 0);
     }
   } catch { /* stay silent — treat as unrecognized */ }
@@ -1703,22 +1705,23 @@ function renderFindResults(matches) {
   resultsEl.querySelectorAll('.rsvp-find-candidate').forEach(btn => {
     btn.addEventListener('click', () => {
       const m = lastMatches[parseInt(btn.dataset.idx, 10)];
-      if (m) confirmHousehold(m.token, m.partySize, m.guests, m.address, m.country);
+      if (m) confirmHousehold(m.token, m.partySize, m.guests, m.label);
     });
   });
   const noneBtn = document.getElementById('rsvp-find-none-btn');
   if (noneBtn) noneBtn.addEventListener('click', () => revealMainFields());
 }
 
-async function confirmHousehold(token, partySize, guests, address, country) {
+async function confirmHousehold(token, partySize, guests, label) {
   householdToken = token;
   householdPartySize = partySize ? parseInt(partySize, 10) : null;
   householdGuests = Array.isArray(guests) ? guests : [];
-  householdAddress = address || '';
-  householdCountry = country || '';
   localStorage.setItem('weddingHouseholdToken', token);
   scaffoldAttendeesForHousehold();
   revealMainFields();
+  // Greet them straight away rather than only on the next visit, so someone
+  // who picked the wrong household can undo it immediately.
+  setRecognition('pending', extractGreetingName(label || ''), householdPartySize || 0);
 }
 
 // Build one attendee block per seat on the invitation, pre-filled with the
@@ -1737,13 +1740,6 @@ function scaffoldAttendeesForHousehold() {
     if (fn && !fn.value.trim()) fn.value = first.firstName || '';
     if (ln && !ln.value.trim()) ln.value = first.lastName || '';
   }
-
-  // The address we hold is only a starting point — it may be years old, so
-  // it goes in as an ordinary editable value the guest can correct.
-  const addr = document.getElementById('f-address');
-  if (addr && householdAddress && !addr.value.trim()) addr.value = householdAddress;
-  const ctry = document.getElementById('f-country');
-  if (ctry && householdCountry && !ctry.value) setCountry(householdCountry);
 
   document.getElementById('attendees-list').innerHTML = '';
   attendeeCount = 0;
@@ -1781,16 +1777,24 @@ function renderBanner() {
   if (!recognition) { banner.style.display = 'none'; return; }
 
   const t = T[lang] || T.en;
-  const key = recognition.status === 'responded'
-    ? 'recognition_greeting_responded' : 'recognition_greeting_pending';
+  const key = recognition.status === 'responded' ? 'recognition_greeting_responded'
+            : recognition.status === 'cleared'   ? 'recognition_greeting_cleared'
+            : 'recognition_greeting_pending';
   textEl.textContent = (t[key] || '')
     .replace('{name}', recognition.name)
     .replace('{count}', String(recognition.count));
 
   if (actionBtn) {
-    actionBtn.textContent = recognition.status === 'responded'
-      ? t.recognition_edit : t.recognition_rsvp;
+    actionBtn.textContent = recognition.status === 'responded' ? t.recognition_edit
+                          : recognition.status === 'cleared'   ? t.recognition_find
+                          : t.recognition_rsvp;
   }
+  // Nothing to disown once the identity is already cleared.
+  const cleared = recognition.status === 'cleared';
+  const notYou = document.getElementById('recognition-not-you');
+  const sep    = document.querySelector('.recognition-sep');
+  if (notYou) notYou.style.display = cleared ? 'none' : '';
+  if (sep)    sep.style.display    = cleared ? 'none' : '';
   banner.style.display = 'block';
 }
 
@@ -1935,15 +1939,54 @@ function renderSongs() {
   if (count) count.textContent = (t.songs_count || '').replace('{count}', String(songsCache.length));
 }
 
-function clearRecognition() {
+// Put the modal back to its first step and empty everything the previous
+// household filled in, so nobody inherits someone else's answers.
+function resetRSVPForm() {
+  const form = document.getElementById('rsvp-form');
+  if (!form) return;
+  form.reset();
+
+  const step = document.getElementById('rsvp-find-step');
+  const main = document.getElementById('rsvp-main-fields');
+  if (step) step.style.display = '';
+  if (main) main.style.display = 'none';
+
+  const results = document.getElementById('rsvp-find-results');
+  if (results) results.innerHTML = '';
+  const skip = document.getElementById('rsvp-find-skip');
+  if (skip) skip.style.display = '';
+  const input = document.getElementById('rsvp-find-input');
+  if (input) input.value = '';
+  lastMatches = [];
+
+  document.getElementById('attendees-list').innerHTML = '';
+  attendeeCount = 0;
+  addAttendee(true);
+  setCountry('');
+  syncContactToGuest1();
+  showRSVPFormView();
+
+  const label = document.getElementById('rsvp-submit-label');
+  if (label) label.setAttribute('data-i18n', 'rsvp_submit');
+  applyLang(lang);
+}
+
+// `userInitiated` separates someone pressing "Not you?" — who is asking to be
+// identified and needs the search — from a lookup quietly failing, which
+// should just go quiet.
+function clearRecognition(userInitiated) {
   householdToken = null;
   householdPartySize = null;
   householdGuests = [];
-  householdAddress = '';
-  householdCountry = '';
   editToken = null;
   localStorage.removeItem('weddingHouseholdToken');
   localStorage.removeItem('weddingEditToken');
-  recognition = null;
+  resetRSVPForm();
+  recognition = userInitiated === true ? { status: 'cleared', name: '', count: 0 } : null;
   renderBanner();
+  if (userInitiated === true) {
+    openRSVP();
+    const input = document.getElementById('rsvp-find-input');
+    if (input) input.focus();
+  }
 }

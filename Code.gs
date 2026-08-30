@@ -190,6 +190,10 @@ function lookupByName(data) {
   const qTokens = tokenize(normalizeName(data && data.name));
   if (qTokens.length === 0) return { success: true, matches: [] };
 
+  // Deliberately returns names only, never the address or country on file:
+  // clicking "that's me" is not proof of identity, so a name search must not
+  // be able to read back where somebody lives. Guests type their own address.
+  //
   // Score every named guest, then keep each household's best-scoring member.
   // Remember which member that was: they are almost certainly the person
   // filling the form, so they should be offered as the contact.
@@ -197,18 +201,32 @@ function lookupByName(data) {
   const bestMember = {};
   getGuestListRows().forEach(function(g) {
     if (!g.token || !g.firstName) return;
-    const score = scoreHousehold(qTokens, g.nameTokens);
-    if (score < 0.55) return;
-    if (!best[g.token] || score > best[g.token]) {
-      best[g.token] = score;
+    const r = scoreAgainst(qTokens, g.nameTokens);
+    if (r.score < 0.55) return;
+    const cur = best[g.token];
+    if (!cur || r.matched > cur.matched ||
+        (r.matched === cur.matched && r.score > cur.score)) {
+      best[g.token] = r;
       bestMember[g.token] = g.guestId;
     }
   });
 
+  const ranked = Object.keys(best)
+    .map(function(tok) {
+      return { token: tok, score: best[tok].score, matched: best[tok].matched };
+    })
+    .sort(function(a, b) { return (b.matched - a.matched) || (b.score - a.score); });
+
+  // Once something matches more of the name than the rest, the rest are noise
+  // rather than alternatives: someone who typed their full name should not
+  // have to pick their own household out of every family sharing its surname,
+  // nor out of everyone who happens to share their first name. Ties are still
+  // all shown — a bare surname legitimately matches many households.
+  const top = ranked[0];
   const households = groupHouseholds();
-  const matches = Object.keys(best)
-    .map(function(tok) { return { token: tok, score: best[tok] }; })
-    .sort(function(a, b) { return b.score - a.score; })
+  const matches = (top ? ranked.filter(function(r) {
+      return r.matched === top.matched && r.score >= top.score - MATCH_MARGIN;
+    }) : [])
     .slice(0, 5)
     .map(function(x) {
       const members = households[x.token] || [];
@@ -217,8 +235,6 @@ function lookupByName(data) {
         label:     buildHouseholdLabel(members),
         partySize: members.length,
         guests:    orderGuests(members, bestMember[x.token]),
-        address:   householdField(members, 'address'),
-        country:   householdField(members, 'country'),
       };
     });
 
@@ -279,8 +295,6 @@ function lookupByToken(data) {
     label:     buildHouseholdLabel(members),
     partySize: members.length,
     guests:    orderGuests(members, null),
-    address:   householdField(members, 'address'),
-    country:   householdField(members, 'country'),
   };
 }
 
@@ -665,6 +679,10 @@ function expandCartons(sheet) {
 
 // ── Fuzzy matching helpers ────────────────────────
 
+// How far below the best match a candidate may score and still be offered
+// alongside it, once both have matched the same number of the query's words.
+const MATCH_MARGIN = 0.15;
+
 const NAME_STOPWORDS = ['mr', 'mrs', 'ms', 'mme', 'melle', 'mlle', 'herr', 'frau', 'and', 'und', 'et', 'the'];
 
 function normalizeName(str) {
@@ -723,22 +741,33 @@ function tokenSimilarity(a, b) {
   return ratio >= 0.72 ? ratio : 0;
 }
 
-function scoreHousehold(queryTokens, blobTokens) {
-  if (queryTokens.length === 0 || blobTokens.length === 0) return 0;
+// Returns both a similarity score and, separately, how many of the query's
+// words actually landed. The count matters more than the average: searching
+// "Delphine de Bokay" scores respectably against "Delphine Assier de
+// Pompignan" too, because the first name and the particle both match — but
+// only one of the two matches the surname, and that is the difference that
+// should decide it.
+function scoreAgainst(queryTokens, blobTokens) {
+  if (queryTokens.length === 0 || blobTokens.length === 0) return { score: 0, matched: 0 };
   // Weight each query token's contribution by its length, so a matched
   // surname (usually longer, more identifying) outweighs a mismatched or
   // missing short first name rather than being diluted by a plain average.
-  let weightedTotal = 0, weightSum = 0;
+  let weightedTotal = 0, weightSum = 0, matched = 0;
   queryTokens.forEach(function(qt) {
     let best = 0;
     blobTokens.forEach(function(bt) {
       const sim = tokenSimilarity(qt, bt);
       if (sim > best) best = sim;
     });
+    if (best > 0) matched += 1;
     weightedTotal += best * qt.length;
     weightSum += qt.length;
   });
-  return weightSum === 0 ? 0 : weightedTotal / weightSum;
+  return { score: weightSum === 0 ? 0 : weightedTotal / weightSum, matched: matched };
+}
+
+function scoreHousehold(queryTokens, blobTokens) {
+  return scoreAgainst(queryTokens, blobTokens).score;
 }
 
 // ── Guests sheet ──────────────────────────────────
