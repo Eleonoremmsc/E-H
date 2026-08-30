@@ -1067,6 +1067,168 @@ function fillNewGuests() {
 }
 
 // ══════════════════════════════════════════════════
+// APPLYING THE COMPARISON REPORT TO THE GUEST LIST
+//
+// Run compareGuestLists() first, read the report, then:
+//
+//   previewGuestListChanges()  — says exactly what it would do, writes nothing
+//   applyGuestListChanges()    — does it
+//
+// The report's Action column drives everything, so you control it by editing
+// that tab: blank an Action, or write SKIP, and that row is left alone. A
+// "CHECK — renamed?" row is applied as a rename, keeping the person's guest_id
+// and household_token so anyone already recognised on their phone stays
+// recognised. Change it to SKIP if it is really two different people.
+//
+// Anything ambiguous — a removal whose name is on the list twice, a rename
+// whose old name cannot be found — is reported and skipped rather than
+// guessed at.
+// ══════════════════════════════════════════════════
+
+function previewGuestListChanges() { runGuestListChanges(false); }
+function applyGuestListChanges()   { runGuestListChanges(true); }
+
+function runGuestListChanges(apply) {
+  const ss     = SpreadsheetApp.openById(SHEET_ID);
+  const report = ss.getSheetByName(COMPARE_REPORT_TAB);
+  const sheet  = getGuestListSheet();
+  if (!sheet)  { Logger.log('PROBLEM: no guest-list tab found.'); return; }
+  if (!report) {
+    Logger.log('PROBLEM: no "' + COMPARE_REPORT_TAB + '" tab found. ' +
+               'Run compareGuestLists() first.');
+    return;
+  }
+
+  const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+  const rep = report.getDataRange().getValues();
+  const inv = sheet.getDataRange().getValues();
+
+  // Index the guest list by normalised name. A name two people share is left
+  // alone rather than guessed at — deleting the wrong Anne is not recoverable.
+  const byName = {};
+  for (let i = 1; i < inv.length; i++) {
+    const k = normalizeName(S(inv[i][1]) + ' ' + S(inv[i][2]));
+    if (!k) continue;
+    if (!byName[k]) byName[k] = [];
+    byName[k].push(i);
+  }
+
+  const adds = [], removes = [], renames = [], skipped = [], ambiguous = [];
+
+  for (let i = 1; i < rep.length; i++) {
+    const action = S(rep[i][0]).toUpperCase();
+    const first  = S(rep[i][1]);
+    const last   = S(rep[i][2]);
+    const ctx    = S(rep[i][3]);
+    const note   = S(rep[i][4]);
+    if (!action || action === 'SUMMARY') continue;
+    if (!first && !last) continue;
+
+    if (action.indexOf('ADD') === 0) {
+      adds.push({ first: first, last: last, card: ctx });
+
+    } else if (action.indexOf('REMOVE') === 0) {
+      const hits = byName[normalizeName(first + ' ' + last)] || [];
+      if (hits.length === 1) removes.push({ row: hits[0], name: first + ' ' + last });
+      else ambiguous.push('REMOVE ' + first + ' ' + last + ' — ' + (hits.length === 0
+        ? 'not found on the guest list' : hits.length + ' people share that name'));
+
+    } else if (action.indexOf('CHECK') === 0 || action.indexOf('RENAME') === 0) {
+      const m = note.match(/was\s+"([^"]+)"/i);
+      if (!m) {
+        skipped.push(first + ' ' + last + ' — could not read the previous name from the note');
+        continue;
+      }
+      const hits = byName[normalizeName(m[1])] || [];
+      if (hits.length === 1) {
+        renames.push({ row: hits[0], from: m[1], first: first, last: last });
+      } else {
+        ambiguous.push('RENAME ' + m[1] + ' -> ' + first + ' ' + last + ' — ' +
+          (hits.length === 0 ? 'previous name not found' : hits.length + ' share the previous name'));
+      }
+
+    } else {
+      skipped.push(action + '  ' + first + ' ' + last);
+    }
+  }
+
+  // ── report ────────────────────────────────────────
+  Logger.log((apply ? 'Applying' : 'PREVIEW — nothing will be written') + ':');
+  Logger.log('  rename ' + renames.length + ' · remove ' + removes.length +
+             ' · add ' + adds.length);
+  renames.forEach(function(r) { Logger.log('    RENAME  ' + r.from + '  ->  ' + r.first + ' ' + r.last); });
+  removes.forEach(function(r) { Logger.log('    REMOVE  ' + r.name); });
+  adds.forEach(function(a)    { Logger.log('    ADD     ' + a.first + ' ' + a.last +
+                                           (a.card ? '   (card: ' + a.card + ')' : '')); });
+  if (skipped.length) {
+    Logger.log('  left alone (' + skipped.length + '):');
+    skipped.forEach(function(s) { Logger.log('    ' + s); });
+  }
+  if (ambiguous.length) {
+    Logger.log('  NEEDS YOUR EYES — skipped (' + ambiguous.length + '):');
+    ambiguous.forEach(function(s) { Logger.log('    ' + s); });
+  }
+
+  if (!apply) {
+    Logger.log('Run applyGuestListChanges() to make these changes.');
+    return;
+  }
+
+  // ── apply ─────────────────────────────────────────
+  // Renames first, while the row numbers still match what was indexed.
+  renames.forEach(function(r) {
+    sheet.getRange(r.row + 1, 2).setValue(r.first);
+    sheet.getRange(r.row + 1, 3).setValue(r.last);
+  });
+
+  // Then removals, bottom-up so earlier deletions do not shift later rows.
+  removes.map(function(r) { return r.row; })
+    .sort(function(a, b) { return b - a; })
+    .forEach(function(rowIdx) { sheet.deleteRow(rowIdx + 1); });
+
+  // Then additions: name and card label only. fillNewGuests() groups by the
+  // card label and assigns the ids, token, party size and status, continuing
+  // the existing numbering rather than restarting it.
+  adds.forEach(function(a) {
+    const row = new Array(14).fill('');
+    row[1] = a.first;
+    row[2] = a.last;
+    row[3] = a.card;      // grouping label; fillNewGuests turns it into an H number
+    sheet.appendRow(row);
+  });
+  if (adds.length) fillNewGuests();
+
+  // Anyone who lost or gained a housemate needs their seat count corrected.
+  const fixed = recomputePartySizes(sheet);
+
+  Logger.log('Done. Renamed ' + renames.length + ', removed ' + removes.length +
+             ', added ' + adds.length + ', party sizes corrected on ' + fixed + ' row(s).');
+  Logger.log('Run checkInvites() to confirm the list is still consistent.');
+}
+
+// party_size is the number of seats on the invitation, which is simply how
+// many rows share the household token — so it can be recomputed rather than
+// tracked through every edit.
+function recomputePartySizes(sheet) {
+  const rows = sheet.getDataRange().getValues();
+  const count = {};
+  for (let i = 1; i < rows.length; i++) {
+    const t = (rows[i][4] || '').toString().trim();
+    if (t) count[t] = (count[t] || 0) + 1;
+  }
+  let fixed = 0;
+  for (let i = 1; i < rows.length; i++) {
+    const t = (rows[i][4] || '').toString().trim();
+    if (!t) continue;
+    if (parseInt(rows[i][5], 10) !== count[t]) {
+      sheet.getRange(i + 1, 6).setValue(count[t]);
+      fixed += 1;
+    }
+  }
+  return fixed;
+}
+
+// ══════════════════════════════════════════════════
 // IMPORTING ADDRESSES FROM A SEPARATE PER-HOUSEHOLD LIST
 //
 // Paste the other address list into its own tab (call it "Addresses"), one
