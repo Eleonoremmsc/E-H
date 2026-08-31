@@ -1205,14 +1205,59 @@ function runGuestListChanges(apply) {
     }
   }
 
+  // Work out, for each addition, whether it joins an invitation that already
+  // exists. The report's "Household / context" column holds the card label,
+  // which is the FIRST name on the invitation — for a couple's card that is
+  // usually the husband, and he is usually already on the guest list. So an
+  // addition carrying his name is his wife joining HIS household, not a new
+  // household of her own. Resolving it here rather than at write time means
+  // the preview says exactly what the apply will do.
+  //
+  // The lookup runs against a projection of the list as it will be once the
+  // renames and removals above have been made, so a card led by someone who
+  // is being renamed still resolves, and one led by someone being removed
+  // correctly does not.
+  const removedRow = {}, renamedRow = {};
+  removes.forEach(function(r) { removedRow[r.row] = true; });
+  renames.forEach(function(r) { renamedRow[r.row] = r; });
+
+  const projected = {};
+  for (let i = 1; i < inv.length; i++) {
+    if (removedRow[i]) continue;
+    const ren = renamedRow[i];
+    const k = normalizeName(ren ? (ren.first + ' ' + ren.last)
+                                : (S(inv[i][1]) + ' ' + S(inv[i][2])));
+    if (!k) continue;
+    if (!projected[k]) projected[k] = [];
+    projected[k].push(i);
+  }
+
+  adds.forEach(function(a) {
+    const hits = a.card ? (projected[normalizeName(a.card)] || []) : [];
+    if (hits.length > 1) {
+      ambiguous.push('ADD ' + a.first + ' ' + a.last + ' — the card "' + a.card +
+        '" matches ' + hits.length + ' people, so this one gets a household of ' +
+        'their own. Merge it by hand if they belong with someone.');
+      return;
+    }
+    if (hits.length === 0) return;
+    const host = inv[hits[0]];
+    if (!S(host[4])) return;            // host has no token yet: group by label
+    a.host = { householdId: S(host[3]), token: S(host[4]),
+               side: S(host[6]), language: S(host[7]), name: a.card };
+  });
+
   // ── report ────────────────────────────────────────
   Logger.log((apply ? 'Applying' : 'PREVIEW — nothing will be written') + ':');
   Logger.log('  rename ' + renames.length + ' · remove ' + removes.length +
              ' · add ' + adds.length);
   renames.forEach(function(r) { Logger.log('    RENAME  ' + r.from + '  ->  ' + r.first + ' ' + r.last); });
   removes.forEach(function(r) { Logger.log('    REMOVE  ' + r.name); });
-  adds.forEach(function(a)    { Logger.log('    ADD     ' + a.first + ' ' + a.last +
-                                           (a.card ? '   (card: ' + a.card + ')' : '')); });
+  adds.forEach(function(a)    {
+    Logger.log('    ADD     ' + a.first + ' ' + a.last + (a.host
+      ? '   joins ' + a.host.name + '  (' + a.host.householdId + ', same invitation)'
+      : '   new invitation' + (a.card ? '   (card: ' + a.card + ')' : '')));
+  });
   if (skipped.length) {
     Logger.log('  left alone (' + skipped.length + '):');
     skipped.forEach(function(s) { Logger.log('    ' + s); });
@@ -1239,23 +1284,61 @@ function runGuestListChanges(apply) {
     .sort(function(a, b) { return b - a; })
     .forEach(function(rowIdx) { sheet.deleteRow(rowIdx + 1); });
 
-  // Then additions: name and card label only. fillNewGuests() groups by the
-  // card label and assigns the ids, token, party size and status, continuing
-  // the existing numbering rather than restarting it.
-  adds.forEach(function(a) {
-    const row = new Array(14).fill('');
-    row[1] = a.first;
-    row[2] = a.last;
-    row[3] = a.card;      // grouping label; fillNewGuests turns it into an H number
-    sheet.appendRow(row);
-  });
-  if (adds.length) fillNewGuests();
+  // Then additions, using the household resolved above.
+  const joined = [], fresh = [];
+  if (adds.length) {
+    // Re-read only to continue the guest_id numbering: renames and removals
+    // have moved rows, but the resolved host values were read by value.
+    let maxG = 0;
+    sheet.getDataRange().getValues().slice(1).forEach(function(r) {
+      const g = S(r[0]).match(/^G(\d+)$/i);
+      if (g) maxG = Math.max(maxG, parseInt(g[1], 10));
+    });
+
+    adds.forEach(function(a) {
+      const row = new Array(14).fill('');
+      row[1] = a.first;
+      row[2] = a.last;
+      if (a.host) {
+        // Same invitation: the same household id and, crucially, the same
+        // token, so either of them searching their name reaches the one RSVP.
+        maxG += 1;
+        row[0]  = 'G' + ('00' + maxG).slice(-3);
+        row[3]  = a.host.householdId;
+        row[4]  = a.host.token;
+        row[6]  = a.host.side;          // side and language belong to the
+        row[7]  = a.host.language;      // invitation, not the individual
+        row[10] = 'Pending';
+        joined.push(a.first + ' ' + a.last + '  ->  ' + a.host.name +
+                    '  (' + a.host.householdId + ')');
+      } else {
+        // Nobody on the list to join: fillNewGuests() groups by this label, so
+        // two new people on one card still end up on one invitation together.
+        row[3] = a.card;
+        fresh.push(a.first + ' ' + a.last + (a.card ? '   (card: ' + a.card + ')' : ''));
+      }
+      sheet.appendRow(row);
+    });
+    if (fresh.length) fillNewGuests();
+  }
 
   // Anyone who lost or gained a housemate needs their seat count corrected.
   const fixed = recomputePartySizes(sheet);
 
   Logger.log('Done. Renamed ' + renames.length + ', removed ' + removes.length +
              ', added ' + adds.length + ', party sizes corrected on ' + fixed + ' row(s).');
+  if (joined.length) {
+    Logger.log('  joined an existing invitation (' + joined.length + '):');
+    joined.forEach(function(s) { Logger.log('    ' + s); });
+  }
+  if (fresh.length) {
+    Logger.log('  new invitation of their own (' + fresh.length + '):');
+    fresh.forEach(function(s) { Logger.log('    ' + s); });
+  }
+  if (ambiguous.length) {
+    Logger.log('  NEEDS YOUR EYES (' + ambiguous.length + '):');
+    ambiguous.forEach(function(s) { Logger.log('    ' + s); });
+  }
   Logger.log('Run checkInvites() to confirm the list is still consistent.');
 }
 
@@ -1279,6 +1362,158 @@ function recomputePartySizes(sheet) {
     }
   }
   return fixed;
+}
+
+// ══════════════════════════════════════════════════
+// REPAIRING INVITATIONS THAT WERE SPLIT IN TWO
+//
+// An earlier applyGuestListChanges() gave people added from a couple's card
+// a household of their own instead of joining the one their partner was
+// already on — so a couple ended up with two invitations and two tokens.
+// That is fixed for future runs; this puts right the ones already split.
+//
+//   previewSplitHouseholds()  — lists every card whose people are spread
+//                               across more than one invitation. Writes nothing.
+//   repairSplitHouseholds()   — merges them onto one household.
+//
+// It reads the card list (the same tab compareGuestLists() uses) to know who
+// belongs together, and keeps whichever household holds the most of that
+// card's people — on a tie, the lowest H number, which is the original. A
+// household whose token already appears on a submitted RSVP is never merged
+// away, because that RSVP is found by token; those are reported instead.
+// ══════════════════════════════════════════════════
+
+function previewSplitHouseholds() { runSplitHouseholdRepair(false); }
+function repairSplitHouseholds()  { runSplitHouseholdRepair(true); }
+
+function runSplitHouseholdRepair(apply) {
+  const ss      = SpreadsheetApp.openById(SHEET_ID);
+  const cartons = getCartonsSheet();
+  const sheet   = getGuestListSheet();
+  if (!sheet)   { Logger.log('PROBLEM: no guest-list tab found.'); return; }
+  if (!cartons) { Logger.log('PROBLEM: could not find the card list tab.'); return; }
+
+  const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+  const rows = sheet.getDataRange().getValues();
+
+  // Tokens that already carry a submitted RSVP must not be merged away.
+  const rsvpTokens = {};
+  const rsvpSheet = ss.getSheetByName(SHEET_NAME);
+  if (rsvpSheet && rsvpSheet.getLastRow() > 1) {
+    rsvpSheet.getDataRange().getValues().slice(1).forEach(function(r) {
+      const t = S(r[9]);                       // Household Token
+      if (t) rsvpTokens[t] = true;
+    });
+  }
+
+  const byName = {};
+  for (let i = 1; i < rows.length; i++) {
+    const k = normalizeName(S(rows[i][1]) + ' ' + S(rows[i][2]));
+    if (!k) continue;
+    if (!byName[k]) byName[k] = [];
+    byName[k].push(i);
+  }
+
+  // Group the card list back into invitations.
+  const cards = {};
+  expandCartons(cartons).forEach(function(g) {
+    if (!g.firstName) return;                  // unnamed placeholder seat
+    if (!cards[g.cardIndex]) cards[g.cardIndex] = { label: g.card, people: [] };
+    cards[g.cardIndex].people.push(g);
+  });
+
+  const merges = [], blocked = [], unmatched = [];
+
+  Object.keys(cards).forEach(function(idx) {
+    const card = cards[idx];
+    if (card.people.length < 2) return;        // one seat cannot be split
+
+    // Which household does each person of this card sit in?
+    const groups = {};                         // token -> {householdId, rows, names}
+    let missing = 0;
+    card.people.forEach(function(p) {
+      const hits = byName[normalizeName(p.firstName + ' ' + p.lastName)] || [];
+      if (hits.length !== 1) { missing += 1; return; }
+      const r = rows[hits[0]];
+      const t = S(r[4]);
+      if (!t) { missing += 1; return; }
+      if (!groups[t]) groups[t] = { householdId: S(r[3]), rows: [], names: [] };
+      groups[t].rows.push(hits[0]);
+      groups[t].names.push(p.firstName + ' ' + p.lastName);
+    });
+
+    const tokens = Object.keys(groups);
+    if (tokens.length < 2) {
+      if (missing && tokens.length) unmatched.push(card.label + ' — ' + missing +
+        ' of its ' + card.people.length + ' people could not be matched on the guest list');
+      return;
+    }
+
+    // Keep the household holding the most of this card's people; on a tie the
+    // lowest H number, which is the one that existed before the split.
+    const hNum = function(t) {
+      const m = S(groups[t].householdId).match(/^H(\d+)$/i);
+      return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER;
+    };
+    tokens.sort(function(a, b) {
+      return (groups[b].rows.length - groups[a].rows.length) || (hNum(a) - hNum(b));
+    });
+    const keep = tokens[0];
+    const drop = tokens.slice(1);
+
+    // Merging rewrites the token on the rows being moved, so any RSVP filed
+    // under one of those tokens would no longer be reachable.
+    const withRsvp = drop.filter(function(t) { return rsvpTokens[t]; });
+    if (withRsvp.length) {
+      blocked.push(card.label + ' — ' + groups[withRsvp[0]].names.join(' & ') +
+        ' already sent an RSVP under their own invitation. Merge by hand once ' +
+        'you have decided which answer to keep.');
+      return;
+    }
+
+    drop.forEach(function(t) {
+      merges.push({
+        label: card.label,
+        keepId: groups[keep].householdId, keepToken: keep,
+        names: groups[t].names, fromId: groups[t].householdId,
+        rows: groups[t].rows,
+      });
+    });
+  });
+
+  Logger.log((apply ? 'Repairing' : 'PREVIEW — nothing will be written') + ':');
+  if (!merges.length) {
+    Logger.log(blocked.length ? '  nothing that can be merged automatically.'
+                              : '  no split invitations found.');
+  }
+  merges.forEach(function(m) {
+    Logger.log('    ' + m.names.join(' & ') + '  (' + m.fromId + ')  ->  ' +
+               m.label + '  (' + m.keepId + ')');
+  });
+  if (unmatched.length) {
+    Logger.log('  could not check (' + unmatched.length + '):');
+    unmatched.forEach(function(s) { Logger.log('    ' + s); });
+  }
+  if (blocked.length) {
+    Logger.log('  NEEDS YOUR EYES — left alone (' + blocked.length + '):');
+    blocked.forEach(function(s) { Logger.log('    ' + s); });
+  }
+
+  if (!apply) {
+    Logger.log('Run repairSplitHouseholds() to merge them.');
+    return;
+  }
+
+  merges.forEach(function(m) {
+    m.rows.forEach(function(i) {
+      sheet.getRange(i + 1, 4).setValue(m.keepId);      // household_id
+      sheet.getRange(i + 1, 5).setValue(m.keepToken);   // household_token
+    });
+  });
+  const fixed = recomputePartySizes(sheet);
+  Logger.log('Done. Merged ' + merges.length + ' stray household(s), ' +
+             'party sizes corrected on ' + fixed + ' row(s).');
+  Logger.log('Run checkInvites() to confirm the list is still consistent.');
 }
 
 // ══════════════════════════════════════════════════
