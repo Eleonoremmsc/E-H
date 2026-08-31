@@ -859,7 +859,21 @@ body {
   text-align: center;
   font-size: 1.02rem; font-weight: 300; font-style: italic;
   color: var(--ink-mid);
-  margin-bottom: 32px;
+  margin-bottom: 24px;
+}
+/* Explains "gîte" and "chambre d'hôtes" so nobody assumes they have to
+   book a whole house. Uses the same blue rule as the RSVP sub-steps. */
+.accom-stay-help {
+  max-width: 760px;
+  margin: 0 auto 32px;
+  padding: 16px 20px;
+  background: var(--cream-lift);
+  border-left: 3px solid var(--blue);
+  border-radius: 3px;
+  font-size: 0.98rem;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--ink-mid);
 }
 
 .accom-filters { margin-bottom: 36px; }
