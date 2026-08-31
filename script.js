@@ -62,7 +62,7 @@ const T = {
     nav_map:             'Map',
     lang_icon_label:     'Change language',
     lang_modal_title:    'Choose your language',
-    welcome_subtitle:    'look forward to celebrating their wedding with you on',
+    welcome_subtitle:    'We look forward to celebrating our wedding with you on',
     welcome_date:        'June 26th, 2027',
     welcome_location:    'Crillon-le-Brave, Provence',
     btn_save:            'Save the Date',
@@ -83,7 +83,7 @@ const T = {
     tier_boutique:       'Boutique',
     tier_charming:       'Charming',
     tier_comfortable:    'Comfortable',
-    accom_distance:      'Distance',
+    accom_distance:      'Distance:',
     accom_onsite:        'On site',
     accom_note_crillon:  'The Relais & Châteaux property at the heart of the village. Book directly for the best rates.',
     accom_note_gordes:   'Perched village hotel with panoramic views over the Luberon.',
@@ -270,7 +270,9 @@ const T = {
     cal_both_note:              "Apple Calendar and the iCal file add both evenings at once — Friday's cocktail and Saturday's wedding.",
     cal_friday_note:            "Saturday is added. Friday's cocktail is a separate event:",
     cal_friday_btn:             "＋ Also add Friday's cocktail",
-    recognition_greeting_responded: 'Hi {name} — you’re confirmed for {count}.',
+    recognition_greeting_responded: 'Hi {name}, you’re confirmed for {count}.',
+    recognition_people_one:  '1 guest',
+    recognition_people_many: '{n} guests',
     recognition_greeting_cleared:   'No problem — let’s find you on the guest list.',
     recognition_find:               'Find me on the list',
     recognition_greeting_pending:   'Hi {name} — welcome back, you haven’t RSVP’d yet.',
@@ -306,7 +308,7 @@ const T = {
     nav_map:             'Carte',
     lang_icon_label:     'Changer de langue',
     lang_modal_title:    'Choisissez votre langue',
-    welcome_subtitle:    'ont le plaisir de célébrer leur mariage avec vous le',
+    welcome_subtitle:    'Nous nous réjouissons de célébrer notre mariage avec vous le',
     welcome_date:        '26 juin 2027',
     welcome_location:    'Crillon-le-Brave, Provence',
     btn_save:            'Retenir la date',
@@ -327,7 +329,7 @@ const T = {
     tier_boutique:       'Boutique',
     tier_charming:       'Charmant',
     tier_comfortable:    'Confortable',
-    accom_distance:      'Distance',
+    accom_distance:      'Distance :',
     accom_onsite:        'Sur place',
     accom_note_crillon:  'La propriété Relais & Châteaux au cœur du village. Réservez directement pour les meilleurs tarifs.',
     accom_note_gordes:   'Hôtel de village perché avec vue panoramique sur le Luberon.',
@@ -514,7 +516,9 @@ const T = {
     cal_both_note:              "Apple Calendar et le fichier iCal ajoutent les deux soirées d'un coup — le cocktail du vendredi et le mariage du samedi.",
     cal_friday_note:            'Le samedi est ajouté. Le cocktail du vendredi est un événement distinct :',
     cal_friday_btn:             '＋ Ajouter aussi le cocktail du vendredi',
-    recognition_greeting_responded: 'Bonjour {name} — votre présence est confirmée pour {count}.',
+    recognition_greeting_responded: 'Bonjour {name}, ta présence est confirmée pour {count}.',
+    recognition_people_one:  '1 personne',
+    recognition_people_many: '{n} personnes',
     recognition_greeting_cleared:   'Pas de souci — retrouvons-vous sur la liste des invités.',
     recognition_find:               'Me trouver sur la liste',
     recognition_greeting_pending:   "Bonjour {name} — heureux de vous revoir, vous n'avez pas encore répondu.",
@@ -550,7 +554,7 @@ const T = {
     nav_map:             'Karte',
     lang_icon_label:     'Sprache ändern',
     lang_modal_title:    'Wählen Sie Ihre Sprache',
-    welcome_subtitle:    'freuen sich, ihre Hochzeit mit Ihnen zu feiern am',
+    welcome_subtitle:    'Wir freuen uns, unsere Hochzeit mit Ihnen zu feiern am',
     welcome_date:        '26. Juni 2027',
     welcome_location:    'Crillon-le-Brave, Provence',
     btn_save:            'Datum speichern',
@@ -571,7 +575,7 @@ const T = {
     tier_boutique:       'Boutique',
     tier_charming:       'Charmant',
     tier_comfortable:    'Komfortabel',
-    accom_distance:      'Entfernung',
+    accom_distance:      'Entfernung:',
     accom_onsite:        'Vor Ort',
     accom_note_crillon:  'Das Relais & Châteaux Hotel im Herzen des Dorfes. Direkt buchen für die besten Preise.',
     accom_note_gordes:   'Hoch gelegenes Dorfhotel mit Panoramablick über den Luberon.',
@@ -758,7 +762,9 @@ const T = {
     cal_both_note:              'Apple Calendar und die iCal-Datei fügen beide Abende auf einmal hinzu — den Cocktail am Freitag und die Hochzeit am Samstag.',
     cal_friday_note:            'Samstag ist eingetragen. Der Cocktail am Freitag ist ein eigener Termin:',
     cal_friday_btn:             '＋ Cocktail am Freitag ebenfalls hinzufügen',
-    recognition_greeting_responded: 'Hallo {name} — Sie sind für {count} bestätigt.',
+    recognition_greeting_responded: 'Hallo {name}, Sie sind für {count} bestätigt.',
+    recognition_people_one:  '1 Person',
+    recognition_people_many: '{n} Personen',
     recognition_greeting_cleared:   'Kein Problem — finden wir Sie auf der Gästeliste.',
     recognition_find:               'Mich auf der Liste finden',
     recognition_greeting_pending:   'Hallo {name} — willkommen zurück, Sie haben noch nicht geantwortet.',
@@ -1792,9 +1798,14 @@ function renderBanner() {
   const key = recognition.status === 'responded' ? 'recognition_greeting_responded'
             : recognition.status === 'cleared'   ? 'recognition_greeting_cleared'
             : 'recognition_greeting_pending';
+  // "confirmed for 2" reads as a date; the noun has to come with the number,
+  // and it has to agree — one guest, two guests.
+  const n = Number(recognition.count) || 0;
+  const people = (n === 1 ? (t.recognition_people_one || '1')
+                          : (t.recognition_people_many || '{n}')).replace('{n}', String(n));
   textEl.textContent = (t[key] || '')
     .replace('{name}', recognition.name)
-    .replace('{count}', String(recognition.count));
+    .replace('{count}', people);
 
   if (actionBtn) {
     actionBtn.textContent = recognition.status === 'responded' ? t.recognition_edit
