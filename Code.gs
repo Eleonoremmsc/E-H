@@ -1232,6 +1232,19 @@ function runGuestListChanges(apply) {
     projected[k].push(i);
   }
 
+  // The first import created one row per SEAT on the card, so a couple invited
+  // as two people already has a second row — with a household and a token, but
+  // nobody's name on it. That empty seat is the one being filled in; appending
+  // instead would put a third person on a two-person invitation.
+  const vacantSeats = {};                 // token -> [row indices]
+  for (let i = 1; i < inv.length; i++) {
+    if (removedRow[i] || renamedRow[i]) continue;
+    const t = S(inv[i][4]);
+    if (!t || S(inv[i][1])) continue;     // no token, or the seat is taken
+    if (!vacantSeats[t]) vacantSeats[t] = [];
+    vacantSeats[t].push(i);
+  }
+
   adds.forEach(function(a) {
     const hits = a.card ? (projected[normalizeName(a.card)] || []) : [];
     if (hits.length > 1) {
@@ -1245,6 +1258,21 @@ function runGuestListChanges(apply) {
     if (!S(host[4])) return;            // host has no token yet: group by label
     a.host = { householdId: S(host[3]), token: S(host[4]),
                side: S(host[6]), language: S(host[7]), name: a.card };
+
+    // Claim an empty seat on that invitation, matching on surname first so a
+    // couple who kept different names still lands on the right row. Any seat
+    // will do as a last resort — it is a seat on their own invitation, and
+    // both names are written, so the row ends up correct either way.
+    const seats = vacantSeats[a.host.token] || [];
+    let pick = -1;
+    for (let j = 0; j < seats.length && pick === -1; j++) {
+      if (normalizeName(S(inv[seats[j]][2])) === normalizeName(a.last)) pick = j;
+    }
+    for (let j = 0; j < seats.length && pick === -1; j++) {
+      if (!S(inv[seats[j]][2])) pick = j;
+    }
+    if (pick === -1 && seats.length) pick = 0;
+    if (pick !== -1) a.seatRow = seats.splice(pick, 1)[0];   // one add per seat
   });
 
   // ── report ────────────────────────────────────────
@@ -1254,9 +1282,15 @@ function runGuestListChanges(apply) {
   renames.forEach(function(r) { Logger.log('    RENAME  ' + r.from + '  ->  ' + r.first + ' ' + r.last); });
   removes.forEach(function(r) { Logger.log('    REMOVE  ' + r.name); });
   adds.forEach(function(a)    {
-    Logger.log('    ADD     ' + a.first + ' ' + a.last + (a.host
-      ? '   joins ' + a.host.name + '  (' + a.host.householdId + ', same invitation)'
-      : '   new invitation' + (a.card ? '   (card: ' + a.card + ')' : '')));
+    let where;
+    if (a.seatRow !== undefined) {
+      where = '   fills the empty seat on ' + a.host.name + '  (' + a.host.householdId + ')';
+    } else if (a.host) {
+      where = '   joins ' + a.host.name + '  (' + a.host.householdId + ') as an extra seat';
+    } else {
+      where = '   new invitation' + (a.card ? '   (card: ' + a.card + ')' : '');
+    }
+    Logger.log('    ADD     ' + a.first + ' ' + a.last + where);
   });
   if (skipped.length) {
     Logger.log('  left alone (' + skipped.length + '):');
@@ -1279,6 +1313,18 @@ function runGuestListChanges(apply) {
     sheet.getRange(r.row + 1, 3).setValue(r.last);
   });
 
+  // Seat fills are edits to rows that already exist, so they belong here too,
+  // before any deletion moves the row numbers.
+  const seated = [];
+  adds.forEach(function(a) {
+    if (a.seatRow === undefined) return;
+    sheet.getRange(a.seatRow + 1, 2).setValue(a.first);
+    sheet.getRange(a.seatRow + 1, 3).setValue(a.last);
+    if (!S(inv[a.seatRow][10])) sheet.getRange(a.seatRow + 1, 11).setValue('Pending');
+    seated.push(a.first + ' ' + a.last + '  ->  ' + a.host.name +
+                '  (' + a.host.householdId + ')');
+  });
+
   // Then removals, bottom-up so earlier deletions do not shift later rows.
   removes.map(function(r) { return r.row; })
     .sort(function(a, b) { return b - a; })
@@ -1296,6 +1342,7 @@ function runGuestListChanges(apply) {
     });
 
     adds.forEach(function(a) {
+      if (a.seatRow !== undefined) return;   // already written into its seat
       const row = new Array(14).fill('');
       row[1] = a.first;
       row[2] = a.last;
@@ -1327,8 +1374,12 @@ function runGuestListChanges(apply) {
 
   Logger.log('Done. Renamed ' + renames.length + ', removed ' + removes.length +
              ', added ' + adds.length + ', party sizes corrected on ' + fixed + ' row(s).');
+  if (seated.length) {
+    Logger.log('  filled an empty seat already on the invitation (' + seated.length + '):');
+    seated.forEach(function(s) { Logger.log('    ' + s); });
+  }
   if (joined.length) {
-    Logger.log('  joined an existing invitation (' + joined.length + '):');
+    Logger.log('  added as an extra seat on an existing invitation (' + joined.length + '):');
     joined.forEach(function(s) { Logger.log('    ' + s); });
   }
   if (fresh.length) {
@@ -1417,12 +1468,15 @@ function runSplitHouseholdRepair(apply) {
   // Group the card list back into invitations.
   const cards = {};
   expandCartons(cartons).forEach(function(g) {
+    if (!cards[g.cardIndex]) {
+      cards[g.cardIndex] = { label: g.card, people: [], seats: g.partySize };
+    }
     if (!g.firstName) return;                  // unnamed placeholder seat
-    if (!cards[g.cardIndex]) cards[g.cardIndex] = { label: g.card, people: [] };
     cards[g.cardIndex].people.push(g);
   });
 
   const merges = [], blocked = [], unmatched = [];
+  const seatsWanted = {};                      // kept token -> seats on the card
 
   Object.keys(cards).forEach(function(idx) {
     const card = cards[idx];
@@ -1479,6 +1533,27 @@ function runSplitHouseholdRepair(apply) {
         rows: groups[t].rows,
       });
     });
+    seatsWanted[keep] = card.seats;
+  });
+
+  // A merge can leave the invitation with more rows than the card has seats:
+  // the stray was created as an extra row while the seat they should have
+  // taken is still sitting there with nobody's name on it. Drop the surplus.
+  const effToken = {};
+  for (let i = 1; i < rows.length; i++) effToken[i] = S(rows[i][4]);
+  merges.forEach(function(m) {
+    m.rows.forEach(function(i) { effToken[i] = m.keepToken; });
+  });
+
+  const dropRows = [];
+  Object.keys(seatsWanted).forEach(function(token) {
+    const mine = [];
+    for (let i = 1; i < rows.length; i++) if (effToken[i] === token) mine.push(i);
+    const surplus = mine.length - seatsWanted[token];
+    if (surplus <= 0) return;
+    mine.filter(function(i) { return !S(rows[i][1]); })   // empty seats only
+        .slice(0, surplus)
+        .forEach(function(i) { dropRows.push(i); });
   });
 
   Logger.log((apply ? 'Repairing' : 'PREVIEW — nothing will be written') + ':');
@@ -1490,6 +1565,13 @@ function runSplitHouseholdRepair(apply) {
     Logger.log('    ' + m.names.join(' & ') + '  (' + m.fromId + ')  ->  ' +
                m.label + '  (' + m.keepId + ')');
   });
+  if (dropRows.length) {
+    Logger.log('  empty seats left over, to be deleted (' + dropRows.length + '):');
+    dropRows.forEach(function(i) {
+      Logger.log('    row ' + (i + 1) + '  ' + (S(rows[i][0]) || '(no id)') + '  ' +
+                 (S(rows[i][2]) || '(no name)') + '  ' + S(rows[i][3]));
+    });
+  }
   if (unmatched.length) {
     Logger.log('  could not check (' + unmatched.length + '):');
     unmatched.forEach(function(s) { Logger.log('    ' + s); });
@@ -1510,9 +1592,14 @@ function runSplitHouseholdRepair(apply) {
       sheet.getRange(i + 1, 5).setValue(m.keepToken);   // household_token
     });
   });
+  // Bottom-up, so an earlier deletion does not shift the rows below it.
+  dropRows.sort(function(a, b) { return b - a; })
+          .forEach(function(i) { sheet.deleteRow(i + 1); });
+
   const fixed = recomputePartySizes(sheet);
-  Logger.log('Done. Merged ' + merges.length + ' stray household(s), ' +
-             'party sizes corrected on ' + fixed + ' row(s).');
+  Logger.log('Done. Merged ' + merges.length + ' stray household(s), deleted ' +
+             dropRows.length + ' leftover empty seat(s), party sizes corrected on ' +
+             fixed + ' row(s).');
   Logger.log('Run checkInvites() to confirm the list is still consistent.');
 }
 
