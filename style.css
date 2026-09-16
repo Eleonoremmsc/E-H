@@ -1442,6 +1442,16 @@ body {
 .req { color: var(--ink-mid); margin-left: 2px; }
 /* A quiet second line on a label — the date and place of the Friday evening,
    so nobody has to go back to the Programme to answer the question. */
+/* Friday closed off because Saturday was declined: dimmed and unclickable,
+   with a line saying why, rather than silently refusing on submit. */
+.att-friday-group.is-locked .radio-group { opacity: 0.4; pointer-events: none; }
+.att-friday-group.is-locked .form-label { opacity: 0.6; }
+.att-friday-locked {
+  font-family: var(--serif);
+  font-size: 0.9rem; font-style: italic;
+  color: var(--olive-deep);
+  margin-top: 8px;
+}
 .form-hint {
   display: block;
   font-family: var(--serif);

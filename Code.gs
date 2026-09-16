@@ -797,7 +797,12 @@ function writeGuests(id, submitted, data, isUpdate) {
     }
   }
 
-  const attendees = data.attendees || [];
+  // The form closes off Friday when Saturday is declined, but the sheet is the
+  // record — normalise here too rather than trusting whatever arrived.
+  const attendees = (data.attendees || []).map(function(a) {
+    if (a && a.status === 'no' && a.friday === 'yes') a.friday = 'no';
+    return a;
+  });
   attendees.forEach(function(a) {
     sheet.appendRow([
       id,

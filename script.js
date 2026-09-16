@@ -249,6 +249,7 @@ const T = {
     rsvp_friday_yes:     'Yes, count me in',
     rsvp_friday_no:      'No, I will join on Saturday only',
     rsvp_err_friday:     'Please say whether you are coming on Friday',
+    rsvp_friday_locked:  'The Friday evening is for guests joining us on Saturday.',
     rsvp_guests_note:    'Please fill in the details for all guests invited with you, so we can send each person their invitation.',
     rsvp_add:            '+ Add the response for another guest in your household',
     rsvp_remove:         'Remove',
@@ -501,6 +502,7 @@ const T = {
     rsvp_friday_yes:     'Oui, je serai là',
     rsvp_friday_no:      'Non, je viendrai seulement le samedi',
     rsvp_err_friday:     'Merci d’indiquer si vous venez le vendredi',
+    rsvp_friday_locked:  'La soirée du vendredi est réservée aux invités présents le samedi.',
     rsvp_guests_note:    'Merci de renseigner les informations pour les personnes invitées avec vous, afin que nous puissions leur adresser leur invitation.',
     rsvp_add:            "+ Ajouter la réponse d'un autre invité de votre foyer",
     rsvp_remove:         'Supprimer',
@@ -753,6 +755,7 @@ const T = {
     rsvp_friday_yes:     'Ja, ich bin dabei',
     rsvp_friday_no:      'Nein, ich komme nur am Samstag',
     rsvp_err_friday:     'Bitte geben Sie an, ob Sie am Freitag kommen',
+    rsvp_friday_locked:  'Der Freitagabend ist für Gäste, die am Samstag dabei sind.',
     rsvp_guests_note:    'Bitte geben Sie die Informationen für die mit Ihnen eingeladenen Personen an, damit wir ihnen ihre Einladung zukommen lassen können.',
     rsvp_add:            '+ Antwort eines weiteren Mitglieds Ihres Haushalts hinzufügen',
     rsvp_remove:         'Entfernen',
@@ -885,6 +888,7 @@ function applyLang(l) {
   renderSongStatus();
   renderSongs();
   renderCountrySelect();
+  document.querySelectorAll('#attendees-list .attendee-block').forEach(syncFridayLock);
 }
 
 document.addEventListener('click', e => {
@@ -1380,7 +1384,7 @@ function addAttendee(isFirst = false, prefill = null) {
       </div>
       <div class="form-error att-err-status"></div>
     </div>
-    <div class="form-group">
+    <div class="form-group att-friday-group">
       <label class="form-label">
         <span data-i18n="rsvp_friday">${t.rsvp_friday}</span> <span class="req">*</span>
         <span class="form-hint" data-i18n="rsvp_friday_hint">${t.rsvp_friday_hint}</span>
@@ -1398,6 +1402,7 @@ function addAttendee(isFirst = false, prefill = null) {
         </label>
       </div>
       <div class="form-error att-err-friday"></div>
+      <div class="att-friday-locked" hidden></div>
     </div>
     ${allergiesField}
   `;
@@ -1405,8 +1410,43 @@ function addAttendee(isFirst = false, prefill = null) {
   const removeBtn = block.querySelector('.attendee-remove');
   if (removeBtn) removeBtn.addEventListener('click', () => { block.remove(); renumberAttendees(); });
 
+  // Friday only exists for people who are actually coming on the Saturday,
+  // so declining Saturday closes it rather than leaving an impossible
+  // combination available and rejecting it later.
+  block.querySelectorAll(`input[name="att_status_${idx}"]`).forEach(r => {
+    r.addEventListener('change', () => syncFridayLock(block));
+  });
+
   list.appendChild(block);
+  syncFridayLock(block);
   renumberAttendees();
+}
+
+// Friday is available unless Saturday is a flat no. "Maybe" still counts as
+// coming, so it leaves the choice open.
+function syncFridayLock(block) {
+  const t     = T[lang] || T.en;
+  const idx   = block.dataset.index;
+  const group = block.querySelector('.att-friday-group');
+  const note  = block.querySelector('.att-friday-locked');
+  if (!group) return;
+
+  const status = block.querySelector(`input[name="att_status_${idx}"]:checked`);
+  const locked = !!status && status.value === 'no';
+
+  group.classList.toggle('is-locked', locked);
+  block.querySelectorAll(`input[name="att_friday_${idx}"]`).forEach(r => {
+    r.disabled = locked;
+    if (locked) r.checked = r.value === 'no';
+  });
+  if (note) {
+    note.textContent = t.rsvp_friday_locked;
+    note.hidden = !locked;
+  }
+  if (locked) {
+    const err = block.querySelector('.att-err-friday');
+    if (err) err.classList.remove('visible');
+  }
 }
 
 // ── Country ───────────────────────────────────────
@@ -1495,10 +1535,11 @@ function collectFormData() {
       relationship = (block.querySelector('.att-relationship') || {}).value?.trim() || '';
     }
     const allergies = (block.querySelector('.att-allergies') || {}).value?.trim() || '';
+    const status = statusEl ? statusEl.value : '';
     attendees.push({
-      firstName, lastName, relationship, allergies,
-      status: statusEl ? statusEl.value : '',
-      friday: fridayEl ? fridayEl.value : '',
+      firstName, lastName, relationship, allergies, status,
+      // Nobody comes on the Friday without the Saturday.
+      friday: status === 'no' ? 'no' : (fridayEl ? fridayEl.value : ''),
     });
   });
   return {
@@ -1551,7 +1592,8 @@ function validateForm(data) {
     if (!statusEl && statusErr) {
       statusErr.textContent = t.rsvp_err_attendance; statusErr.classList.add('visible'); valid = false;
     }
-    if (!fridayEl && fridayErr) {
+    const declined = statusEl && statusEl.value === 'no';
+    if (!declined && !fridayEl && fridayErr) {
       fridayErr.textContent = t.rsvp_err_friday; fridayErr.classList.add('visible'); valid = false;
     }
   });
