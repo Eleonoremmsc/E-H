@@ -21,11 +21,11 @@ const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw5I6qwAYXmzVEtqR
 // Friday cocktail is offered as its own explicit second click.
 const EVENT = {
   title:       'Eléonore & Hubert',
-  startUtc:    '20270626T143000Z',   // 16:30 CEST = 14:30 UTC
+  startUtc:    '20270626T090000Z',   // 11:00 CEST = 09:00 UTC
   endUtc:      '20270626T215900Z',   // 23:59 CEST = 21:59 UTC
-  startLocal:  '20270626T163000',
+  startLocal:  '20270626T110000',
   endLocal:    '20270626T235900',
-  startPlain:  '2027-06-26T16:30:00',
+  startPlain:  '2027-06-26T11:00:00',
   endPlain:    '2027-06-26T23:59:00',
   timezone:    'Europe/Paris',
   location:    'Domaine des Pins, 1100 Chemin de Mormoiron par les Mourands, 84410 Crillon-le-Brave, France',
@@ -239,10 +239,16 @@ const T = {
     rsvp_firstname:      'First name',
     rsvp_relationship:              'Relationship (optional)',
     rsvp_relationship_placeholder:  'e.g. spouse, sibling, plus-one',
-    rsvp_attendance:     'Attendance',
+    rsvp_attendance:     'Saturday — ceremony & reception',
+    rsvp_attendance_hint: '26 June · Crillon-le-Brave',
     rsvp_yes:            'With joy, I will be there',
     rsvp_maybe:          'I hope to attend',
     rsvp_no:             'Regretfully, I will not be able to join',
+    rsvp_friday:         'Friday evening cocktail',
+    rsvp_friday_hint:    '25 June · Château Pesquié',
+    rsvp_friday_yes:     'Yes, count me in',
+    rsvp_friday_no:      'No, I will join on Saturday only',
+    rsvp_err_friday:     'Please say whether you are coming on Friday',
     rsvp_guests_note:    'Please fill in the details for all guests invited with you, so we can send each person their invitation.',
     rsvp_add:            '+ Add the response for another guest in your household',
     rsvp_remove:         'Remove',
@@ -485,10 +491,16 @@ const T = {
     rsvp_firstname:      'Prénom',
     rsvp_relationship:              'Relation (facultatif)',
     rsvp_relationship_placeholder:  'ex. conjoint(e), frère/sœur, accompagnant(e)',
-    rsvp_attendance:     'Présence',
+    rsvp_attendance:     'Samedi — cérémonie & réception',
+    rsvp_attendance_hint: '26 juin · Crillon-le-Brave',
     rsvp_yes:            'Avec joie, je serai présent(e)',
     rsvp_maybe:          "J'espère pouvoir participer",
     rsvp_no:             'Je ne pourrai malheureusement pas être présent(e)',
+    rsvp_friday:         'Soirée cocktail du vendredi',
+    rsvp_friday_hint:    '25 juin · Château Pesquié',
+    rsvp_friday_yes:     'Oui, je serai là',
+    rsvp_friday_no:      'Non, je viendrai seulement le samedi',
+    rsvp_err_friday:     'Merci d’indiquer si vous venez le vendredi',
     rsvp_guests_note:    'Merci de renseigner les informations pour les personnes invitées avec vous, afin que nous puissions leur adresser leur invitation.',
     rsvp_add:            "+ Ajouter la réponse d'un autre invité de votre foyer",
     rsvp_remove:         'Supprimer',
@@ -731,10 +743,16 @@ const T = {
     rsvp_firstname:      'Vorname',
     rsvp_relationship:              'Beziehung (optional)',
     rsvp_relationship_placeholder:  'z. B. Ehepartner/in, Geschwister, Begleitung',
-    rsvp_attendance:     'Teilnahme',
+    rsvp_attendance:     'Samstag — Trauung & Empfang',
+    rsvp_attendance_hint: '26. Juni · Crillon-le-Brave',
     rsvp_yes:            'Mit Freude, ich werde dabei sein',
     rsvp_maybe:          'Ich hoffe, teilnehmen zu können',
     rsvp_no:             'Leider werde ich nicht teilnehmen können',
+    rsvp_friday:         'Cocktailabend am Freitag',
+    rsvp_friday_hint:    '25. Juni · Château Pesquié',
+    rsvp_friday_yes:     'Ja, ich bin dabei',
+    rsvp_friday_no:      'Nein, ich komme nur am Samstag',
+    rsvp_err_friday:     'Bitte geben Sie an, ob Sie am Freitag kommen',
     rsvp_guests_note:    'Bitte geben Sie die Informationen für die mit Ihnen eingeladenen Personen an, damit wir ihnen ihre Einladung zukommen lassen können.',
     rsvp_add:            '+ Antwort eines weiteren Mitglieds Ihres Haushalts hinzufügen',
     rsvp_remove:         'Entfernen',
@@ -1286,7 +1304,8 @@ function addAttendee(isFirst = false, prefill = null) {
   block.dataset.index = idx;
   if (isFirst) block.dataset.isContact = 'true';
 
-  const checked = s => prefill && prefill.status === s ? 'checked' : '';
+  const checked    = s => prefill && prefill.status === s ? 'checked' : '';
+  const checkedFri = s => prefill && prefill.friday === s ? 'checked' : '';
 
   const allergiesField = `
     <div class="form-group">
@@ -1340,6 +1359,7 @@ function addAttendee(isFirst = false, prefill = null) {
     <div class="form-group">
       <label class="form-label">
         <span data-i18n="rsvp_attendance">${t.rsvp_attendance}</span> <span class="req">*</span>
+        <span class="form-hint" data-i18n="rsvp_attendance_hint">${t.rsvp_attendance_hint}</span>
       </label>
       <div class="radio-group">
         <label class="radio-option">
@@ -1359,6 +1379,25 @@ function addAttendee(isFirst = false, prefill = null) {
         </label>
       </div>
       <div class="form-error att-err-status"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">
+        <span data-i18n="rsvp_friday">${t.rsvp_friday}</span> <span class="req">*</span>
+        <span class="form-hint" data-i18n="rsvp_friday_hint">${t.rsvp_friday_hint}</span>
+      </label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="att_friday_${idx}" value="yes" ${checkedFri('yes')}>
+          <span class="radio-dot"></span>
+          <span class="radio-text" data-i18n="rsvp_friday_yes">${t.rsvp_friday_yes}</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="att_friday_${idx}" value="no" ${checkedFri('no')}>
+          <span class="radio-dot"></span>
+          <span class="radio-text" data-i18n="rsvp_friday_no">${t.rsvp_friday_no}</span>
+        </label>
+      </div>
+      <div class="form-error att-err-friday"></div>
     </div>
     ${allergiesField}
   `;
@@ -1440,7 +1479,11 @@ function collectFormData() {
   const form = document.getElementById('rsvp-form');
   const attendees = [];
   document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
-    const statusEl = block.querySelector('input[type="radio"]:checked');
+    // Scoped by name: with two radio groups in a block, ":checked" alone
+    // would return whichever happened to come first in the DOM.
+    const idx      = block.dataset.index;
+    const statusEl = block.querySelector(`input[name="att_status_${idx}"]:checked`);
+    const fridayEl = block.querySelector(`input[name="att_friday_${idx}"]:checked`);
     let firstName, lastName, relationship;
     if (block.dataset.isContact) {
       firstName = form.firstName.value.trim();
@@ -1452,7 +1495,11 @@ function collectFormData() {
       relationship = (block.querySelector('.att-relationship') || {}).value?.trim() || '';
     }
     const allergies = (block.querySelector('.att-allergies') || {}).value?.trim() || '';
-    attendees.push({ firstName, lastName, relationship, allergies, status: statusEl ? statusEl.value : '' });
+    attendees.push({
+      firstName, lastName, relationship, allergies,
+      status: statusEl ? statusEl.value : '',
+      friday: fridayEl ? fridayEl.value : '',
+    });
   });
   return {
     email:     form.email.value.trim(),
@@ -1488,10 +1535,13 @@ function validateForm(data) {
   document.querySelectorAll('#attendees-list .attendee-block').forEach(block => {
     const fnEl      = block.querySelector('.att-firstname');
     const lnEl      = block.querySelector('.att-lastname');
-    const statusEl  = block.querySelector('input[type="radio"]:checked');
+    const idx       = block.dataset.index;
+    const statusEl  = block.querySelector(`input[name="att_status_${idx}"]:checked`);
+    const fridayEl  = block.querySelector(`input[name="att_friday_${idx}"]:checked`);
     const fnErr     = block.querySelector('.att-err-firstname');
     const lnErr     = block.querySelector('.att-err-lastname');
     const statusErr = block.querySelector('.att-err-status');
+    const fridayErr = block.querySelector('.att-err-friday');
     if (fnEl && !fnEl.value.trim() && fnErr) {
       fnErr.textContent = t.rsvp_err_required; fnErr.classList.add('visible'); valid = false;
     }
@@ -1500,6 +1550,9 @@ function validateForm(data) {
     }
     if (!statusEl && statusErr) {
       statusErr.textContent = t.rsvp_err_attendance; statusErr.classList.add('visible'); valid = false;
+    }
+    if (!fridayEl && fridayErr) {
+      fridayErr.textContent = t.rsvp_err_friday; fridayErr.classList.add('visible'); valid = false;
     }
   });
 

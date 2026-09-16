@@ -810,6 +810,7 @@ function writeGuests(id, submitted, data, isUpdate) {
       data.lastName,
       a.relationship || '',
       a.allergies || '',
+      a.friday || '',
     ]);
   });
 }
@@ -878,6 +879,7 @@ const EMAIL_TEXT = {
     status:   { yes: 'With joy, I will be there',
                 maybe: 'I hope to attend',
                 no: 'Regretfully, I will not be able to join' },
+    friday:   { yes: 'Friday cocktail: yes', no: 'Friday cocktail: no' },
     subject:  { create: "Your RSVP to Éléonore & Hubert's wedding",
                 update: "Your updated RSVP – Éléonore & Hubert's wedding" },
     greeting: function(n) { return 'Thank you, ' + n + '.'; },
@@ -893,6 +895,7 @@ const EMAIL_TEXT = {
     status:   { yes: 'Avec joie, je serai présent(e)',
                 maybe: "J'espère pouvoir venir",
                 no: 'À mon grand regret, je ne pourrai pas être présent(e)' },
+    friday:   { yes: 'Soirée de vendredi : oui', no: 'Soirée de vendredi : non' },
     subject:  { create: "Votre réponse au mariage d'Éléonore & Hubert",
                 update: "Votre réponse modifiée – mariage d'Éléonore & Hubert" },
     greeting: function(n) { return 'Merci, ' + n + '.'; },
@@ -908,6 +911,7 @@ const EMAIL_TEXT = {
     status:   { yes: 'Mit Freude, ich werde da sein',
                 maybe: 'Ich hoffe, dabei sein zu können',
                 no: 'Leider kann ich nicht teilnehmen' },
+    friday:   { yes: 'Freitagabend: ja', no: 'Freitagabend: nein' },
     subject:  { create: 'Ihre Zusage zur Hochzeit von Éléonore & Hubert',
                 update: 'Ihre geänderte Antwort – Hochzeit von Éléonore & Hubert' },
     greeting: function(n) { return 'Vielen Dank, ' + n + '.'; },
@@ -926,8 +930,10 @@ function sendEmail(data, editUrl, isUpdate) {
 
   const lines = (data.attendees || [])
     .map(function(a) {
-      return '  • ' + a.firstName + ' ' + a.lastName + ' — ' +
-             (t.status[a.status] || a.status);
+      let line = '  • ' + a.firstName + ' ' + a.lastName + ' — ' +
+                 (t.status[a.status] || a.status);
+      if (a.friday) line += ' · ' + (t.friday[a.friday] || a.friday);
+      return line;
     })
     .join('\n');
 
@@ -952,9 +958,12 @@ const RSVP_HEADERS = [
   'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
   'Country', 'Confirmation email',
 ];
+// Friday is appended at the end for the same reason Country was on the RSVP
+// tab: inserting mid-row would shift columns that existing rows already fill.
 const GUEST_HEADERS = [
   'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
   'Household Email', 'Contact First', 'Contact Last', 'Relationship', 'Allergies',
+  'Friday',
 ];
 
 // Headers used to be written only when a tab was first created, so tabs that
