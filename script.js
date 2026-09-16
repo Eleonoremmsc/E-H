@@ -249,7 +249,6 @@ const T = {
     rsvp_friday_yes:     'Yes, count me in',
     rsvp_friday_no:      'No, I will join on Saturday only',
     rsvp_err_friday:     'Please say whether you are coming on Friday',
-    rsvp_friday_locked:  'The Friday evening is for guests joining us on Saturday.',
     rsvp_guests_note:    'Please fill in the details for all guests invited with you, so we can send each person their invitation.',
     rsvp_add:            '+ Add the response for another guest in your household',
     rsvp_remove:         'Remove',
@@ -502,7 +501,6 @@ const T = {
     rsvp_friday_yes:     'Oui, je serai là',
     rsvp_friday_no:      'Non, je viendrai seulement le samedi',
     rsvp_err_friday:     'Merci d’indiquer si vous venez le vendredi',
-    rsvp_friday_locked:  'La soirée du vendredi est réservée aux invités présents le samedi.',
     rsvp_guests_note:    'Merci de renseigner les informations pour les personnes invitées avec vous, afin que nous puissions leur adresser leur invitation.',
     rsvp_add:            "+ Ajouter la réponse d'un autre invité de votre foyer",
     rsvp_remove:         'Supprimer',
@@ -755,7 +753,6 @@ const T = {
     rsvp_friday_yes:     'Ja, ich bin dabei',
     rsvp_friday_no:      'Nein, ich komme nur am Samstag',
     rsvp_err_friday:     'Bitte geben Sie an, ob Sie am Freitag kommen',
-    rsvp_friday_locked:  'Der Freitagabend ist für Gäste, die am Samstag dabei sind.',
     rsvp_guests_note:    'Bitte geben Sie die Informationen für die mit Ihnen eingeladenen Personen an, damit wir ihnen ihre Einladung zukommen lassen können.',
     rsvp_add:            '+ Antwort eines weiteren Mitglieds Ihres Haushalts hinzufügen',
     rsvp_remove:         'Entfernen',
@@ -1402,7 +1399,6 @@ function addAttendee(isFirst = false, prefill = null) {
         </label>
       </div>
       <div class="form-error att-err-friday"></div>
-      <div class="att-friday-locked" hidden></div>
     </div>
     ${allergiesField}
   `;
@@ -1425,10 +1421,8 @@ function addAttendee(isFirst = false, prefill = null) {
 // Friday is available unless Saturday is a flat no. "Maybe" still counts as
 // coming, so it leaves the choice open.
 function syncFridayLock(block) {
-  const t     = T[lang] || T.en;
   const idx   = block.dataset.index;
   const group = block.querySelector('.att-friday-group');
-  const note  = block.querySelector('.att-friday-locked');
   if (!group) return;
 
   const status = block.querySelector(`input[name="att_status_${idx}"]:checked`);
@@ -1439,10 +1433,6 @@ function syncFridayLock(block) {
     r.disabled = locked;
     if (locked) r.checked = r.value === 'no';
   });
-  if (note) {
-    note.textContent = t.rsvp_friday_locked;
-    note.hidden = !locked;
-  }
   if (locked) {
     const err = block.querySelector('.att-err-friday');
     if (err) err.classList.remove('visible');
