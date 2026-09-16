@@ -1440,6 +1440,20 @@ body {
   margin-bottom: 10px;
 }
 .req { color: var(--ink-mid); margin-left: 2px; }
+/* A quiet second line on a label — the date and place of the Friday evening,
+   so nobody has to go back to the Programme to answer the question. */
+/* Friday closed off because Saturday was declined: dimmed and unclickable. */
+.att-friday-group.is-locked .radio-group { opacity: 0.4; pointer-events: none; }
+.att-friday-group.is-locked .form-label { opacity: 0.6; }
+.form-hint {
+  display: block;
+  font-family: var(--serif);
+  font-size: 0.82rem; font-weight: 400;
+  letter-spacing: 0; text-transform: none;
+  font-style: italic;
+  color: var(--olive);
+  margin-top: 4px;
+}
 
 .form-input,
 .form-select,
