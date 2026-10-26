@@ -121,23 +121,19 @@
       max-width: calc(100vw - 150px);
     }
     #chip.warn { color: var(--warn); }
-    #minimap {
-      position: fixed; left: 14px; bottom: 14px; z-index: 5; border-radius: 10px;
-      background: rgba(247, 241, 230, 0.9); border: 1px solid var(--line); cursor: crosshair;
-    }
     #help {
       position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 5;
       padding: 7px 14px; border-radius: 999px; background: rgba(20, 22, 14, 0.62); color: #f3ecdf;
       font-size: 11.5px; pointer-events: none; white-space: nowrap;
     }
-    #pad { position: fixed; right: calc(var(--panel-w) + 18px); bottom: 18px; z-index: 6; display: none; grid-template-columns: repeat(3, 46px); gap: 6px; }
-    #panel.closed ~ #pad { right: 18px; }
-    #pad.show { display: grid; }
-    #pad button {
-      width: 46px; height: 46px; border-radius: 12px; border: 1px solid var(--line);
-      background: rgba(247, 241, 230, 0.85); font-size: 18px; color: var(--ink); touch-action: none;
-    }
-    #pad .gap { visibility: hidden; }
+    #totype { display: none; margin-top: 8px; gap: 6px; flex-wrap: wrap; align-items: center; }
+    #totype.show { display: flex; }
+    #totype span { font-size: 11px; color: var(--lavender-text); margin-right: 2px; }
+    #totype .btn { padding: 4px 9px; font-size: 11px; }
+    #totype .btn.on { background: var(--olive); color: var(--cream); }
+    #mix .row { margin: 4px 0; }
+    #mix input { width: 60px; }
+    .dim { color: var(--lavender-text); font-size: 11px; }
     .style-row { padding: 6px 0 7px; border-bottom: 1px dotted var(--line); }
     .style-row:last-child { border-bottom: 0; }
     .style-row .row { margin: 0; }
@@ -163,17 +159,13 @@
       #panel.closed { transform: translateY(100%); }
       #panel-toggle { top: auto; bottom: calc(58vh + 10px); right: 14px; }
       #panel.closed ~ #panel-toggle { bottom: 14px; }
-      #minimap { top: 58px; bottom: auto; }
       #help { display: none; }
-      #pad { right: 14px; bottom: calc(58vh + 60px); }
-      #panel.closed ~ #pad { bottom: 64px; }
     }
   </style>
 </head>
 <body>
   <canvas id="scene" tabindex="0"></canvas>
   <div id="chip">Loading plan…</div>
-  <canvas id="minimap" width="200" height="200"></canvas>
   <div id="help"></div>
 
   <aside id="panel">
@@ -195,21 +187,23 @@
 
     <section>
       <h2>View</h2>
-      <div class="seg" data-key="view">
-        <button data-val="orbit">Overview</button><button data-val="walk">Walk through</button><button data-val="plan">Floor plan</button>
+      <div class="seg small" data-key="view">
+        <button data-val="plan">Top view</button><button data-val="overview">Whole tent</button><button data-val="head">Facing head table</button>
+        <button data-val="fromHead">From head table</button><button data-val="side">Seat under a screen</button>
       </div>
       <div class="btns">
         <button class="btn" id="btn-shot">Save image</button>
-        <button class="btn" id="btn-entrance">Walk in from the entrance</button>
       </div>
       <label class="tog" style="margin-top:12px"><input type="checkbox" id="arrange"> Arrange by hand <small>drag to move</small></label>
       <div id="arrange-tools">
         <div id="selected">Click anything to select it, then drag it.</div>
         <div class="btns">
-          <button class="btn" data-add="round">+ Round table</button>
+          <button class="btn" data-add="table">+ Table</button>
           <button class="btn" data-add="olive">+ Olive tree</button>
           <button class="btn" data-add="urn">+ Flower urn</button>
+          <button class="btn" data-add="lantern">+ Lantern</button>
         </div>
+        <div id="totype"></div>
         <div class="btns">
           <button class="btn" id="btn-rotate">Rotate ⟳</button>
           <button class="btn" id="btn-delete">Remove</button>
@@ -243,10 +237,10 @@
     <section>
       <h2>Guests &amp; tables</h2>
       <div class="row"><span>Guests</span><input type="number" data-key="guests" min="20" max="800" step="10"></div>
-      <div class="seg-label">Guests per round table</div>
-      <div class="seg small" data-key="perTable">
-        <button data-val="8">8 · Ø1.5 m</button><button data-val="10">10 · Ø1.8 m</button><button data-val="12">12 · Ø2.1 m</button>
-      </div>
+      <div class="seg-label">Tables: how many of each</div>
+      <div id="mix"></div>
+      <div class="seg-label">Seat everyone else at</div>
+      <div class="seg small" data-key="fill" id="fill"></div>
       <div class="seg-label">Space between tables</div>
       <div class="seg small" data-key="aisle">
         <button data-val="0.7">Comfortable · 70 cm</button><button data-val="0.5">Snug · 50 cm</button>
@@ -268,9 +262,9 @@
     <section>
       <h2>Show or hide</h2>
       <label class="tog"><input type="checkbox" data-show="headTable"> Head table on a low stage</label>
-      <label class="tog"><input type="checkbox" data-show="rounds"> Round tables</label>
+      <label class="tog"><input type="checkbox" data-show="rounds"> Tables</label>
       <label class="tog"><input type="checkbox" data-show="chairs"> Chairs</label>
-      <label class="tog"><input type="checkbox" data-show="tableware"> Tableware</label>
+      <label class="tog"><input type="checkbox" data-show="tableware"> Plates and glasses</label>
       <label class="tog"><input type="checkbox" data-show="flowers"> Table flowers</label>
       <label class="tog"><input type="checkbox" data-show="dance"> Dance floor <small>under the centre tables</small></label>
       <label class="tog"><input type="checkbox" data-show="bars"> Two bars</label>
@@ -281,7 +275,8 @@
       <label class="tog"><input type="checkbox" data-show="ceilingDrapes"> Ceiling drapes</label>
       <label class="tog"><input type="checkbox" data-show="wallDrapes"> Wall drapes &amp; swags</label>
       <label class="tog"><input type="checkbox" data-show="garlands"> Guirlandes</label>
-      <label class="tog"><input type="checkbox" data-show="chandeliers"> Chandeliers</label>
+      <label class="tog"><input type="checkbox" data-show="lanterns"> Standing lanterns along the sides</label>
+      <label class="tog"><input type="checkbox" data-show="hanging"> Hanging lights</label>
       <label class="tog"><input type="checkbox" data-show="photophores"> Photophores</label>
       <label class="tog"><input type="checkbox" data-show="olives"> Olive trees</label>
       <label class="tog"><input type="checkbox" data-show="urns"> Flower urns</label>
@@ -310,10 +305,6 @@
     </section>
   </aside>
   <button id="panel-toggle">Hide panel</button>
-  <div id="pad">
-    <button class="gap"></button><button data-move="f">▲</button><button class="gap"></button>
-    <button data-move="l">◀</button><button data-move="b">▼</button><button data-move="r">▶</button>
-  </div>
 
   <div id="loading"><div>Éléonore &amp; Hubert<small>Setting the tables…</small></div></div>
 
