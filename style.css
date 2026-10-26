@@ -550,6 +550,9 @@ body {
   transition: color var(--ease);
 }
 .songs-view:hover { color: var(--ink); }
+/* A button carries no display of its own here, so [hidden] would work on its
+   own; stated explicitly so a later display rule cannot unhide the link. */
+.songs-view[hidden] { display: none; }
 
 .songs-modal {
   max-width: 460px;

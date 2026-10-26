@@ -166,7 +166,9 @@
         <button type="submit" class="songs-submit" id="songs-submit" data-i18n="songs_add">Add</button>
       </form>
             <p class="songs-status" id="songs-status" role="status" aria-live="polite"></p>
-            <button type="button" class="songs-view" id="songs-view-btn" data-i18n="songs_view">See the playlist so far</button>
+            <!-- Hidden until this visitor has added a song of their own; see
+                 renderSongsViewLink(). Starts hidden so it never flashes. -->
+            <button type="button" class="songs-view" id="songs-view-btn" data-i18n="songs_view" hidden>See the playlist so far</button>
           </div>
         </div>
       </div>
