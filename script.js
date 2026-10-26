@@ -52,7 +52,7 @@ const T = {
   en: {
     nav_before:          'Before the day',
     before_title:        'Before the day',
-    cal_lead:            'Saturday 26 June 2027, in Provence. Add it to your calendar now. The full details will follow in good time.',
+    cal_lead:            'Saturday 26 June 2027, in Provence. Add it to your calendar now.',
     cal_title:           'Save the date',
     btn_calendar:        'Add to my calendar',
     songs_lead:          'We are putting the playlist together. If there is a song you would like to hear, add it here.',
@@ -309,7 +309,7 @@ const T = {
   fr: {
     nav_before:          'Avant le jour J',
     before_title:        'Avant le jour J',
-    cal_lead:            "Samedi 26 juin 2027, en Provence. Notez la date dès maintenant. Les détails suivront en temps voulu.",
+    cal_lead:            "Samedi 26 juin 2027, en Provence. Notez la date dès maintenant.",
     cal_title:           'Gardez la date',
     btn_calendar:        'Ajouter à mon agenda',
     songs_lead:          "Nous constituons la playlist. Si vous souhaitez entendre un morceau en particulier, indiquez-le ici.",
@@ -565,8 +565,8 @@ const T = {
 
   de: {
     nav_before:          'Vor dem Tag',
-    before_title:        'Vor dem großen Tag',
-    cal_lead:            'Samstag, 26. Juni 2027, in der Provence. Gleich eintragen — die Einzelheiten folgen rechtzeitig.',
+    before_title:        'Vor dem Tag',
+    cal_lead:            'Samstag, 26. Juni 2027, in der Provence. Gleich eintragen!',
     cal_title:           'Den Tag merken',
     btn_calendar:        'Zum Kalender hinzufügen',
     songs_lead:          'Wir stellen die Playlist zusammen. Gibt es ein Lied, das nicht fehlen darf?',
@@ -848,8 +848,22 @@ const COUNTRIES = [
   { value: 'Other',          en: 'Other',             fr: 'Autre',              de: 'Andere' },
 ];
 
+
+// ── Stored state ────────────────────────────────
+// Browsers that block site data — private windows, some in-app browsers —
+// throw on any access to localStorage, a plain read included. One unguarded
+// read of the saved language used to run at the top of this file, so in those
+// browsers the whole script died before the password gate was ever wired up
+// and the website was a dead box. Nothing here is essential: a visitor who
+// loses this simply picks their language again and re-enters the password.
+function lsGet(key)        { try { return localStorage.getItem(key); }   catch { return null; } }
+function lsSet(key, value) { try { localStorage.setItem(key, value); }   catch { /* blocked */ } }
+function lsRemove(key)     { try { localStorage.removeItem(key); }       catch { /* blocked */ } }
+function ssGet(key)        { try { return sessionStorage.getItem(key); } catch { return null; } }
+function ssSet(key, value) { try { sessionStorage.setItem(key, value); } catch { /* blocked */ } }
+
 // ── State ────────────────────────────────────────
-let lang      = localStorage.getItem('weddingLang') || CONFIG.defaultLang;
+let lang      = lsGet('weddingLang') || CONFIG.defaultLang;
 let editToken = null;
 
 // ── Boot ─────────────────────────────────────────
@@ -874,7 +888,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function applyLang(l) {
   lang = l;
   const t = T[l] || T.en;
-  localStorage.setItem('weddingLang', l);
+  lsSet('weddingLang', l);
   document.documentElement.lang = l;
 
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -916,7 +930,7 @@ function initGate() {
   const submit = document.getElementById('password-submit');
   const err    = document.getElementById('gate-error');
 
-  if (sessionStorage.getItem(CONFIG.sessionKey) === '1') {
+  if (ssGet(CONFIG.sessionKey) === '1') {
     unlock(gate, site);
     return;
   }
@@ -924,7 +938,7 @@ function initGate() {
   function attempt() {
     const val = input.value.trim().toLowerCase();
     if (val === CONFIG.password.toLowerCase()) {
-      sessionStorage.setItem(CONFIG.sessionKey, '1');
+      ssSet(CONFIG.sessionKey, '1');
       gate.classList.add('fade-out');
       setTimeout(() => unlock(gate, site), 500);
     } else {
@@ -1635,7 +1649,7 @@ async function handleRSVPSubmit(e) {
         editToken = result.token;
         // Remember this guest for next time, even if they weren't matched
         // against the guest list (self-added) — same "no login" recognition.
-        localStorage.setItem('weddingEditToken', result.token);
+        lsSet('weddingEditToken', result.token);
       }
       // Reflect the new state on the page straight away, rather than only
       // after the guest happens to reload.
@@ -1690,7 +1704,7 @@ function prefillForm(data) {
 // their own details and get flagged "Self-added" in the sheet.
 // ══════════════════════════════════════════════════
 
-let householdToken     = localStorage.getItem('weddingHouseholdToken') || null;
+let householdToken     = lsGet('weddingHouseholdToken') || null;
 let householdPartySize = null;
 let householdGuests    = [];   // names of everyone on the invitation
 let lastMatches        = [];   // candidates from the most recent search
@@ -1729,7 +1743,7 @@ function initRecognition() {
   if (householdToken) {
     recognitionPromise = silentRecognizeByHousehold(householdToken);
   } else {
-    const storedEditToken = localStorage.getItem('weddingEditToken');
+    const storedEditToken = lsGet('weddingEditToken');
     if (storedEditToken) recognitionPromise = silentRecognizeByEditToken(storedEditToken);
   }
 }
@@ -1760,7 +1774,7 @@ async function silentRecognizeByEditToken(token) {
   try {
     const res    = await fetch(`${RSVP_ENDPOINT}?token=${encodeURIComponent(token)}`);
     const result = await res.json();
-    if (!result.success || !result.data) { localStorage.removeItem('weddingEditToken'); return; }
+    if (!result.success || !result.data) { lsRemove('weddingEditToken'); return; }
     editToken = token;
     setRecognition('responded', result.data.firstName || '',
                    (result.data.attendees || []).length);
@@ -1834,7 +1848,7 @@ async function confirmHousehold(token, partySize, guests, label) {
   householdToken = token;
   householdPartySize = partySize ? parseInt(partySize, 10) : null;
   householdGuests = Array.isArray(guests) ? guests : [];
-  localStorage.setItem('weddingHouseholdToken', token);
+  lsSet('weddingHouseholdToken', token);
   scaffoldAttendeesForHousehold();
   revealMainFields();
   // Greet them straight away rather than only on the next visit, so someone
@@ -1931,9 +1945,33 @@ function renderBanner() {
 let songsCache     = null;  // last list from the backend, newest first
 let songsStatusKey = '';    // stored as a key so it survives a language switch
 
+// You see the playlist once you have put something on it. The flag is
+// per-browser and purely cosmetic — localStorage throws in some private
+// windows, and a visitor who loses it simply adds another song.
+const SONGS_CONTRIBUTED_KEY = 'weddingSongAdded';
+
+let songContributed = false;  // this page view, for when the stored flag cannot be kept
+
+function hasContributedSong() {
+  return songContributed || lsGet(SONGS_CONTRIBUTED_KEY) === '1';
+}
+
+function markSongContributed() {
+  songContributed = true;
+  lsSet(SONGS_CONTRIBUTED_KEY, '1');
+  renderSongsViewLink();
+}
+
+function renderSongsViewLink() {
+  const btn = document.getElementById('songs-view-btn');
+  if (btn) btn.hidden = !hasContributedSong();
+}
+
 function initSongs() {
   const form    = document.getElementById('songs-form');
   const viewBtn = document.getElementById('songs-view-btn');
+
+  renderSongsViewLink();
   const overlay = document.getElementById('songs-overlay');
   const closeBtn = document.getElementById('songs-close');
 
@@ -1982,6 +2020,8 @@ async function handleSongSubmit(e) {
     if (result.success) {
       input.value = '';
       songsCache = result.songs || songsCache;
+      // A duplicate still counts — they named a song, it was simply already there.
+      markSongContributed();
       setSongStatus(result.duplicate ? 'songs_duplicate' : 'songs_thanks');
     } else {
       setSongStatus('songs_error');
@@ -2102,8 +2142,8 @@ function clearRecognition(userInitiated) {
   householdPartySize = null;
   householdGuests = [];
   editToken = null;
-  localStorage.removeItem('weddingHouseholdToken');
-  localStorage.removeItem('weddingEditToken');
+  lsRemove('weddingHouseholdToken');
+  lsRemove('weddingEditToken');
   resetRSVPForm();
   recognition = userInitiated === true ? { status: 'cleared', name: '', count: 0 } : null;
   renderBanner();
