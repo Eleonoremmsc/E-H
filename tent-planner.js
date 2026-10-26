@@ -26,53 +26,83 @@ const TAU = Math.PI * 2;
 
 const CATALOG = {
   headTable: { label: 'Head table', opts: { A: 'Guests on one side, facing the room', B: 'Guests on both sides' } },
-  chairs: { label: 'Chairs', opts: { A: 'Cane bistro, natural wood', B: 'Chiavari, fruitwood with ivory cushion', C: 'Louis ghost, clear' } },
+  chairs: { label: 'Chairs', opts: { A: 'Cross-back, natural oak with rattan seat', B: 'Bentwood with caned seat', C: 'Chiavari, fruitwood with ivory cushion', D: 'Louis ghost, clear' } },
   linen: { label: 'Table linen', opts: { A: 'Ivory linen', B: 'Natural flax', C: 'Sage green' } },
   tableware: { label: 'Tableware', opts: { A: 'Brass charger, white porcelain', B: 'Rattan charger', C: 'Green-glazed Provençal plates' } },
   centrepiece: { label: 'Table flowers', opts: { A: 'Low olive branches and white roses', B: 'Tall candelabra with cascading roses', C: 'Bud vases of lavender and wildflowers' } },
   headFlowers: { label: 'Head table flowers', opts: { A: 'Olive and white rose runner', B: 'Abundant blush and peach meadow', C: 'Greenery and brass candlesticks' } },
   urns: { label: 'Flower urns', opts: { A: 'White hydrangeas and roses in stone urns', B: 'Wild meadow in soft pastels', C: 'Olive branches and white delphiniums' } },
   photophores: { label: 'Photophores', opts: { A: 'Clear glass votives', B: 'Amber glass', C: 'Tall hurricanes' } },
-  garlands: { label: 'Guirlandes', opts: { A: 'Starburst from the centre', B: 'Festoons across the tent', C: 'Long swags lengthwise' } },
-  chandeliers: { label: 'Chandeliers', opts: { A: 'Olive wreath with candles', B: 'Crystal', C: 'Woven rattan pendants' } },
+  garlands: { label: 'Guirlandes', opts: { A: 'Starburst from the centre', B: 'Festoons across the tent', C: 'Long swags lengthwise', D: 'Starry canopy of fairy lights' } },
+  lanterns: { label: 'Standing lanterns', opts: { A: 'Teepee: white cloth on four wooden poles', B: 'Black Moroccan lanterns', C: 'Cloth box on four wooden legs' } },
+  hanging: { label: 'Hanging lights', opts: { A: 'Woven rattan pendants', B: 'Small cloth lanterns' } },
+  roof: { label: 'Tent roof', opts: { A: 'White canvas', B: 'Clear, open to the sky' } },
+  floor: { label: 'Floor', opts: { A: 'Natural sisal', B: 'Moroccan rugs' } },
   drapes: { label: 'Ceiling drapes', opts: { A: 'Swagged voile', B: 'Flat pleated lining' } },
   danceFloor: { label: 'Dance floor', opts: { A: 'Chevron oak', B: 'White lacquer', C: 'Black and white chequer' } },
   pots: { label: 'Olive tree pots', opts: { A: 'Anduze terracotta', B: 'White stone planter', C: 'Woven basket' } },
   bars: { label: 'Bars', opts: { A: 'Ivory panels and zinc top', B: 'Old oak and marble' } },
 };
-const STATIC_STYLES = new Set(['drapes', 'chandeliers']);
+const STATIC_STYLES = new Set(['drapes', 'hanging', 'roof', 'floor']);
+
+// Table sizes. Rectangular tables seat one guest at each end and the rest
+// along the two long sides.
+const TABLE_TYPES = {
+  r8: { shape: 'round', seats: 8, r: 0.76, label: 'Round 8', size: 'Ø1.5 m' },
+  r10: { shape: 'round', seats: 10, r: 0.9, label: 'Round 10', size: 'Ø1.8 m' },
+  r12: { shape: 'round', seats: 12, r: 1.05, label: 'Round 12', size: 'Ø2.1 m' },
+  q8: { shape: 'rect', seats: 8, len: 2.1, w: 0.9, label: 'Long 8', size: '2.1 × 0.9 m' },
+  q10: { shape: 'rect', seats: 10, len: 2.75, w: 0.9, label: 'Long 10', size: '2.75 × 0.9 m' },
+  q12: { shape: 'rect', seats: 12, len: 3.4, w: 1.0, label: 'Long 12', size: '3.4 × 1.0 m' },
+};
+const tableType = t => TABLE_TYPES[t.t] || TABLE_TYPES.r10;
 
 // ── Plan state ──────────────────────────────────────
 
-const STORE_KEY = 'eh-tent-plan-v2';
+const STORE_KEY = 'eh-tent-plan-v3';
 const DEFAULTS = {
   tentW: 20, tentL: 30, walls: 'open',
-  guests: 450, perTable: 10, headSeats: 20, danceSize: 8, aisle: 0.7,
+  guests: 450, headSeats: 20, danceSize: 8, aisle: 0.7,
+  mix: { q12: 0, q10: 0, q8: 0, r12: 0, r10: 0, r8: 0 },   // tables asked for by type
+  fill: 'r10',                                            // and the rest of the guests on these
   oliveCount: 8, photophores: 5,
-  time: 'night', moment: 'dinner', view: 'orbit', quality: 'high',
+  time: 'night', moment: 'dinner', view: 'overview', quality: 'high',
   style: { ...Object.fromEntries(Object.keys(CATALOG).map(k => [k, 'A'])), headTable: 'B' },
   show: {
-    roof: true, cutaway: true, headTable: true, rounds: true, chairs: true, tableware: true, flowers: true,
+    roof: true, cutaway: true, headTable: true, rounds: true, chairs: true, tableware: false, flowers: true,
     dance: true, bars: true, dj: true, cake: true, lounge: false, screens: true,
-    ceilingDrapes: true, wallDrapes: true, garlands: true, chandeliers: true, photophores: true,
+    ceilingDrapes: true, wallDrapes: true, garlands: true, lanterns: true, hanging: true, photophores: true,
     olives: true, urns: true, curtain: true, neon: true, disco: true, spotlight: true,
   },
   items: null,    // null: laid out automatically; otherwise the hand-arranged items
 };
 
 // Changing one of these re-runs the automatic layout.
-const LAYOUT_KEYS = new Set(['tentW', 'tentL', 'guests', 'perTable', 'headSeats', 'danceSize', 'aisle', 'oliveCount']);
+const LAYOUT_KEYS = new Set(['tentW', 'tentL', 'guests', 'headSeats', 'danceSize', 'aisle', 'oliveCount', 'mix', 'fill']);
 const STATIC_KEYS = new Set(['tentW', 'tentL', 'walls']);
 const ITEM_KEYS = new Set(['photophores']);
-const LAYOUT_SHOW = new Set(['bars', 'dj', 'cake', 'lounge']);
+const LAYOUT_SHOW = new Set(['bars', 'dj', 'cake', 'lounge', 'lanterns']);
 // Hidden in the floor-plan view so the tables can be seen from above.
-const PLAN_HIDE = new Set(['roof', 'ceilingDrapes', 'garlands', 'chandeliers', 'disco']);
+const PLAN_HIDE = new Set(['roof', 'ceilingDrapes', 'garlands', 'hanging', 'disco']);
 
 function loadState() {
   const base = structuredClone(DEFAULTS);
   try {
-    const s = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (s) return { ...base, ...s, show: { ...base.show, ...s.show }, style: { ...base.style, ...s.style }, view: 'orbit' };
+    let s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (!s) {
+      // carry over a plan saved by the previous version, when every table was round
+      s = JSON.parse(localStorage.getItem('eh-tent-plan-v2'));
+      if (s) {
+        s.fill = `r${s.perTable || 10}`;
+        s.items = s.items && s.items.map(i => (i.type === 'round' ? { ...i, type: 'table', t: s.fill } : i));
+        delete s.style?.chandeliers;
+      }
+    }
+    if (s) {
+      const v = { ...base, ...s, show: { ...base.show, ...s.show }, style: { ...base.style, ...s.style }, mix: { ...base.mix, ...s.mix } };
+      if (!['plan', 'overview', 'head', 'fromHead', 'side'].includes(v.view)) v.view = 'overview';
+      return v;
+    }
   } catch { /* private window or blocked storage */ }
   return base;
 }
@@ -83,9 +113,10 @@ function saveState() {
 
 // ── Layout (pure: no Three.js) ─────────────────────
 
-const TABLE_R = { 8: 0.76, 10: 0.9, 12: 1.05 };
 const ROOF_PITCH = Math.tan(18 * Math.PI / 180);
 const EAVE = 3;
+const CHAIR_OUT = 0.55;    // how far chairs reach beyond a table's edge
+const LANTERN_HALF = { A: 0.62, B: 0.2, C: 0.3 };   // half the width of each standing lantern style
 
 function distRect(x, z, r) {
   return Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
@@ -113,14 +144,18 @@ function headInfo(st) {
   };
 }
 
-// Footprint of an item in its own frame, for picking, clearance and walking.
+// Footprint of an item in its own frame, for picking and clearance.
 function footprint(it, st = state) {
-  const tr = TABLE_R[st.perTable] || 0.9;
   switch (it.type) {
-    case 'round': return { r: tr + 0.5 };
+    case 'table': {
+      const tt = tableType(it);
+      if (tt.shape === 'round') return { r: tt.r + 0.5 };
+      return { x0: -tt.w / 2 - CHAIR_OUT, x1: tt.w / 2 + CHAIR_OUT, z0: -tt.len / 2 - CHAIR_OUT, z1: tt.len / 2 + CHAIR_OUT };
+    }
     case 'olive': return { r: 0.6 };
     case 'urn': return { r: 0.45 };
     case 'cake': return { r: 0.55 };
+    case 'lantern': { const h = LANTERN_HALF[st.style.lanterns] ?? 0.3; return { x0: -h, x1: h, z0: -h, z1: h }; }
     case 'head': { const h = headInfo(st); return { x0: h.back - 0.1, x1: h.front, z0: -h.len / 2 - 0.8, z1: h.len / 2 + 0.8 }; }
     case 'bar': return { x0: -2.2, x1: 2.2, z0: -1.65, z1: 0.5 };
     case 'dj': return { x0: -1.8, x1: 1.8, z0: -0.5, z1: 0.5 };
@@ -134,15 +169,38 @@ function itemDist(it, wx, wz, st = state) {
   const f = footprint(it, st), p = toLocal(it, wx, wz);
   return f.r !== undefined ? Math.max(0, Math.hypot(p.x, p.z) - f.r) : distRect(p.x, p.z, f);
 }
+// Space a table needs including its chairs, as a circle or an upright box.
+function tableShape(tt, x, z, turned) {
+  if (tt.shape === 'round') return { c: true, x, z, r: tt.r + CHAIR_OUT };
+  const hx = (turned ? tt.len : tt.w) / 2 + CHAIR_OUT, hz = (turned ? tt.w : tt.len) / 2 + CHAIR_OUT;
+  return { c: false, x0: x - hx, x1: x + hx, z0: z - hz, z1: z + hz };
+}
+// Clear distance between two shapes (negative when they overlap).
+function gap(a, b) {
+  if (a.c && b.c) return Math.hypot(a.x - b.x, a.z - b.z) - a.r - b.r;
+  if (a.c) return distRect(a.x, a.z, b) - a.r;
+  if (b.c) return distRect(b.x, b.z, a) - b.r;
+  return Math.max(b.x0 - a.x1, a.x0 - b.x1, b.z0 - a.z1, a.z0 - b.z1);
+}
+// The tables to place: those asked for by type, then enough of the fill
+// type for the remaining guests.
+function tablePlan(st) {
+  const hi = headInfo(st);
+  const plan = [];
+  for (const t of Object.keys(TABLE_TYPES)) for (let i = 0; i < (st.mix?.[t] || 0); i++) plan.push(t);
+  const seats = hi.seats + plan.reduce((s, t) => s + TABLE_TYPES[t].seats, 0);
+  if (TABLE_TYPES[st.fill]) for (let i = 0, n = Math.ceil(Math.max(0, st.guests - seats) / TABLE_TYPES[st.fill].seats); i < n; i++) plan.push(st.fill);
+  // biggest first, so the long tables find room before the gaps are taken
+  const size = t => { const tt = TABLE_TYPES[t]; return tt.shape === 'rect' ? 10 + tt.len : tt.r; };
+  return plan.sort((a, b) => size(b) - size(a));
+}
 
 let nextId = 1;
-const mkItem = (type, x, z, rot = 0, v) => ({ id: `${type}-${nextId++}`, type, x, z, rot, ...(v ? { v } : {}) });
+const mkItem = (type, x, z, rot = 0, extra) => ({ id: `${type}-${nextId++}`, type, x, z, rot, ...extra });
 
 function autoLayout(st, { trees = true } = {}) {
   const W = st.tentW, L = st.tentL, sh = st.show;
-  const tableR = TABLE_R[st.perTable] || 0.9;
-  const foot = tableR + 0.55;                         // table plus chairs pulled out
-  const spacing = 2 * foot + (st.aisle ?? 0.7);      // service aisle between chair backs
+  const aisle = st.aisle ?? 0.7;
   const hi = headInfo(st);
   const head = mkItem('head', -W / 2 + 0.35 - hi.back, 0);
   const stageX0 = head.x + hi.front;                 // front edge of the head-table stage
@@ -159,7 +217,7 @@ function autoLayout(st, { trees = true } = {}) {
   add(stageX0, stageX0 + 2.4, -2.4, 2.4, 0.2);       // speech spot and cake
   add(W / 2 - 3, W / 2, -1.1, 1.1, 0.2);             // entrance
   if (sh.bars) for (const s of [-1, 1]) {
-    items.push(mkItem('bar', W / 2 - 3.1, s * (L / 2 - 1.9), s < 0 ? 0 : Math.PI, s < 0 ? 'Champagne' : 'Cocktails'));
+    items.push(mkItem('bar', W / 2 - 3.1, s * (L / 2 - 1.9), s < 0 ? 0 : Math.PI, { v: s < 0 ? 'Champagne' : 'Cocktails' }));
     add(W / 2 - 5.9, W / 2 - 0.2, s < 0 ? -L / 2 : L / 2 - 2.7, s < 0 ? -L / 2 + 2.7 : L / 2, 1.0);
   }
   if (sh.dj) {
@@ -179,50 +237,98 @@ function autoLayout(st, { trees = true } = {}) {
   // flower urns flank the entrance
   for (const s of [-1, 1]) items.push(mkItem('urn', W / 2 - 0.8, s * 1.7));
 
-  const inside = (x, z, m) => Math.abs(x) <= W / 2 - m && Math.abs(z) <= L / 2 - m;
-  const tableOk = (x, z) => inside(x, z, foot + 0.5) && zones.every(r => distRect(x, z, r) >= foot + r.pad);
-
-  // Try staggered and square grids at several offsets, in both directions,
-  // keep whichever seats the most, then squeeze extra tables into the gaps.
-  let best = null;
-  const phases = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
-  for (const hex of [true, false]) for (const turned of [false, true]) {
-    const rowSp = hex ? spacing * Math.sqrt(3) / 2 : spacing;
-    for (const rPhase of phases) for (const cPhase of phases) {
-      const pts = [];
-      for (let r = -40; r <= 40; r++) {
-        const a = (r + rPhase) * rowSp;
-        if (Math.abs(a) > (turned ? W : L) / 2) continue;
-        const off = hex && (r & 1) ? 0.5 : 0;
-        for (let c = -40; c <= 40; c++) {
-          const b = (c + cPhase + off) * spacing;
-          const x = turned ? a : b, z = turned ? b : a;
-          if (Math.abs(x) <= W / 2 && Math.abs(z) <= L / 2 && tableOk(x, z)) pts.push({ x, z });
-        }
-      }
-      const d = pts.reduce((s, p) => s + Math.hypot(p.x - danceX, p.z), 0) / Math.max(1, pts.length);
-      if (!best || pts.length > best.pts.length || (pts.length === best.pts.length && d < best.d)) best = { pts, d };
+  // Standing lanterns along the long walls, alternating sides from bay to
+  // bay; their spots are kept free before the tables go in.
+  if (sh.lanterns) {
+    const nb = Math.max(2, Math.round(L / 5)), bay = L / nb;
+    const h = LANTERN_HALF[st.style.lanterns] ?? 0.3;
+    for (let i = 0; i < nb; i++) {
+      const s = i % 2 ? 1 : -1, x = s * (W / 2 - h - 0.1), z = -L / 2 + (i + 0.5) * bay;
+      if (s > 0 && Math.abs(z) < 2.5) continue;
+      if (zones.some(r => distRect(x, z, r) < h + 0.2)) continue;
+      items.push(mkItem('lantern', x, z, s > 0 ? Math.PI / 2 : -Math.PI / 2));
+      add(x - h, x + h, z - h, z + h, 0.15);
     }
   }
-  const pts = best.pts;
-  const gaps = [];
-  for (let x = -W / 2; x <= W / 2; x += 0.25) for (let z = -L / 2; z <= L / 2; z += 0.25) if (tableOk(x, z)) gaps.push({ x, z });
-  gaps.sort((a, b) => Math.hypot(a.x - danceX, a.z) - Math.hypot(b.x - danceX, b.z));
-  for (const g of gaps) if (pts.every(p => Math.hypot(p.x - g.x, p.z - g.z) >= spacing - 1e-6)) pts.push(g);
 
-  const needed = Math.ceil(Math.max(0, st.guests - hi.seats) / st.perTable);
-  const tables = pts
-    .sort((a, b) => Math.hypot(a.x - danceX, a.z) - Math.hypot(b.x - danceX, b.z))
-    .slice(0, needed);
-  for (const t of tables) items.push(mkItem('round', t.x, t.z));
+  const inside = (x, z, m) => Math.abs(x) <= W / 2 - m && Math.abs(z) <= L / 2 - m;
+  const shapeOk = sh2 => (sh2.c ? inside(sh2.x, sh2.z, sh2.r + 0.5) : (sh2.x0 >= -W / 2 + 0.5 && sh2.x1 <= W / 2 - 0.5 && sh2.z0 >= -L / 2 + 0.5 && sh2.z1 <= L / 2 - 0.5))
+    && zones.every(r => gap(sh2, { c: false, ...r }) >= r.pad);
+  const byCentre = (a, b) => Math.hypot(a.x - danceX, a.z) - Math.hypot(b.x - danceX, b.z);
+
+  const plan = tablePlan(st);
+  const placed = [];   // { t, x, z, turned, shape }
+  if (plan.length && plan.every(t => t === plan[0]) && TABLE_TYPES[plan[0]].shape === 'round') {
+    // One round size: try staggered and square grids at several offsets, in
+    // both directions, keep whichever seats the most, then fill the gaps.
+    const tt = TABLE_TYPES[plan[0]];
+    const spacing = 2 * (tt.r + CHAIR_OUT) + aisle;
+    const ok = (x, z) => shapeOk(tableShape(tt, x, z));
+    let best = null;
+    const phases = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+    for (const hex of [true, false]) for (const turned of [false, true]) {
+      const rowSp = hex ? spacing * Math.sqrt(3) / 2 : spacing;
+      for (const rPhase of phases) for (const cPhase of phases) {
+        const pts = [];
+        for (let r = -40; r <= 40; r++) {
+          const a = (r + rPhase) * rowSp;
+          if (Math.abs(a) > (turned ? W : L) / 2) continue;
+          const off = hex && (r & 1) ? 0.5 : 0;
+          for (let c = -40; c <= 40; c++) {
+            const b = (c + cPhase + off) * spacing;
+            const x = turned ? a : b, z = turned ? b : a;
+            if (Math.abs(x) <= W / 2 && Math.abs(z) <= L / 2 && ok(x, z)) pts.push({ x, z });
+          }
+        }
+        const d = pts.reduce((s, p) => s + Math.hypot(p.x - danceX, p.z), 0) / Math.max(1, pts.length);
+        if (!best || pts.length > best.pts.length || (pts.length === best.pts.length && d < best.d)) best = { pts, d };
+      }
+    }
+    const pts = best.pts;
+    const gaps = [];
+    for (let x = -W / 2; x <= W / 2; x += 0.25) for (let z = -L / 2; z <= L / 2; z += 0.25) if (ok(x, z)) gaps.push({ x, z });
+    gaps.sort(byCentre);
+    for (const g of gaps) if (pts.every(p => Math.hypot(p.x - g.x, p.z - g.z) >= spacing - 1e-6)) pts.push(g);
+    pts.sort(byCentre);
+    for (const p of pts.slice(0, plan.length)) placed.push({ t: plan[0], x: p.x, z: p.z, turned: false });
+  } else {
+    // A mix: place each table, biggest first, at the free spot nearest the
+    // dance floor; long tables run along the tent unless only across fits.
+    const cands = [];
+    for (let x = -W / 2; x <= W / 2; x += 0.25) for (let z = -L / 2; z <= L / 2; z += 0.25) cands.push({ x, z });
+    cands.sort(byCentre);
+    // Free spots per table type and direction. A spot that is blocked once
+    // stays blocked (tables are only ever added), so it is dropped for good.
+    const free = {};
+    const shapes = [];
+    for (const t of plan) {
+      const tt = TABLE_TYPES[t];
+      let spot = null;
+      for (const turned of tt.shape === 'rect' ? [false, true] : [false]) {
+        const key = t + turned;
+        free[key] ||= cands.map(p => ({ ...p, s: tableShape(tt, p.x, p.z, turned) })).filter(p => shapeOk(p.s));
+        const list = free[key];
+        let i = 0;
+        while (i < list.length && !shapes.every(o => gap(list[i].s, o) >= aisle - 1e-6)) i++;
+        list.splice(0, i);
+        if (list.length) spot = { t, x: list[0].x, z: list[0].z, turned, s: list[0].s };
+        if (spot) break;
+      }
+      if (!spot) continue;
+      shapes.push(spot.s);
+      placed.push(spot);
+    }
+  }
+  for (const p of placed) items.push(mkItem('table', p.x, p.z, p.turned ? Math.PI / 2 : 0, { t: p.t }));
+  const tableShapes = placed.map(p => tableShape(TABLE_TYPES[p.t], p.x, p.z, p.turned));
 
   // Olive trees: framing positions first, then spread evenly through the gaps.
   const olives = [];
   if (trees) {
-    const solid = items.filter(i => ['bar', 'dj', 'lounge', 'screen', 'urn'].includes(i.type));
+    const solid = items.filter(i => ['bar', 'dj', 'lounge', 'screen', 'urn', 'lantern'].includes(i.type));
     const speech = { x: stageX0 + 0.9, z: 0 };
     const treeOk = (x, z) => inside(x, z, 0.7)
-      && tables.every(t => Math.hypot(t.x - x, t.z - z) >= foot + 0.35)
+      && tableShapes.every(o => gap({ c: true, x, z, r: 0.35 }, o) >= 0)
       && solid.every(i => itemDist(i, x, z, st) >= 0.5)
       && (distRect(x, z, zones[0]) > 0 || Math.abs(z) > hi.len / 2 + 0.5)
       && distRect(x, z, { x0: danceX - D / 2, x1: danceX + D / 2, z0: -D / 2, z1: D / 2 }) >= 0.3
@@ -253,7 +359,7 @@ function autoLayout(st, { trees = true } = {}) {
     }
     for (const o of olives) items.push(mkItem('olive', o.x, o.z, Math.abs(o.x * 7.3 + o.z * 3.1) % TAU));
   }
-  return { items, needed };
+  return { items, planned: plan.length, placed: placed.length };
 }
 
 // Everything the scene needs, worked out from the items.
@@ -261,33 +367,37 @@ function derive(st, items) {
   const W = st.tentW, L = st.tentL;
   const ridge = EAVE + (W / 2) * ROOF_PITCH;
   const roofY = x => ridge - (ridge - EAVE) * Math.min(1, Math.abs(x) / (W / 2));
-  const tableR = TABLE_R[st.perTable] || 0.9;
   const hi = headInfo(st);
   const head = items.find(i => i.type === 'head');
   const danceIt = items.find(i => i.type === 'dance');
   const D = st.danceSize;
   const dance = { x: danceIt.x, z: danceIt.z, size: D };
-  const danceRect = { x0: dance.x - D / 2, x1: dance.x + D / 2, z0: dance.z - D / 2, z1: dance.z + D / 2 };
-  const tables = items.filter(i => i.type === 'round').sort((a, b) => a.z - b.z || a.x - b.x);
-  tables.forEach((t, i) => { t.n = i + 1; t.cleared = distRect(t.x, t.z, danceRect) < tableR + 0.3; });
-  const needed = Math.ceil(Math.max(0, st.guests - hi.seats) / st.perTable);
-  const seated = Math.min(st.guests, hi.seats + tables.length * st.perTable);
+  const danceRect = { x0: dance.x - D / 2 - 0.3, x1: dance.x + D / 2 + 0.3, z0: dance.z - D / 2 - 0.3, z1: dance.z + D / 2 + 0.3 };
+  const tables = items.filter(i => i.type === 'table').sort((a, b) => a.z - b.z || a.x - b.x);
+  tables.forEach((t, i) => {
+    t.n = i + 1;
+    const tt = tableType(t);
+    // a table on the dance floor is carried out after dinner
+    const probe = tt.shape === 'round' ? [[0, 0]] : [[0, 0], [0, tt.len / 2], [0, -tt.len / 2]];
+    t.cleared = tt.shape === 'round'
+      ? distRect(t.x, t.z, danceRect) < tt.r
+      : probe.some(([lx, lz]) => { const p = toWorld(t, lx, lz); return distRect(p.x, p.z, danceRect) === 0; });
+  });
+  const tableSeats = tables.reduce((s, t) => s + tableType(t).seats, 0);
+  const seated = Math.min(st.guests, hi.seats + tableSeats);
   const speech = toWorld(head, hi.front + 0.9, 0);
   const cakeIt = items.find(i => i.type === 'cake');
   const cake = cakeIt ? { x: cakeIt.x, z: cakeIt.z } : toWorld(head, hi.front + 1.5, 1.7);
   const nb = Math.max(2, Math.round(L / 5)), bay = L / nb;
   const frames = [...Array(nb + 1)].map((_, i) => -L / 2 + i * bay);
-  return {
-    W, L, eave: EAVE, ridge, roofY, tableR, hi, head, dance, tables, needed, seated, speech, cake,
-    frames, bay, chandeliers: nb,
-  };
+  return { W, L, eave: EAVE, ridge, roofY, hi, head, dance, tables, tableSeats, seated, speech, cake, frames, bay };
 }
 
 const SIZE_PRESETS = [[20, 30], [20, 35], [25, 30], [20, 40], [25, 35], [25, 40], [25, 45], [30, 40], [30, 45], [30, 50], [35, 50], [35, 60]];
 function smallestFit(st) {
   for (const [w, l] of SIZE_PRESETS) {
     const a = autoLayout({ ...st, tentW: w, tentL: l }, { trees: false });
-    if (a.items.filter(i => i.type === 'round').length >= a.needed) return [w, l];
+    if (a.placed >= a.planned) return [w, l];
   }
   return null;
 }
@@ -380,7 +490,62 @@ function canvasTex(w, h, draw, { repeat = false, color = true } = {}) {
   return t;
 }
 const r0 = rng(7);
+
+// Smooth value noise, for wood grain.
+function noise2(seed) {
+  const r = rng(seed), table = new Float32Array(256 * 256);
+  for (let i = 0; i < table.length; i++) table[i] = r();
+  const at = (x, y) => table[((y & 255) << 8) | (x & 255)];
+  return (x, y) => {
+    const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi;
+    const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+    const a = at(xi, yi), b = at(xi + 1, yi), c = at(xi, yi + 1), d = at(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  };
+}
+const rgbOf = hex => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+// Wood with growth rings, fibres and pores. The grain runs down the image,
+// or across it with `across`.
+function woodCanvas(w, h, { light, dark, seed, rings = 0.07, across = false }) {
+  const n = noise2(seed);
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const g = cv.getContext('2d');
+  const img = g.createImageData(w, h);
+  const A = rgbOf(light), B = rgbOf(dark);
+  for (let py = 0; py < h; py++) for (let px = 0; px < w; px++) {
+    const x = across ? py : px, y = across ? px : py;          // x across the grain, y along it
+    const warp = (n(x * 0.012, y * 0.003) * 2 + n(x * 0.05, y * 0.01)) * 22;
+    const ring = ((x + warp) * rings) % 1;
+    const late = Math.pow(ring, 4);                            // the dark latewood edge of each ring
+    const fibre = n(x * 0.9, y * 0.015) * 0.35;
+    const tone = n(x * 0.008 + 50, y * 0.002) * 0.35;
+    const pore = n(x * 1.7, y * 0.25) > 0.93 ? 0.3 : 0;
+    const k = Math.min(1, late * 0.55 + fibre + tone + pore);
+    const i = (py * w + px) * 4;
+    for (let c = 0; c < 3; c++) img.data[i + c] = A[c] + (B[c] - A[c]) * k;
+    img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return cv;
+}
+function woodTex(opts, repeat = [1, 1]) {
+  const cv = woodCanvas(256, 512, opts);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(...repeat);
+  return t;
+}
+const OAK_PLANK = woodCanvas(512, 96, { light: '#C29B6E', dark: '#7A5634', seed: 31, rings: 0.09, across: true });
+
 const TEX = {
+  beech: woodTex({ light: '#C79E70', dark: '#8A5E37', seed: 3, rings: 0.05 }),
+  fruitwood: woodTex({ light: '#A9744C', dark: '#62391F', seed: 5, rings: 0.06 }),
+  walnut: woodTex({ light: '#6E4C33', dark: '#2E1E14', seed: 9, rings: 0.05 }, [2, 2]),
+  oak: woodTex({ light: '#BE976B', dark: '#76563A', seed: 13, rings: 0.08 }, [2, 1]),
+  honey: woodTex({ light: '#C99A62', dark: '#8A5A30', seed: 21, rings: 0.06 }),
   sisal: canvasTex(256, 256, (g, w, h) => {
     g.fillStyle = '#C9B38E'; g.fillRect(0, 0, w, h);
     for (let y = 0; y < h; y += 4) for (let x = 0; x < w; x += 4) {
@@ -397,24 +562,21 @@ const TEX = {
       g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, y, 2, 2);
     }
   }, { repeat: true, color: false }),
-  chevron: canvasTex(512, 512, (g, w, h) => {
-    g.fillStyle = '#B48A5E'; g.fillRect(0, 0, w, h);
-    const cw = 64, ph = 22;
+  // point de Hongrie: oak planks cut at an angle, each a different piece of wood
+  chevron: canvasTex(1024, 1024, (g, w, h) => {
+    g.fillStyle = '#9C7650'; g.fillRect(0, 0, w, h);
+    const cw = 128, ph = 40;
     for (let c = 0; c < w / cw; c++) {
       g.save();
       g.beginPath(); g.rect(c * cw, 0, cw, h); g.clip();
       g.translate(c * cw + cw / 2, 0);
       g.rotate(c % 2 ? 0.75 : -0.75);
       for (let y = -h; y < h * 2; y += ph) {
-        const tone = 150 + r0() * 45;
-        g.fillStyle = `rgb(${tone + 30},${tone - 5},${tone - 55})`;
-        g.fillRect(-cw * 1.5, y, cw * 3, ph - 1.5);
-        for (let k = 0; k < 6; k++) {
-          g.fillStyle = `rgba(110,70,35,${0.05 + r0() * 0.08})`;
-          g.fillRect(-cw * 1.5, y + r0() * ph, cw * 3, 0.8);
-        }
-        g.fillStyle = 'rgba(80,50,25,.35)';
-        g.fillRect(-cw * 1.5, y + ph - 1.5, cw * 3, 1.5);
+        g.drawImage(OAK_PLANK, r0() * 300, r0() * 50, 200, 40, -cw * 1.5, y, cw * 3, ph - 2);
+        g.fillStyle = `rgba(${r0() < 0.5 ? '255,235,200' : '70,45,20'},${r0() * 0.12})`;
+        g.fillRect(-cw * 1.5, y, cw * 3, ph - 2);
+        g.fillStyle = 'rgba(60,38,18,.55)';
+        g.fillRect(-cw * 1.5, y + ph - 2, cw * 3, 2);
       }
       g.restore();
     }
@@ -424,14 +586,28 @@ const TEX = {
       g.fillStyle = (i + j) % 2 ? '#1D1D1B' : '#F2EFE8'; g.fillRect(i * w / 4, j * w / 4, w / 4, w / 4);
     }
   }, { repeat: true }),
-  oak: canvasTex(256, 256, (g, w, h) => {
-    g.fillStyle = '#8A6844'; g.fillRect(0, 0, w, h);
-    for (let x = 0; x < w; x += 1) {
-      g.fillStyle = `rgba(${r0() < 0.5 ? '60,40,20' : '170,135,95'},${r0() * 0.18})`;
-      g.fillRect(x, 0, 1, h);
-    }
-    for (let p = 0; p < w; p += 32) { g.fillStyle = 'rgba(40,25,10,.4)'; g.fillRect(p, 0, 1.5, h); }
+  // Moroccan rug: deep red field, ochre border, a lozenge medallion
+  moroccan: canvasTex(512, 384, (g, w, h) => {
+    g.fillStyle = '#8E2A22'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#C9953F'; g.fillRect(0, 0, w, 40); g.fillRect(0, h - 40, w, 40); g.fillRect(0, 0, 40, h); g.fillRect(w - 40, 0, 40, h);
+    g.fillStyle = '#5E1A16';
+    for (let x = 6; x < w; x += 22) { g.fillRect(x, 14, 10, 10); g.fillRect(x, h - 24, 10, 10); }
+    for (let y = 6; y < h; y += 22) { g.fillRect(14, y, 10, 10); g.fillRect(w - 24, y, 10, 10); }
+    const lozenge = (cx, cy, rx, ry, c) => { g.fillStyle = c; g.beginPath(); g.moveTo(cx, cy - ry); g.lineTo(cx + rx, cy); g.lineTo(cx, cy + ry); g.lineTo(cx - rx, cy); g.closePath(); g.fill(); };
+    lozenge(w / 2, h / 2, 150, 95, '#D9B36A'); lozenge(w / 2, h / 2, 120, 72, '#8E2A22'); lozenge(w / 2, h / 2, 60, 36, '#E3C98F'); lozenge(w / 2, h / 2, 26, 16, '#5E1A16');
+    for (const [x, y] of [[110, 100], [w - 110, 100], [110, h - 100], [w - 110, h - 100]]) lozenge(x, y, 34, 22, '#C9953F');
+    for (let i = 0; i < 6000; i++) { g.fillStyle = `rgba(${r0() < 0.5 ? '0,0,0' : '255,230,190'},${r0() * 0.08})`; g.fillRect(r0() * w, r0() * h, 2, 2); }
   }, { repeat: true }),
+  // light through a lantern's cloth: brightest in the middle, with the
+  // shadows of its wooden frame
+  lanternGlow: canvasTex(128, 256, (g, w, h) => {
+    const gr = g.createRadialGradient(w / 2, h * 0.55, 4, w / 2, h * 0.55, h * 0.6);
+    gr.addColorStop(0, '#FFFFFF'); gr.addColorStop(0.5, '#C8C8C8'); gr.addColorStop(1, '#5A5A5A');
+    g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(0,0,0,.45)';
+    for (const y of [h / 3, (2 * h) / 3]) g.fillRect(0, y - 3, w, 6);
+    g.fillRect(0, 0, 6, h); g.fillRect(w - 6, 0, 6, h);
+  }, { color: false }),
   marble: canvasTex(512, 256, (g, w, h) => {
     g.fillStyle = '#EEEAE3'; g.fillRect(0, 0, w, h);
     g.strokeStyle = 'rgba(150,140,130,.35)';
@@ -531,22 +707,31 @@ function lowerThirdTex(label) {
 // ── Materials ──────────────────────────────────────
 
 const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...o });
-const fabric = (color, o = {}) => std(color, { roughness: 0.95, bumpMap: TEX.weave, bumpScale: 0.6, ...o });
+// Cloth: a soft sheen at grazing angles and a fine woven relief.
+const fabric = (color, o = {}) => new THREE.MeshPhysicalMaterial({
+  color, roughness: 0.95, sheen: 0.6, sheenRoughness: 0.75, sheenColor: 0xffffff, bumpMap: TEX.weave, bumpScale: 0.6, ...o,
+});
+// Wood: the grain as colour and as a faint relief.
+const woodMat = (tex, o = {}) => std(0xffffff, { map: tex, bumpMap: tex, bumpScale: 0.35, roughness: 0.55, ...o });
 const MAT = {
   linen: fabric(0xF3EDE1),
   ivory: fabric(0xF6F0E4),
   roof: std(0xFBF8F2, { roughness: 0.9, side: THREE.BackSide, shadowSide: THREE.DoubleSide }),
   glass: new THREE.MeshStandardMaterial({ color: 0xdfeaf0, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.12, side: THREE.BackSide, depthWrite: false }),
+  clearRoof: new THREE.MeshStandardMaterial({ color: 0xe8f0f4, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.1, side: THREE.BackSide, depthWrite: false }),
   drape: fabric(0xF4EEE2, { transparent: true, opacity: 0.94, side: THREE.FrontSide }),
   curtain: fabric(0xF1EADC, { side: THREE.DoubleSide }),
   frame: std(0xC9C9C4, { roughness: 0.45, metalness: 0.6 }),
-  sisal: std(0xffffff, { map: TEX.sisal, roughness: 1 }),
+  sisal: std(0xffffff, { map: TEX.sisal, bumpMap: TEX.sisal, bumpScale: 0.8, roughness: 1 }),
+  rugs: std(0xffffff, { map: TEX.moroccan, bumpMap: TEX.weave, bumpScale: 0.8, roughness: 1 }),
   grass: std(0xffffff, { map: TEX.grass, roughness: 1 }),
   gravel: std(0xffffff, { map: TEX.gravel, roughness: 1 }),
-  wood: std(0xA77F55, { roughness: 0.55 }),
-  fruitwood: std(0x9C6B42, { roughness: 0.4 }),
-  darkWood: std(0x4A3424, { roughness: 0.5 }),
-  oak: std(0xffffff, { map: TEX.oak, roughness: 0.6 }),
+  wood: woodMat(TEX.beech, { roughness: 0.45 }),
+  fruitwood: woodMat(TEX.fruitwood, { roughness: 0.35 }),
+  darkWood: woodMat(TEX.walnut, { roughness: 0.4 }),
+  oak: woodMat(TEX.oak),
+  honey: woodMat(TEX.honey, { roughness: 0.5 }),
+  rattanSeat: std(0xffffff, { map: TEX.basket, bumpMap: TEX.basket, bumpScale: 0.6, roughness: 0.9 }),
   marble: std(0xffffff, { map: TEX.marble, roughness: 0.25 }),
   cane: std(0xffffff, { map: TEX.cane, roughness: 0.9, side: THREE.DoubleSide }),
   acrylic: new THREE.MeshStandardMaterial({ color: 0xF4F6F7, roughness: 0.05, transparent: true, opacity: 0.32, depthWrite: false }),
@@ -590,8 +775,24 @@ const MAT = {
   mountain: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }),
 };
 const LINEN_COLORS = { A: 0xF3EDE1, B: 0xD9CCB4, C: 0xA9B497 };
+// Lantern cloth, glass and woven shades light up from inside at night
+// (see the frame loop).
+TEX.rattanFine = TEX.basket.clone();
+TEX.rattanFine.repeat.set(5, 3);
+TEX.rattanFine.needsUpdate = true;
+const LANTERN_CLOTH = fabric(0xF4ECDD, { emissive: 0xFFB060, emissiveMap: TEX.lanternGlow, emissiveIntensity: 0, side: THREE.DoubleSide });
+const LANTERN_GLASS = std(0xFFE6B8, { emissive: 0xFFB060, emissiveIntensity: 0, roughness: 0.15 });
+const RATTAN_GLOW = std(0xffffff, { map: TEX.rattanFine, emissive: 0xFFA348, emissiveMap: TEX.rattanFine, emissiveIntensity: 0, side: THREE.DoubleSide, roughness: 0.9 });
+const GLOW_MATS = [LANTERN_CLOTH, LANTERN_GLASS, RATTAN_GLOW];
+MAT.blackMetal = std(0x1C1B19, { roughness: 0.45, metalness: 0.7 });
+// Each standing lantern: what glows, what holds it, where its light sits, and its footprint.
+const LANTERN_STYLES = {
+  A: { cover: 'teepeeCloth', frame: 'teepeePoles', coverMat: LANTERN_CLOTH, frameMat: MAT.oak, light: 1.1 },
+  B: { cover: 'moroccanGlass', frame: 'moroccanFrame', coverMat: LANTERN_GLASS, frameMat: MAT.blackMetal, light: 0.4 },
+  C: { cover: 'lanternTall', frame: 'lanternTallFrame', coverMat: LANTERN_CLOTH, frameMat: MAT.wood, light: 1.15 },
+};
 const DANCE_MATS = {
-  A: std(0xffffff, { map: TEX.chevron, roughness: 0.45 }),
+  A: std(0xffffff, { map: TEX.chevron, bumpMap: TEX.chevron, bumpScale: 0.3, roughness: 0.4 }),
   B: std(0xF4F1EA, { roughness: 0.12 }),
   C: std(0xffffff, { map: TEX.chequer, roughness: 0.2 }),
 };
@@ -749,7 +950,28 @@ function candelabraGeometry() {
 
 // Three chair designs. Each returns [{ geo, mat }] parts, drawn instanced.
 function chairParts(style) {
-  if (style === 'B') {   // Chiavari
+  if (style === 'A') {   // cross-back: oak, an X between the back posts, woven rattan seat
+    const bits = [];
+    for (const x of [-0.19, 0.19]) {
+      bits.push(place(new THREE.CylinderGeometry(0.016, 0.017, 0.46, 10), x, 0.23, 0.18));             // front legs
+      bits.push(tube([v3(x, 0, -0.2), v3(x, 0.45, -0.17), v3(x, 0.7, -0.2), v3(x * 1.02, 0.9, -0.25)], 0.017, 16, 8));  // back posts
+    }
+    // curved top rail and the cross
+    bits.push(tube([v3(-0.21, 0.86, -0.24), v3(-0.1, 0.88, -0.27), v3(0, 0.885, -0.275), v3(0.1, 0.88, -0.27), v3(0.21, 0.86, -0.24)], 0.03, 20, 8));
+    for (const s of [-1, 1]) bits.push(tube([v3(s * 0.18, 0.5, -0.18), v3(0, 0.66, -0.21), v3(-s * 0.18, 0.82, -0.235)], 0.011, 12, 6));
+    // seat frame and the bentwood arches between the legs
+    bits.push(place(new THREE.BoxGeometry(0.44, 0.045, 0.04), 0, 0.455, 0.2));
+    bits.push(place(new THREE.BoxGeometry(0.42, 0.045, 0.04), 0, 0.455, -0.18));
+    for (const x of [-0.205, 0.205]) bits.push(place(new THREE.BoxGeometry(0.04, 0.045, 0.4), x, 0.455, 0.01));
+    for (const [x, z, ry] of [[0, 0.185, 0], [0, -0.17, 0], [-0.19, 0.01, Math.PI / 2], [0.19, 0.01, Math.PI / 2]]) {
+      bits.push(place(new THREE.TorusGeometry(0.17, 0.01, 6, 20, Math.PI), x, 0.26, z, ry));
+    }
+    return [
+      { geo: mergeGeometries(bits), mat: MAT.honey },
+      { geo: place(new THREE.BoxGeometry(0.39, 0.03, 0.36), 0, 0.47, 0.01), mat: MAT.rattanSeat },
+    ];
+  }
+  if (style === 'C') {   // Chiavari
     const bits = [];
     for (const [x, z] of [[-0.18, -0.17], [0.18, -0.17], [-0.18, 0.18], [0.18, 0.18]]) {
       const tall = z < 0;
@@ -764,7 +986,7 @@ function chairParts(style) {
       { geo: place(new THREE.BoxGeometry(0.38, 0.05, 0.36), 0, 0.49, 0.01), mat: MAT.ivory },
     ];
   }
-  if (style === 'C') {   // Louis ghost
+  if (style === 'D') {   // Louis ghost
     const back = new THREE.CylinderGeometry(0.17, 0.17, 0.035, 28).rotateX(Math.PI / 2).scale(1, 1.3, 1);
     const ring = new THREE.TorusGeometry(0.18, 0.016, 8, 32).scale(1, 1.3, 1);
     const bits = [
@@ -775,7 +997,7 @@ function chairParts(style) {
     for (const [x, z] of [[-0.19, -0.18], [0.19, -0.18], [-0.19, 0.18], [0.19, 0.18]]) bits.push(place(new THREE.CylinderGeometry(0.018, 0.012, 0.45, 10), x, 0.225, z));
     return [{ geo: mergeGeometries(bits), mat: MAT.acrylic, cast: false }];
   }
-  // A: bentwood bistro chair with a caned seat and back
+  // B: bentwood bistro chair with a caned seat and back
   const bits = [];
   for (const [x, z] of [[-0.18, -0.16], [0.18, -0.16], [-0.17, 0.17], [0.17, 0.17]]) bits.push(place(new THREE.CylinderGeometry(0.013, 0.016, 0.46, 8), x, 0.23, z));
   bits.push(place(new THREE.TorusGeometry(0.2, 0.012, 6, 32), 0, 0.46, 0, 0, Math.PI / 2));
@@ -826,12 +1048,52 @@ function initGeo() {
   GEO.candelabra = candelabraGeometry();
   GEO.candlestick = new THREE.CylinderGeometry(0.02, 0.04, 0.3, 12);
   GEO.cone = new THREE.ConeGeometry(1, 1, 32, 1, true).translate(0, -0.5, 0);
-  GEO.crystalDrop = new THREE.OctahedronGeometry(0.018).scale(1, 1.8, 1);
-  GEO.rattanShade = new THREE.LatheGeometry(v2s([[0.02, 0.32], [0.18, 0.3], [0.33, 0.18], [0.4, 0.02], [0.4, 0]]), 32);
+  // tall lantern: cloth box 0.4 × 0.75 m held between four legs 1.75 m high
+  GEO.lanternTall = new THREE.BoxGeometry(0.4, 0.75, 0.4).translate(0, 1.15, 0);
+  const tall = [];
+  for (const [x, z] of [[-0.22, -0.22], [0.22, -0.22], [-0.22, 0.22], [0.22, 0.22]]) tall.push(place(new THREE.BoxGeometry(0.045, 1.75, 0.045), x, 0.875, z));
+  for (const y of [0.76, 1.54]) for (const [w, d] of [[0.48, 0.03], [0.03, 0.48]]) for (const s of [-1, 1]) {
+    tall.push(place(new THREE.BoxGeometry(w, 0.03, d), d > w ? s * 0.22 : 0, y, d > w ? 0 : s * 0.22));
+  }
+  for (const [w, d] of [[0.44, 0.025], [0.025, 0.44]]) for (const s of [-1, 1]) tall.push(place(new THREE.BoxGeometry(w, 0.025, d), d > w ? s * 0.22 : 0, 0.3, d > w ? 0 : s * 0.22));
+  tall.push(place(new THREE.BoxGeometry(0.5, 0.035, 0.5), 0, 1.76, 0));
+  GEO.lanternTallFrame = mergeGeometries(tall);
+  // teepee: four wooden poles crossing above a white cloth cone
+  const apex = 2.35, base = 0.78;
+  const poles = [];
+  for (let k = 0; k < 4; k++) {
+    const a = (k / 4) * TAU + Math.PI / 4, bx = Math.cos(a) * base, bz = Math.sin(a) * base;
+    poles.push(tube([v3(bx, 0, bz), v3(-bx * 0.17, apex * 1.17, -bz * 0.17)], 0.025, 2, 8));
+    const a2 = a + TAU / 4, k1 = 1 - 1.0 / apex;
+    poles.push(tube([v3(bx * k1, 1.0, bz * k1), v3(Math.cos(a2) * base * k1, 1.0, Math.sin(a2) * base * k1)], 0.012, 2, 6));
+  }
+  GEO.teepeePoles = mergeGeometries(poles);
+  GEO.teepeeCloth = new THREE.CylinderGeometry(0.09, 0.6, 1.55, 40, 1, true).translate(0, 1.325, 0);
+  // black Moroccan lantern: glass box, pierced metal roof, ring on top
+  GEO.moroccanGlass = new THREE.BoxGeometry(0.27, 0.5, 0.27).translate(0, 0.38, 0);
+  const mor = [place(new THREE.BoxGeometry(0.36, 0.06, 0.36), 0, 0.03, 0), place(new THREE.BoxGeometry(0.33, 0.04, 0.33), 0, 0.64, 0)];
+  for (const [x, z] of [[-0.145, -0.145], [0.145, -0.145], [-0.145, 0.145], [0.145, 0.145]]) mor.push(place(new THREE.BoxGeometry(0.025, 0.56, 0.025), x, 0.36, z));
+  for (const y of [0.24, 0.48]) for (const [w, d] of [[0.3, 0.012], [0.012, 0.3]]) for (const s of [-1, 1]) mor.push(place(new THREE.BoxGeometry(w, 0.012, d), d > w ? s * 0.14 : 0, y, d > w ? 0 : s * 0.14));
+  mor.push(place(new THREE.ConeGeometry(0.25, 0.24, 4, 1).rotateY(Math.PI / 4), 0, 0.78, 0));
+  mor.push(place(new THREE.SphereGeometry(0.03, 10, 8), 0, 0.92, 0));
+  mor.push(place(new THREE.TorusGeometry(0.06, 0.008, 6, 20), 0, 1.0, 0));
+  GEO.moroccanFrame = mergeGeometries(mor);
+  // woven pendants: a globe, a bell and a tiered shade, each open below
+  GEO.pendants = [
+    new THREE.LatheGeometry(v2s([[0.02, 0.3], [0.15, 0.27], [0.24, 0.17], [0.27, 0.04], [0.23, -0.08], [0.13, -0.15]]), 32),
+    new THREE.LatheGeometry(v2s([[0.03, 0.26], [0.09, 0.23], [0.14, 0.12], [0.2, -0.02], [0.3, -0.13], [0.31, -0.15]]), 32),
+    mergeGeometries([0.1, 0.17, 0.24].map((r, i) => new THREE.CylinderGeometry(r * 0.6, r, 0.1, 32, 1, true).translate(0, 0.2 - i * 0.12, 0))),
+  ];
+  // small hanging lantern, centred on its middle
+  GEO.lanternSmall = new THREE.BoxGeometry(0.24, 0.4, 0.24);
+  const small = [];
+  for (const [x, z] of [[-0.13, -0.13], [0.13, -0.13], [-0.13, 0.13], [0.13, 0.13]]) small.push(place(new THREE.BoxGeometry(0.02, 0.48, 0.02), x, 0, z));
+  for (const y of [-0.21, 0.21]) small.push(place(new THREE.BoxGeometry(0.29, 0.02, 0.29), 0, y, 0));
+  GEO.lanternSmallFrame = mergeGeometries(small);
   for (const g of Object.values(GEO)) SHARED_GEO.add(g);
 }
 initGeo();
-const CHAIRS = { A: chairParts('A'), B: chairParts('B'), C: chairParts('C') };
+const CHAIRS = { A: chairParts('A'), B: chairParts('B'), C: chairParts('C'), D: chairParts('D') };
 for (const parts of Object.values(CHAIRS)) for (const p of parts) SHARED_GEO.add(p.geo);
 
 const C = h => new THREE.Color(h);
@@ -974,10 +1236,18 @@ const env = {};
 for (const [k, v] of Object.entries(TIMES[state.time])) env[k] = v instanceof THREE.Color ? v.clone() : v;
 function stepEnv(k) {
   const t = TIMES[state.time];
+  let change = 0;
   for (const key in t) {
-    if (t[key] instanceof THREE.Color) env[key].lerp(t[key], k);
-    else env[key] += (t[key] - env[key]) * k;
+    if (t[key] instanceof THREE.Color) {
+      const c = env[key];
+      change += Math.abs(t[key].r - c.r) + Math.abs(t[key].g - c.g) + Math.abs(t[key].b - c.b);
+      c.lerp(t[key], k);
+    } else {
+      change += Math.abs(t[key] - env[key]) / (Math.abs(t[key]) + 1);
+      env[key] += (t[key] - env[key]) * k;
+    }
   }
+  return change;
 }
 
 const MOMENTS = {
@@ -1042,7 +1312,7 @@ function buildStatic() {
   buildOutside();
   buildTent();
   buildDrapes();
-  buildChandeliers();
+  buildHangingLanterns();
   const sx = lay.W / 2 - 1.2;
   spot.position.set(sx, lay.roofY(sx) - 0.35, 0);
   const ext = Math.max(lay.W, lay.L) * 0.75 + 8;
@@ -1057,8 +1327,9 @@ function buildItems(exclude) {
   anim.cleared = new THREE.Group();
   cur.group.add(anim.cleared);
   for (const h of by('head')) buildHeadTable(h, cur.group);
-  buildRounds(by('round').filter(t => !t.cleared), cur.group);
-  buildRounds(by('round').filter(t => t.cleared), anim.cleared);
+  buildTables(by('table').filter(t => !t.cleared), cur.group);
+  buildTables(by('table').filter(t => t.cleared), anim.cleared);
+  buildLanterns(by('lantern'), cur.group);
   for (const d of by('dance')) buildDanceFloor(d, cur.group);
   buildOlives(by('olive'), cur.group);
   buildUrns(by('urn'), cur.group);
@@ -1084,7 +1355,7 @@ function buildDrag(it) {
   const g = cur.group;
   const one = { head: buildHeadTable, dance: buildDanceFloor, bar: buildBar, dj: buildDJ, cake: buildCake, lounge: buildLounge, screen: buildScreen }[it.type];
   if (one) one(it, g);
-  else ({ round: buildRounds, olive: buildOlives, urn: buildUrns })[it.type]?.([it], g);
+  else ({ table: buildTables, olive: buildOlives, urn: buildUrns, lantern: buildLanterns })[it.type]?.([it], g);
   for (const { light } of cur.lights) light.removeFromParent();
   cur.lights = [];
   cur = layers.items;
@@ -1196,8 +1467,10 @@ function buildTent() {
   cur.group.add(g);
   const obs = cur.obstacles;
 
-  const floor = mesh(new THREE.BoxGeometry(W + 0.3, 0.12, L + 0.3), MAT.sisal, { cast: false });
+  const rugs = state.style.floor === 'B';
+  const floor = mesh(new THREE.BoxGeometry(W + 0.3, 0.12, L + 0.3), rugs ? MAT.rugs : MAT.sisal, { cast: false });
   MAT.sisal.map.repeat.set(W / 1.5, L / 1.5);
+  MAT.rugs.map.repeat.set(W / 4, L / 3);
   floor.position.y = -0.06;
   g.add(floor);
 
@@ -1226,13 +1499,15 @@ function buildTent() {
   // roof and gables (seen from inside only when the cutaway is on)
   const roof = new THREE.Group();
   const o = 0.25;
+  const clear = state.style.roof === 'B';
+  const roofMat = clear ? MAT.clearRoof : MAT.roof;
   for (const s of [-1, 1]) {
-    roof.add(mesh(quad(v3(s * (W / 2 + o), eave - o * ROOF_PITCH, -L / 2 - o), v3(s * (W / 2 + o), eave - o * ROOF_PITCH, L / 2 + o), v3(0, ridge, L / 2 + o), v3(0, ridge, -L / 2 - o), v3(s, 2, 0)), MAT.roof));
+    roof.add(mesh(quad(v3(s * (W / 2 + o), eave - o * ROOF_PITCH, -L / 2 - o), v3(s * (W / 2 + o), eave - o * ROOF_PITCH, L / 2 + o), v3(0, ridge, L / 2 + o), v3(0, ridge, -L / 2 - o), v3(s, 2, 0)), roofMat, { cast: !clear }));
     const tri = new THREE.BufferGeometry().setFromPoints([v3(-W / 2, eave, s * L / 2), v3(W / 2, eave, s * L / 2), v3(0, ridge, s * L / 2)]);
     tri.computeVertexNormals();
     if (tri.attributes.normal.getZ(0) * s < 0) tri.setIndex([0, 2, 1]);
     tri.computeVertexNormals();
-    roof.add(mesh(tri, MAT.roof));
+    roof.add(mesh(tri, roofMat, { cast: !clear }));
   }
   addTo('roof', roof, g);
 
@@ -1322,64 +1597,39 @@ function buildDrapes() {
   addTo('wallDrapes', wall);
 }
 
-function buildChandeliers() {
-  const { roofY, frames, bay } = lay;
+// Hanging lights in clusters of three over each bay, at different heights:
+// woven rattan pendants or small cloth lanterns. One warm light per bay.
+function buildHangingLanterns() {
+  const { W, roofY, frames, bay } = lay;
   const g = new THREE.Group();
-  const style = state.style.chandeliers;
-  const spots = [];
-  for (let i = 0; i < frames.length - 1; i++) spots.push(frames[i] + bay / 2);
-  const top = roofY(0);
-  const y = top - 1.9;
+  const rattan = state.style.hanging !== 'B';
   const r = rng(5);
-  const chains = [], candles = [], flames = [], glows = [], leaves = [], leafCol = [];
-  const rings = [], drops = [], shades = [];
-  for (const z of spots) {
-    if (style === 'C') {
-      // three woven pendants at staggered heights
+  const shades = [[], [], []], frameM = [], cords = [], bulbs = [], glows = [];
+  for (let i = 0; i < frames.length - 1; i++) {
+    const z = frames[i] + bay / 2;
+    for (const x0 of [-W / 4, W / 4]) {
+      const top = roofY(x0) - 0.15;
       for (let k = 0; k < 3; k++) {
-        const a = (k / 3) * TAU, x = Math.cos(a) * 0.55, zz = z + Math.sin(a) * 0.55, yy = y + 0.2 - k * 0.25;
-        shades.push(mat(x, yy, zz, r() * TAU, 0.9 + k * 0.15));
-        chains.push(mat(x, (yy + 0.3 + top) / 2, zz, 0, 1, top - yy - 0.3, 1));
-        flames.push(mat(x, yy + 0.05, zz, 0, 3.5));
-        glows.push({ p: v3(x, yy, zz), size: 0.9, flicker: 0.02 });
-      }
-    } else {
-      chains.push(mat(0, (y + top) / 2, z, 0, 1, top - y, 1));
-      rings.push(mat(0, y, z), mat(0, y - 0.18, z, 0, 0.55));
-      const n = style === 'B' ? 16 : 12;
-      for (let k = 0; k < n; k++) {
-        const a = (k / n) * TAU, x = Math.cos(a) * 0.55, zz = z + Math.sin(a) * 0.55;
-        candles.push(mat(x, y + 0.08, zz));
-        flames.push(mat(x, y + 0.16, zz));
-        glows.push({ p: v3(x, y + 0.17, zz), size: 0.2, flicker: style === 'B' ? 0.05 : 0.25 });
-      }
-      if (style === 'B') {
-        for (let k = 0; k < 90; k++) {
-          const a = r() * TAU, rr = 0.15 + r() * 0.42, yy = y - 0.05 - r() * 0.55 * (1 - rr / 0.7);
-          drops.push(mat(Math.cos(a) * rr, yy, z + Math.sin(a) * rr, r() * TAU));
-        }
-      } else {
-        // olive branches woven round the ring
-        for (let k = 0; k < 260; k++) {
-          const a = r() * TAU, rr = 0.55 + (r() - 0.5) * 0.1;
-          leaves.push(mat(Math.cos(a) * rr, y + (r() - 0.5) * 0.1, z + Math.sin(a) * rr, r() * TAU, 1, 1, 1, (r() - 0.5) * 1.5, (r() - 0.5) * 1.5));
-          leafCol.push(pick(PAL.olive, r));
-        }
+        const a = (k / 3) * TAU + r(), x = x0 + Math.cos(a) * 0.55, zz = z + Math.sin(a) * 0.55;
+        const y = top - 1.0 - k * 0.4 - r() * 0.25;
+        const m = mat(x, y, zz, r() * TAU, rattan ? 0.8 + r() * 0.5 : 1);
+        if (rattan) shades[(i + k) % 3].push(m); else { shades[0].push(m); frameM.push(m); }
+        cords.push(mat(x, (y + 0.2 + top) / 2, zz, 0, 1, top - y - 0.2, 1));
+        bulbs.push(mat(x, y + (rattan ? 0.05 : 0), zz, 0, 1.6));
+        glows.push({ p: v3(x, y, zz), size: rattan ? 0.9 : 0.7, flicker: 0.02 });
       }
     }
     const pl = new THREE.PointLight(0xFFB774, 0, 18, 1.6);
-    pl.position.set(0, y - 0.3, z);
-    addLight(pl, 9, g);
+    pl.position.set(0, roofY(0) - 2.2, z);
+    addLight(pl, 8, g);
   }
-  if (rings.length) g.add(instanced(new THREE.TorusGeometry(0.55, 0.016, 8, 48).rotateX(Math.PI / 2), style === 'B' ? MAT.brass : MAT.black, rings, { cast: false }));
-  g.add(instanced(new THREE.CylinderGeometry(0.008, 0.008, 1, 4), MAT.black, chains, { cast: false }));
-  if (candles.length) g.add(instanced(GEO.candle, MAT.ivory, candles, { cast: false }));
-  if (style === 'C') g.add(instanced(GEO.bulb, BULB, flames, { cast: false, receive: false }), instanced(GEO.rattanShade, MAT.rattan, shades, { cast: false }));
-  else g.add(instanced(GEO.flame, FLAME, flames, { cast: false, receive: false }));
-  if (drops.length) g.add(instanced(GEO.crystalDrop, MAT.crystal, drops, { cast: false }));
-  if (leaves.length) g.add(instanced(GEO.leaf, MAT.leaf, leaves, { cast: false, colors: leafCol }));
-  addGlow('chandeliers', glows, 0.15, 1.0, g);
-  addTo('chandeliers', g);
+  if (rattan) shades.forEach((list, k) => g.add(instanced(GEO.pendants[k], RATTAN_GLOW, list, { cast: false })));
+  else g.add(instanced(GEO.lanternSmall, LANTERN_CLOTH, shades[0], { cast: false }), instanced(GEO.lanternSmallFrame, MAT.wood, frameM, { cast: false }));
+  g.add(instanced(new THREE.CylinderGeometry(0.004, 0.004, 1, 4), MAT.black, cords, { cast: false }));
+  g.add(instanced(GEO.bulb, BULB, bulbs, { cast: false, receive: false }));
+  addGlow('hanging', glows, 0, 0.35, g);
+  lay.hangingCount = cords.length;
+  addTo('hanging', g);
 
   // two soft fill lights along the length so the far tables are not in the dark
   for (const z of [-lay.L / 3, lay.L / 3]) {
@@ -1387,6 +1637,24 @@ function buildChandeliers() {
     pl.position.set(lay.W / 4, lay.eave - 0.4, z);
     addLight(pl, 6, cur.group);
   }
+}
+
+// Standing lanterns in the chosen style, each with a warm light inside.
+function buildLanterns(list, parent) {
+  if (!list.length) return;
+  const g = new THREE.Group();
+  const ls = LANTERN_STYLES[state.style.lanterns];
+  const ms = list.map(it => mat(it.x, 0, it.z, it.rot || 0));
+  g.add(instanced(GEO[ls.cover], ls.coverMat, ms, { cast: false }), instanced(GEO[ls.frame], ls.frameMat, ms));
+  const glows = [];
+  for (const it of list) {
+    glows.push({ p: v3(it.x, ls.light, it.z), size: state.style.lanterns === 'B' ? 0.6 : 1.4, flicker: 0.02 });
+    const pl = new THREE.PointLight(0xFFB46A, 0, 6, 1.7);
+    pl.position.set(it.x, ls.light, it.z);
+    addLight(pl, state.style.lanterns === 'B' ? 1.2 : 2.4, g, 'lantern');
+  }
+  addGlow('lanterns', glows, 0, 0.35, g);
+  addTo('lanterns', g, parent);
 }
 
 function buildGarlands() {
@@ -1419,6 +1687,19 @@ function buildGarlands() {
         return v3(x, roofY(x) - 0.3 - 0.5 * Math.sin(Math.PI * k), z);
       });
     }
+  }
+  if (style === 'D') {
+    // a dense canopy of fairy lights just under the roof, every 50 cm
+    const glows = [];
+    let metres = 0;
+    for (let x = -W / 2 + 0.4; x < W / 2 - 0.3; x += 0.5) {
+      metres += L;
+      for (let z = -L / 2 + 0.2; z < L / 2; z += 0.18) glows.push({ p: v3(x, roofY(x) - 0.3 - 0.06 * Math.sin(z * 2.1 + x), z), size: 0.08, flicker: 0.6, color: [1.0, 0.8, 0.55] });
+    }
+    addGlow('garlands', glows, 0.15, 0.9, g);
+    lay.garland = { metres: Math.round(metres), bulbs: glows.length };
+    addTo('garlands', g);
+    return;
   }
   const wire = [], bulbs = [], glows = [];
   let metres = 0;
@@ -1600,8 +1881,9 @@ function skirtBox(w, h, l) {
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
     const k = (h / 2 - y) / h;                    // 0 at the top, 1 at the floor
-    if (Math.abs(Math.abs(x) - w / 2) < 1e-4) p.setX(i, x + Math.sign(x) * (0.012 * Math.sin(z * 38) * k + 0.04 * k));
-    if (Math.abs(Math.abs(z) - l / 2) < 1e-4) p.setZ(i, z + Math.sign(z) * (0.012 * Math.sin(x * 38) * k + 0.04 * k));
+    // cloth flares out a little towards the floor, so it catches the light from above
+    if (Math.abs(Math.abs(x) - w / 2) < 1e-4) p.setX(i, x + Math.sign(x) * (0.012 * Math.sin(z * 38) * k + 0.11 * k));
+    if (Math.abs(Math.abs(z) - l / 2) < 1e-4) p.setZ(i, z + Math.sign(z) * (0.012 * Math.sin(x * 38) * k + 0.11 * k));
   }
   geo.translate(0, h / 2, 0);
   geo.computeVertexNormals();
@@ -1696,38 +1978,77 @@ function buildHeadTable(it, parent) {
   addTo('headTable', g, parent);
 }
 
-function buildRounds(tables, parent) {
+// Cloth for each table size, made once and shared.
+const TABLE_GEO = {};
+function tableCloth(t) {
+  const tt = TABLE_TYPES[t];
+  if (!TABLE_GEO[t]) {
+    TABLE_GEO[t] = tt.shape === 'round'
+      ? mergeGeometries([skirtRound(tt.r, 0.76), new THREE.CylinderGeometry(tt.r + 0.03, tt.r + 0.03, 0.015, 64).translate(0, 0.76, 0)])
+      : skirtBox(tt.w, 0.76, tt.len);
+    SHARED_GEO.add(TABLE_GEO[t]);
+  }
+  return TABLE_GEO[t];
+}
+
+// Round and long tables with their chairs, settings, flowers and photophores.
+function buildTables(tables, parent) {
   if (!tables.length) return;
-  const { tableR } = lay;
-  const per = state.perTable;
   const top = 0.76;
   const g = new THREE.Group();
-  const tm = tables.map(t => mat(t.x, 0, t.z));
-  g.add(instanced(skirtRound(tableR, top), linenMaterial(), tm));
-  g.add(instanced(new THREE.CylinderGeometry(tableR + 0.03, tableR + 0.03, 0.015, 64).translate(0, top, 0), MAT.linen, tm));
+  for (const t of Object.keys(TABLE_TYPES)) {
+    const of = tables.filter(x => (x.t || 'r10') === t);
+    if (of.length) g.add(instanced(tableCloth(t), linenMaterial(), of.map(x => mat(x.x, 0, x.z, x.rot || 0))));
+  }
   addTo('rounds', g, parent);
 
   const chairs = [], seats = [];
-  for (const t of tables) for (let i = 0; i < per; i++) {
-    const a = (i / per) * TAU + (t.rot || 0);
-    const rc = tableR + 0.33, rp = tableR - 0.22, ga = a + 0.22, rg = tableR - 0.42;
-    chairs.push(mat(t.x + Math.cos(a) * rc, 0, t.z + Math.sin(a) * rc, Math.atan2(-Math.cos(a), -Math.sin(a))));
-    seats.push({ x: t.x + Math.cos(a) * rp, z: t.z + Math.sin(a) * rp, gx: t.x + Math.cos(ga) * rg, gz: t.z + Math.sin(ga) * rg, a: -a });
-  }
-  addChairs(chairs, parent);
-  addTo('tableware', placeSettings(seats, top + 0.008), parent);
-
   const b = flowerBatch();
   const ph = photophoreBatch();
   const n = state.photophores;
   for (const t of tables) {
+    const tt = tableType(t), rot = t.rot || 0;
     const r = rng(Math.round(t.x * 100 + t.z * 7919));
-    centrepiece(b, r, t.x, t.z, top + 0.008);
-    for (let k = 0; k < n; k++) {
-      const a = (k / n) * TAU + 0.3, rr = state.style.centrepiece === 'C' ? 0.33 : 0.36;
-      ph.add(t.x + Math.cos(a) * rr, top + 0.008, t.z + Math.sin(a) * rr);
+    if (tt.shape === 'round') {
+      for (let i = 0; i < tt.seats; i++) {
+        const a = (i / tt.seats) * TAU + rot;
+        const rc = tt.r + 0.33, rp = tt.r - 0.22, ga = a + 0.22, rg = tt.r - 0.42;
+        chairs.push(mat(t.x + Math.cos(a) * rc, 0, t.z + Math.sin(a) * rc, Math.atan2(-Math.cos(a), -Math.sin(a))));
+        seats.push({ x: t.x + Math.cos(a) * rp, z: t.z + Math.sin(a) * rp, gx: t.x + Math.cos(ga) * rg, gz: t.z + Math.sin(ga) * rg, a: -a });
+      }
+      centrepiece(b, r, t.x, t.z, top + 0.008);
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * TAU + 0.3, rr = state.style.centrepiece === 'C' ? 0.33 : 0.36;
+        ph.add(t.x + Math.cos(a) * rr, top + 0.008, t.z + Math.sin(a) * rr);
+      }
+    } else {
+      // guests along both long sides, and one at each end
+      const per = (tt.seats - 2) / 2;
+      const place1 = (lx, lz, lry, px, pz, gx, gz) => {
+        const c = toWorld(t, lx, lz), p = toWorld(t, px, pz), gl = toWorld(t, gx, gz);
+        chairs.push(mat(c.x, 0, c.z, lry + rot));
+        seats.push({ x: p.x, z: p.z, gx: gl.x, gz: gl.z, a: lry + rot });
+      };
+      for (let i = 0; i < per; i++) {
+        const z = -tt.len / 2 + 0.4 + i * 0.65;
+        for (const s of [-1, 1]) place1(s * (tt.w / 2 + 0.33), z, -s * Math.PI / 2, s * (tt.w / 2 - 0.2), z, s * (tt.w / 2 - 0.4), z + 0.16);
+      }
+      for (const s of [-1, 1]) place1(0, s * (tt.len / 2 + 0.33), s > 0 ? Math.PI : 0, 0, s * (tt.len / 2 - 0.2), 0.16, s * (tt.len / 2 - 0.4));
+      // a run of arrangements down the middle, photophores between them
+      const k = Math.max(1, Math.round(tt.len / 1.2));
+      for (let i = 0; i < k; i++) {
+        const c = toWorld(t, 0, -tt.len / 2 + (i + 0.5) * (tt.len / k));
+        centrepiece(b, r, c.x, c.z, top + 0.008);
+      }
+      const m = Math.max(2, Math.round(n * tt.len / 2.2));
+      for (let i = 0; i < m; i++) {
+        const p = toWorld(t, (i % 2 ? 1 : -1) * 0.2, -tt.len / 2 + 0.3 + (i / Math.max(1, m - 1)) * (tt.len - 0.6));
+        ph.add(p.x, top + 0.008, p.z);
+      }
     }
   }
+  addChairs(chairs, parent);
+  addTo('tableware', placeSettings(seats, top + 0.008), parent);
   b.flush(parent);
   ph.flush(parent);
 }
@@ -2082,21 +2403,29 @@ function applyVisibility() {
     for (const o of objs) o.visible = on;
   }
   const cut = state.show.cutaway;
-  MAT.roof.side = cut ? THREE.BackSide : THREE.DoubleSide;
-  MAT.glass.side = cut ? THREE.BackSide : THREE.DoubleSide;
+  for (const m of [MAT.roof, MAT.glass, MAT.clearRoof]) { m.side = cut ? THREE.BackSide : THREE.DoubleSide; m.needsUpdate = true; }
   MAT.drape.side = cut ? THREE.FrontSide : THREE.DoubleSide;
-  MAT.roof.needsUpdate = MAT.glass.needsUpdate = MAT.drape.needsUpdate = true;
+  MAT.drape.needsUpdate = true;
   applyQuality();
+  invalidate();
 }
 function applyQuality() {
   const hq = state.quality !== 'fast';
   gtao.enabled = hq;
   bloom.enabled = hq;
-  // the uplights in the olive pots are the first thing to go on a slow device
-  for (const l of Object.values(layers)) for (const { light, kind } of l.lights) if (kind === 'tree') light.visible = hq;
+  // on a slow device the lanterns and olive trees glow without lighting their surroundings
+  for (const l of Object.values(layers)) for (const { light, kind } of l.lights) if (kind !== 'warm') light.visible = hq;
   const ratio = Math.min(window.devicePixelRatio, hq ? 2 : 1);
   if (renderer.getPixelRatio() !== ratio) { renderer.setPixelRatio(ratio); resize(); }
 }
+
+// ── Drawing only when something changes ────────────
+// The views stand still, so a new picture is drawn only after a change,
+// while the lighting eases between settings, or during the waltz and party.
+
+let redraw = 3;
+function invalidate(frames = 2) { redraw = Math.max(redraw, frames); }
+controls.addEventListener('change', () => invalidate());
 
 // ── Arranging by hand ──────────────────────────────
 
@@ -2136,6 +2465,8 @@ const findItem = id => currentItems().find(i => i.id === id);
 function updateSelection() {
   if (selMesh) { selMesh.removeFromParent(); selMesh.geometry.dispose(); selMesh = null; }
   const it = arrange.on && arrange.sel && findItem(arrange.sel);
+  $('#totype').classList.toggle('show', !!it && it.type === 'table');
+  invalidate();
   if (!it) return;
   const f = footprint(it);
   let geo;
@@ -2155,19 +2486,21 @@ function updateSelection() {
   scene.add(selMesh);
 }
 
-const ITEM_NAMES = { head: 'Head table', round: 'Round table', olive: 'Olive tree', urn: 'Flower urn', bar: 'Bar', dj: 'DJ booth', cake: 'Cake table', lounge: 'Lounge', screen: 'Screen', dance: 'Dance floor' };
+const ITEM_NAMES = { head: 'Head table', olive: 'Olive tree', urn: 'Flower urn', bar: 'Bar', dj: 'DJ booth', cake: 'Cake table', lounge: 'Lounge', screen: 'Screen', dance: 'Dance floor', lantern: 'Standing lantern' };
+const itemName = it => (it.type === 'table' ? `Table ${it.n} (${tableType(it).label})` : ITEM_NAMES[it.type]);
 const FIXED = new Set(['head', 'dance']);
 function select(id) {
   arrange.sel = id;
   const it = id && findItem(id);
   $('#selected').textContent = it
-    ? `${ITEM_NAMES[it.type]}${it.n ? ' ' + it.n : ''} selected${FIXED.has(it.type) ? ' (it can be moved but not removed)' : ''}.`
+    ? `${itemName(it)} selected${FIXED.has(it.type) ? ' (it can be moved but not removed)' : ''}.`
     : 'Click anything to select it, then drag it.';
+  for (const b of $$('#totype button')) b.classList.toggle('on', !!it && it.t === b.dataset.totype);
   updateSelection();
 }
 
 addEventListener('pointerdown', e => {
-  if (e.target !== canvas || !arrange.on || state.view === 'walk' || e.button !== 0) return;
+  if (e.target !== canvas || !arrange.on || e.button !== 0) return;
   const p = floorHit(e);
   const it = p && itemAt(p.x, p.z);
   if (!it) { select(null); return; }
@@ -2194,12 +2527,13 @@ addEventListener('pointermove', e => {
   d.z = Math.max(-lay.L / 2 - lim, Math.min(lay.L / 2 + lim, Math.round((p.z + d.oz) * 20) / 20));
   layers.drag.group.position.set(d.x - d.x0, 0, d.z - d.z0);
   if (selMesh) selMesh.position.set(d.x, 0.07, d.z);
+  invalidate();
 });
 addEventListener('pointerup', () => {
   const d = arrange.drag;
   if (!d) return;
   arrange.drag = null;
-  controls.enabled = state.view !== 'walk';
+  controls.enabled = true;
   if (!d.lifted) return;
   clearLayer('drag');
   if (d.x !== undefined) {
@@ -2225,6 +2559,13 @@ function deleteSel() {
   state.items = state.items.filter(i => i.id !== arrange.sel);
   saveState(); select(null); rebuildItems();
 }
+function retypeSel(t) {
+  const it = arrange.sel && findItem(arrange.sel);
+  if (!it || it.type !== 'table' || it.t === t) return;
+  takeOver(); remember();
+  findItem(arrange.sel).t = t;
+  saveState(); rebuildItems(); select(arrange.sel);
+}
 function undo() {
   const prev = arrange.history.pop();
   if (!prev) return;
@@ -2232,10 +2573,10 @@ function undo() {
   saveState(); rebuildItems();
 }
 // Add a new item at the nearest free spot to the middle of the view.
-function addItem(type) {
+function addItem(type, extra) {
   takeOver(); remember();
   const c = controls.target;
-  const need = (footprint({ type }).r ?? 1) + 0.1;
+  const need = (footprint({ type, ...extra }).r ?? 1) + 0.1;
   let best = null;
   for (let rad = 0; rad < 30 && !best; rad += 0.25) {
     for (let a = 0; a < TAU && !best; a += 0.2) {
@@ -2245,7 +2586,7 @@ function addItem(type) {
     }
   }
   const p = best || { x: c.x, z: c.z };
-  const it = mkItem(type, Math.round(p.x * 20) / 20, Math.round(p.z * 20) / 20);
+  const it = mkItem(type, Math.round(p.x * 20) / 20, Math.round(p.z * 20) / 20, 0, extra);
   state.items.push(it);
   saveState();
   rebuildItems();
@@ -2260,102 +2601,71 @@ addEventListener('keydown', e => {
   else if (e.key === 'Escape') select(null);
 });
 
-// ── Walking ────────────────────────────────────────
-
-const walk = { yaw: Math.PI / 2, pitch: 0, keys: new Set(), pad: new Set(), drag: null };
-const EYE = 1.65;
-
-function enterWalk(fromEntrance) {
-  controls.enabled = false;
-  if (fromEntrance || !walk.placed) {
-    camera.position.set(lay.W / 2 + 6, EYE, 0);
-    walk.yaw = Math.PI / 2;
-    walk.pitch = -0.02;
-    walk.placed = true;
-  }
-}
-function collide(p) {
-  const pr = 0.28;
-  const dancing = MOMENTS[state.moment].dancing;
-  const pushCircle = (cx, cz, r) => {
-    const dx = p.x - cx, dz = p.z - cz, d = Math.hypot(dx, dz), m = r + pr;
-    if (d < m && d > 1e-6) { p.x = cx + dx / d * m; p.z = cz + dz / d * m; }
-  };
-  const pushRect = (q, r) => {
-    const cx = Math.max(r.x0, Math.min(q.x, r.x1)), cz = Math.max(r.z0, Math.min(q.z, r.z1));
-    const dx = q.x - cx, dz = q.z - cz, d = Math.hypot(dx, dz);
-    if (d >= pr) return false;
-    if (d > 1e-6) { q.x = cx + dx / d * pr; q.z = cz + dz / d * pr; }
-    else {
-      const opts = [[r.x0 - pr - q.x, 0], [r.x1 + pr - q.x, 0], [0, r.z0 - pr - q.z], [0, r.z1 + pr - q.z]];
-      opts.sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1]));
-      q.x += opts[0][0]; q.z += opts[0][1];
-    }
-    return true;
-  };
-  for (const c of layers.static.obstacles.circles) pushCircle(c.x, c.z, c.r);
-  for (const r of layers.static.obstacles.rects) pushRect(p, r);
-  for (const it of currentItems()) {
-    if (it.type === 'dance') continue;
-    if (it.type === 'round' && it.cleared && dancing) continue;
-    const f = footprint(it);
-    if (f.r !== undefined) { pushCircle(it.x, it.z, it.type === 'round' ? lay.tableR + 0.42 : f.r); continue; }
-    const rect = it.type === 'head' ? { ...f, z0: f.z0 + 0.6, z1: f.z1 - 0.6 } : f;
-    const q = toLocal(it, p.x, p.z);
-    if (pushRect(q, rect)) { const w = toWorld(it, q.x, q.z); p.x = w.x; p.z = w.z; }
-  }
-  p.x = Math.max(-70, Math.min(70, p.x));
-  p.z = Math.max(-70, Math.min(70, p.z));
-}
-function stepWalk(dt) {
-  const k = walk.keys, pd = walk.pad;
-  const f = (k.has('KeyW') || k.has('ArrowUp') || pd.has('f') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') || pd.has('b') ? 1 : 0);
-  const s = (k.has('KeyD') || pd.has('r') ? 1 : 0) - (k.has('KeyA') || pd.has('l') ? 1 : 0);
-  const turn = (k.has('ArrowLeft') ? 1 : 0) - (k.has('ArrowRight') ? 1 : 0);
-  walk.yaw += turn * dt * 1.6;
-  const speed = (k.has('ShiftLeft') || k.has('ShiftRight') ? 4.2 : 1.9) * dt;
-  const fx = -Math.sin(walk.yaw), fz = -Math.cos(walk.yaw);
-  const p = camera.position;
-  for (let i = 0; i < 2; i++) {          // two half-steps keep collisions solid
-    p.x += (fx * f + Math.cos(walk.yaw) * s) * speed / 2;
-    p.z += (fz * f - Math.sin(walk.yaw) * s) * speed / 2;
-    collide(p);
-  }
-  p.y = EYE;
-  camera.rotation.set(walk.pitch, walk.yaw, 0);
-}
-
 // ── Views ──────────────────────────────────────────
 
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const typing = e => /INPUT|SELECT|TEXTAREA/.test(e.target.tagName);
 
-function setHelp() {
-  const v = state.view;
-  $('#help').textContent = v === 'walk'
-    ? 'Drag to look · W A S D / Z Q S D or arrows to move · Shift to hurry · click the map to jump'
-    : arrange.on ? 'Drag anything to move it · R rotates · Delete removes · drag empty space to turn the view'
-      : v === 'plan' ? 'Floor plan · drag to pan around, scroll to zoom' : 'Drag to turn · right-drag to pan · scroll to zoom';
-}
-function setView(v, fromEntrance) {
-  state.view = v;
-  const { W, L } = lay;
-  $('#pad').classList.toggle('show', v === 'walk');
-  if (v === 'walk') enterWalk(fromEntrance);
-  else {
-    controls.enabled = true;
-    if (v === 'plan') {
-      controls.target.set(0, 0, 0);
-      // head table at the top, like the mini-map; high enough to fit the whole tent
-      const fit = Math.max(W + 4, (L + 4) / camera.aspect) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
-      camera.position.set(0.01, fit, 0);
-    } else {
-      controls.target.set(0, 1.2, 0);
-      camera.position.set(W * 1.05, Math.max(W, L) * 0.55, L * 0.62);
-    }
-    controls.update();
+// Where the camera stands and what it looks at, for each view.
+function viewCamera(v) {
+  const { W, L, head, hi } = lay;
+  const hr = head.rot || 0, fx = Math.cos(hr), fz = -Math.sin(hr);   // the way the head table faces
+  const inTent = p => ({ x: Math.max(-W / 2 + 0.8, Math.min(W / 2 - 0.8, p.x)), z: Math.max(-L / 2 + 0.8, Math.min(L / 2 - 0.8, p.z)) });
+  if (v === 'plan') {
+    // head table at the top; high enough to fit the whole tent
+    const fit = Math.max(W + 4, (L + 4) / camera.aspect) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
+    return { pos: v3(0.01, fit, 0), look: v3(0, 0, 0) };
   }
+  if (v === 'head') {
+    // standing across the room, facing the head table, at the first spot
+    // with nothing tall in the way for the next few metres
+    const tall = currentItems().filter(it => ['olive', 'urn', 'lantern'].includes(it.type));
+    const clear = (x, z) => {
+      if (currentItems().some(it => it.type === 'table' && itemDist(it, x, z) < 0.2)) return false;
+      for (let k = 0; k <= 6; k += 0.5) {
+        const qx = x + (head.x - x) * k / Math.hypot(head.x - x, head.z - z), qz = z + (head.z - z) * k / Math.hypot(head.x - x, head.z - z);
+        if (tall.some(it => itemDist(it, qx, qz) < 0.5)) return false;
+      }
+      return true;
+    };
+    let p = null;
+    for (let d = W - 2.5; d > 4 && !p; d -= 0.5) for (const side of [0, 1, -1, 2, -2, 3, -3]) {
+      const q = inTent({ x: head.x + fx * d - fz * side, z: head.z + fz * d + fx * side });
+      if (clear(q.x, q.z)) { p = q; break; }
+    }
+    p ||= inTent({ x: head.x + fx * (W - 2.5), z: head.z + fz * (W - 2.5) });
+    return { pos: v3(p.x, 1.75, p.z), look: v3(head.x + fx * 0.5, 1.15, head.z + fz * 0.5) };
+  }
+  if (v === 'fromHead') {
+    // seated at the middle of the head table, looking out over the room
+    const p = toWorld(head, hi.depth / 2 + 0.1, 0.33);
+    return { pos: v3(p.x, 1.45, p.z), look: v3(head.x + fx * 12, 1.0, head.z + fz * 12) };
+  }
+  if (v === 'side') {
+    // a guest seated near one end, under a screen, looking down the tent
+    // in the chair of the nearest table that has its back to the screen
+    const scr = currentItems().filter(i => i.type === 'screen').sort((a, b) => a.z - b.z)[0] || { x: 0, z: -L / 2 + 0.5, rot: 0 };
+    const q = toWorld(scr, 0, 14);
+    const t = lay.tables.slice().sort((a, b) => Math.hypot(a.x - scr.x, a.z - scr.z) - Math.hypot(b.x - scr.x, b.z - scr.z))[0];
+    if (!t) return { pos: v3(scr.x, 1.2, scr.z + 2), look: v3(q.x, 1.4, q.z) };
+    const tt = tableType(t), dx = scr.x - t.x, dz = scr.z - t.z, d = Math.hypot(dx, dz) || 1;
+    const reach = (tt.shape === 'round' ? tt.r : tt.w / 2) + 0.4;
+    return { pos: v3(t.x + dx / d * reach, 1.2, t.z + dz / d * reach), look: v3(q.x, 1.3, q.z) };
+  }
+  return { pos: v3(W * 1.05, Math.max(W, L) * 0.55, L * 0.62), look: v3(0, 1.2, 0) };
+}
+function setHelp() {
+  $('#help').textContent = arrange.on ? 'Drag anything to move it · R rotates · Delete removes · drag empty space to turn the view'
+    : state.view === 'plan' ? 'Top view · drag to turn, right-drag to pan, scroll to zoom' : 'Drag to look around · scroll to zoom';
+}
+function setView(v) {
+  state.view = v;
+  const { pos, look } = viewCamera(v);
+  camera.position.copy(pos);
+  controls.target.copy(look);
+  controls.minDistance = v === 'plan' || v === 'overview' ? 2 : 0.5;
+  controls.update();
   setHelp();
   applyVisibility();
   syncPanel();
@@ -2371,6 +2681,11 @@ $('#styles').innerHTML = Object.entries(CATALOG).map(([k, c]) => `
     </div>
     <div class="style-name" data-style-name="${k}"></div>
   </div>`).join('');
+// table mix: how many of each kind, and what the remaining guests sit at
+$('#mix').innerHTML = Object.entries(TABLE_TYPES).map(([t, tt]) => `
+  <div class="row"><span>${tt.label} <small class="dim">${tt.size}</small></span><input type="number" min="0" max="120" step="1" data-mix="${t}"></div>`).join('');
+$('#fill').innerHTML = `<button data-val="none">Nobody</button>` + Object.entries(TABLE_TYPES).map(([t, tt]) => `<button data-val="${t}">${tt.label}</button>`).join('');
+$('#totype').innerHTML = '<span>Change to</span>' + Object.entries(TABLE_TYPES).map(([t, tt]) => `<button class="btn" data-totype="${t}">${tt.label}</button>`).join('');
 
 function syncPanel() {
   for (const seg of $$('.seg[data-key]')) {
@@ -2381,6 +2696,7 @@ function syncPanel() {
   }
   for (const n of $$('[data-style-name]')) n.textContent = CATALOG[n.dataset.styleName].opts[state.style[n.dataset.styleName]];
   for (const i of $$('input[data-key]')) i.value = state[i.dataset.key];
+  for (const i of $$('input[data-mix]')) i.value = state.mix[i.dataset.mix] || 0;
   for (const o of $$('output[data-for]')) o.textContent = state[o.dataset.for];
   for (const i of $$('input[data-show]')) i.checked = !!state.show[i.dataset.show];
   $('#arrange').checked = arrange.on;
@@ -2395,19 +2711,27 @@ function inventory() {
   const sh = state.show, sty = k => `${state.style[k]} · ${CATALOG[k].opts[state.style[k]]}`;
   const ph = tables.length * state.photophores + (lay.headPhotophores || 0);
   const rows = [
-    ['Tent', `${state.tentW} × ${state.tentL} m · ${state.tentW * state.tentL} m²`],
+    ['Tent', `${state.tentW} × ${state.tentL} m · ${state.tentW * state.tentL} m² · ${sty('roof')}`],
     ['Side walls', { open: 'rolled up', glass: 'glass', closed: 'white' }[state.walls]],
+    ['Floor', sty('floor')],
     ['Seated guests', `${seated} of ${state.guests}`],
-    [`Round tables Ø${(lay.tableR * 2).toFixed(1)} m`, `${tables.length} × ${state.perTable}`],
+  ];
+  for (const [t, tt] of Object.entries(TABLE_TYPES)) {
+    const n = tables.filter(x => x.t === t).length;
+    if (n) rows.push([`${tt.label} tables (${tt.size})`, `${n} · ${n * tt.seats} seats`]);
+  }
+  rows.push(
     ['Head table', `${hi.len.toFixed(1)} m · ${hi.seats} seats · ${hi.both ? 'both sides' : 'one side'}`],
-    ['Chairs', `${tables.length * state.perTable + hi.seats} · ${sty('chairs')}`],
+    ['Chairs', `${lay.tableSeats + hi.seats} · ${sty('chairs')}`],
     ['Table linen', sty('linen')],
-    ['Tableware', sty('tableware')],
-    ['Table flowers', `${tables.length} · ${sty('centrepiece')}`],
+    ['Table flowers', sty('centrepiece')],
     ['Head table flowers', sty('headFlowers')],
     ['Dance floor', `${dance.size} × ${dance.size} m · ${sty('danceFloor')}`],
     ['Tables cleared after dinner', tables.filter(t => t.cleared).length],
-  ];
+  );
+  if (sh.tableware) rows.push(['Tableware', sty('tableware')]);
+  if (sh.lanterns && count('lantern')) rows.push(['Standing lanterns', `${count('lantern')} · ${sty('lanterns')}`]);
+  if (sh.hanging) rows.push(['Hanging lights', `${lay.hangingCount} · ${sty('hanging')}`]);
   if (count('urn')) rows.push(['Flower urns', `${count('urn')} · ${sty('urns')}`]);
   if (count('bar')) rows.push(['Bars', `${count('bar')} · ${sty('bars')}`]);
   if (count('dj')) rows.push(['DJ booth', count('dj')]);
@@ -2417,7 +2741,6 @@ function inventory() {
   if (sh.ceilingDrapes) rows.push(['Ceiling drapes', `≈ ${Math.round(state.tentW * state.tentL * 1.25)} m² · ${sty('drapes')}`]);
   if (sh.wallDrapes) rows.push(['Wall drapes', `${lay.frames.length * 2 + Math.max(0, Math.ceil((state.tentW - 0.5) / 5) - 1) * 2} tied panels + swags`]);
   if (sh.garlands) rows.push(['Guirlandes', `≈ ${lay.garland.metres} m · ${lay.garland.bulbs} bulbs · ${sty('garlands')}`]);
-  if (sh.chandeliers) rows.push(['Chandeliers', `${lay.chandeliers} · ${sty('chandeliers')}`]);
   if (sh.photophores) rows.push(['Photophores', `${ph} · ${sty('photophores')}`]);
   if (sh.olives) rows.push(['Olive trees', `${count('olive')} · ${sty('pots')}`]);
   if (sh.curtain) rows.push(['Fairy-light curtain', `${(hi.len + 2.2).toFixed(1)} m wide`]);
@@ -2427,22 +2750,25 @@ function inventory() {
 }
 
 function updatePanelInfo() {
-  const { tables, needed, seated, hi } = lay;
+  const { tables, seated, hi } = lay;
   const W = state.tentW, L = state.tentL;
   const short = state.guests - seated;
   const area = W * L;
-  const cleared = tables.filter(t => t.cleared).length;
-  let html = `<b>${seated}</b> of ${state.guests} guests seated · ${tables.length} round tables + head table<br>`;
+  const cleared = tables.filter(t => t.cleared);
+  const asked = Object.values(state.mix).reduce((s, n) => s + (n || 0), 0);
+  let html = `<b>${seated}</b> of ${state.guests} guests seated · ${tables.length} tables + head table<br>`;
   html += `${area} m² · ${(area / state.guests).toFixed(2)} m² per guest (1.5 m² rule: ${Math.round(state.guests * 1.5)} m²)<br>`;
-  html += `After dinner ${cleared} table${cleared === 1 ? '' : 's'} (${cleared * state.perTable} seats) are carried out for the dance floor.`;
+  html += `After dinner ${cleared.length} table${cleared.length === 1 ? '' : 's'} (${cleared.reduce((s, t) => s + tableType(t).seats, 0)} seats) are carried out for the dance floor.`;
+  if (!state.items && auto.placed < auto.planned) html += `<br><span class="warn">${auto.planned - auto.placed} of the ${auto.planned} tables asked for do not fit.</span>`;
   if (short > 0) {
-    html += `<br><span class="warn">${short} guests have no seat (${needed - tables.length} more tables needed).</span>`;
+    html += `<br><span class="warn">${short} guests have no seat.</span>`;
     if (!state.items) {
       const fit = smallestFit(state);
       if (fit) html += `<br><span class="ok">Smallest standard size that fits everyone: <b>${fit[0]} × ${fit[1]} m</b></span> <button class="btn solid" id="btn-fit" style="margin-top:6px">Try ${fit[0]} × ${fit[1]}</button>`;
+      else if (state.fill === 'none' && asked) html += '<br><span class="ok">Ask for more tables, or seat everyone else at a table type below.</span>';
     } else html += '<br><span class="ok">Add tables by hand, or re-arrange automatically.</span>';
   } else {
-    const spare = hi.seats + tables.length * state.perTable - state.guests;
+    const spare = hi.seats + lay.tableSeats - state.guests;
     html += `<br><span class="ok">Everyone has a seat${spare > 0 ? `, with ${spare} spare` : ''}.</span>`;
   }
   $('#capacity').innerHTML = html;
@@ -2466,12 +2792,12 @@ function commit(key) {
   }
   saveState();
   if (STATIC_KEYS.has(key)) rebuildAll(relayout);
-  else if (relayout || ITEM_KEYS.has(key) || key === 'headSeats') rebuildItems(relayout);
+  else if (relayout || ITEM_KEYS.has(key)) rebuildItems(relayout);
   else applyVisibility();
-  if (key === 'view') setView(state.view);
-  if (STATIC_KEYS.has(key)) setView(state.view === 'walk' ? 'orbit' : state.view);
+  if (key === 'view' || STATIC_KEYS.has(key)) setView(state.view);
   if (key === 'moment' || key === 'screens') applyMoment();
   syncPanel();
+  invalidate();
 }
 
 for (const seg of $$('.seg[data-key]')) {
@@ -2493,8 +2819,8 @@ for (const seg of $$('.seg[data-style]')) {
     state.style[k] = b.dataset.val;
     saveState();
     if (STATIC_STYLES.has(k)) { buildStatic(); applyVisibility(); }
-    // the head table style changes its size, so an automatic layout is redone
-    else rebuildItems(k === 'headTable' && !state.items);
+    // the head table and lantern styles change their size, so an automatic layout is redone
+    else rebuildItems((k === 'headTable' || k === 'lanterns') && !state.items);
     syncPanel();
   });
 }
@@ -2510,6 +2836,13 @@ for (const i of $$('input[data-key]')) {
     v = Math.max(+i.min || -Infinity, Math.min(+i.max || Infinity, v));
     state[key] = v;
     commit(key);
+  });
+}
+for (const i of $$('input[data-mix]')) {
+  i.addEventListener('change', () => {
+    const v = Math.max(0, Math.min(120, Math.round(+i.value) || 0));
+    state.mix = { ...state.mix, [i.dataset.mix]: v };
+    commit('mix');
   });
 }
 for (const i of $$('input[data-show]')) {
@@ -2533,11 +2866,12 @@ $('#panel-toggle').addEventListener('click', () => {
 });
 $('#arrange').addEventListener('change', e => {
   arrange.on = e.target.checked;
-  if (arrange.on && state.view === 'walk') setView('orbit');
+  if (arrange.on && state.view !== 'plan' && state.view !== 'overview') setView('plan');
   select(null);
   setHelp(); syncPanel();
 });
-for (const b of $$('[data-add]')) b.addEventListener('click', () => addItem(b.dataset.add));
+for (const b of $$('[data-add]')) b.addEventListener('click', () => addItem(b.dataset.add, b.dataset.add === 'table' ? { t: TABLE_TYPES[state.fill] ? state.fill : 'r10' } : undefined));
+$('#totype').addEventListener('click', e => { const b = e.target.closest('[data-totype]'); if (b) retypeSel(b.dataset.totype); });
 $('#btn-rotate').addEventListener('click', () => rotateSel());
 $('#btn-delete').addEventListener('click', deleteSel);
 $('#btn-undo').addEventListener('click', undo);
@@ -2546,7 +2880,6 @@ $('#btn-auto').addEventListener('click', () => {
   state.items = null; arrange.history = [];
   saveState(); select(null); rebuildItems(true); syncPanel();
 });
-$('#btn-entrance').addEventListener('click', () => setView('walk', true));
 $('#btn-reset').addEventListener('click', () => {
   if (!confirm('Reset every choice and arrangement to the starting plan?')) return;
   state = structuredClone(DEFAULTS);
@@ -2554,7 +2887,7 @@ $('#btn-reset').addEventListener('click', () => {
   saveState();
   select(null);
   rebuildAll(true);
-  setView('orbit');
+  setView('overview');
   applyMoment();
 });
 $('#btn-list').addEventListener('click', () => {
@@ -2567,111 +2900,7 @@ $('#btn-list').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 let wantShot = false;
-$('#btn-shot').addEventListener('click', () => { wantShot = true; });
-
-// keyboard and pointer for walking
-addEventListener('keydown', e => {
-  if (typing(e) || state.view !== 'walk') return;
-  walk.keys.add(e.code);
-  if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
-});
-addEventListener('keyup', e => walk.keys.delete(e.code));
-addEventListener('blur', () => walk.keys.clear());
-canvas.addEventListener('pointerdown', e => {
-  if (state.view !== 'walk') return;
-  walk.drag = { x: e.clientX, y: e.clientY, id: e.pointerId };
-  canvas.setPointerCapture(e.pointerId);
-});
-canvas.addEventListener('pointermove', e => {
-  if (!walk.drag || walk.drag.id !== e.pointerId) return;
-  walk.yaw += (e.clientX - walk.drag.x) * 0.0042;
-  walk.pitch = Math.max(-1.2, Math.min(1.2, walk.pitch + (e.clientY - walk.drag.y) * 0.0035));
-  walk.drag.x = e.clientX; walk.drag.y = e.clientY;
-});
-canvas.addEventListener('pointerup', () => { walk.drag = null; });
-canvas.addEventListener('pointercancel', () => { walk.drag = null; });
-for (const b of $$('#pad button[data-move]')) {
-  const m = b.dataset.move;
-  b.addEventListener('pointerdown', e => { e.preventDefault(); walk.pad.add(m); });
-  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, () => walk.pad.delete(m));
-}
-
-// ── Mini-map ───────────────────────────────────────
-
-const mini = $('#minimap');
-const mg = mini.getContext('2d');
-function miniScale() {
-  const s = 190 / Math.max(state.tentW, state.tentL);
-  return { s, w: state.tentW * s, h: state.tentL * s };
-}
-function drawMini() {
-  const W = state.tentW, L = state.tentL;
-  const { tables, tableR } = lay;
-  const { s, w, h } = miniScale();
-  const pw = Math.round(h + 10), ph = Math.round(w + 10); // drawn landscape: length runs left→right
-  if (mini.width !== pw * 2 || mini.height !== ph * 2) {
-    mini.width = pw * 2; mini.height = ph * 2;
-    mini.style.width = pw + 'px'; mini.style.height = ph + 'px';
-  }
-  mg.setTransform(2, 0, 0, 2, 0, 0);
-  mg.clearRect(0, 0, pw, ph);
-  // world (x, z) → map: z to the right, x down (head table along the top edge)
-  const P = (x, z) => [5 + (z + L / 2) * s, 5 + (x + W / 2) * s];
-  mg.fillStyle = '#EFE6D6'; mg.strokeStyle = '#8B8494'; mg.lineWidth = 1;
-  mg.fillRect(5, 5, h, w); mg.strokeRect(5, 5, h, w);
-  const dancing = MOMENTS[state.moment].dancing;
-  const COLORS = { head: '#7A6A55', dance: dancing ? '#C9A27A' : '#E3D2BA', bar: '#4F6480', dj: '#363B26', lounge: '#B86E4B', screen: '#23260F' };
-  const items = currentItems();
-  for (const t of ['dance', 'head', 'bar', 'dj', 'lounge', 'screen']) for (const it of items) {
-    if (it.type !== t) continue;
-    const f = footprint(it);
-    const corners = [[f.x0, f.z0], [f.x1, f.z0], [f.x1, f.z1], [f.x0, f.z1]].map(([lx, lz]) => { const p = toWorld(it, lx, lz); return P(p.x, p.z); });
-    mg.fillStyle = COLORS[t];
-    mg.beginPath(); corners.forEach(([a, b], i) => (i ? mg.lineTo(a, b) : mg.moveTo(a, b))); mg.closePath(); mg.fill();
-  }
-  mg.strokeStyle = '#657252';
-  for (const t of tables) {
-    if (t.cleared && dancing) continue;
-    const [a, b] = P(t.x, t.z);
-    mg.fillStyle = '#FAF6EE';
-    mg.setLineDash(t.cleared ? [2, 2] : []);
-    mg.beginPath(); mg.arc(a, b, Math.max(2, tableR * s), 0, TAU); mg.fill(); mg.stroke();
-    mg.setLineDash([]);
-    if (s > 4) { mg.fillStyle = '#4B5136'; mg.font = '7px Montserrat'; mg.textAlign = 'center'; mg.textBaseline = 'middle'; mg.fillText(t.n, a, b + 0.5); }
-  }
-  for (const it of items) {
-    if (it.type !== 'olive' && it.type !== 'urn' && it.type !== 'cake') continue;
-    const [a, b] = P(it.x, it.z);
-    mg.fillStyle = it.type === 'olive' ? '#657252' : it.type === 'urn' ? '#C48E9A' : '#B9A27E';
-    mg.beginPath(); mg.arc(a, b, 2.4, 0, TAU); mg.fill();
-  }
-  const sel = arrange.on && arrange.sel && findItem(arrange.sel);
-  if (sel) {
-    const [a, b] = P(arrange.drag?.x ?? sel.x, arrange.drag?.z ?? sel.z);
-    mg.strokeStyle = '#4F6480'; mg.lineWidth = 1.5;
-    mg.beginPath(); mg.arc(a, b, 6, 0, TAU); mg.stroke(); mg.lineWidth = 1;
-  }
-  // entrance marker and the viewer
-  const [ea, eb] = P(W / 2, 0);
-  mg.fillStyle = '#92AAC4'; mg.fillRect(ea - 6, eb - 1, 12, 3);
-  const cp = camera.position;
-  const [ca, cb] = P(Math.max(-W / 2 - 2, Math.min(W / 2 + 2, cp.x)), Math.max(-L / 2 - 2, Math.min(L / 2 + 2, cp.z)));
-  const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
-  mg.save(); mg.translate(ca, cb); mg.rotate(Math.atan2(dir.z, -dir.x));
-  mg.fillStyle = '#9A4A2E';
-  mg.beginPath(); mg.moveTo(0, -7); mg.lineTo(4.5, 4); mg.lineTo(-4.5, 4); mg.closePath(); mg.fill();
-  mg.restore();
-}
-mini.addEventListener('click', e => {
-  if (state.view !== 'walk') setView('walk');
-  const r = mini.getBoundingClientRect();
-  const { s } = miniScale();
-  const z = (e.clientX - r.left - 5) / s - state.tentL / 2;
-  const x = (e.clientY - r.top - 5) / s - state.tentW / 2;
-  camera.position.set(x, EYE, z);
-  collide(camera.position);
-  walk.placed = true;
-});
+$('#btn-shot').addEventListener('click', () => { wantShot = true; invalidate(); });
 
 // ── Moments ────────────────────────────────────────
 
@@ -2682,6 +2911,7 @@ function applyMoment() {
   anim.lowerThird.needsUpdate = true;
   SCREEN.map = m.live && state.show.screens ? rtTarget.texture : TEX.idle;
   SCREEN.needsUpdate = true;
+  invalidate();
 }
 
 // ── Resize and frame loop ──────────────────────────
@@ -2694,6 +2924,7 @@ function resize() {
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   GLOW_SHARED.uScale.value = (h * renderer.getPixelRatio()) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2));
+  invalidate();
 }
 addEventListener('resize', resize);
 
@@ -2704,15 +2935,21 @@ const clock = new THREE.Clock();
 let frameN = 0;
 
 function tick() {
+  requestAnimationFrame(tick);
   const dt = Math.min(clock.getDelta(), 0.1);
   const t = clock.elapsedTime;
-  frameN++;
-  GLOW_SHARED.uTime.value = t;
+  controls.update();
 
   // ease towards the chosen time of day and moment
   const k = 1 - Math.exp(-dt * 2.2);
-  stepEnv(k);
   const m = MOMENTS[state.moment];
+  const easing = stepEnv(k)
+    + Math.abs(m.dim - mo.dim) + Math.abs((state.show.spotlight ? m.spot : 0) - mo.spot) + Math.abs(m.party - mo.party);
+  const moving = easing > 0.002 || m.dancing || (mo.spot > 0.01 && spotAim.distanceTo(spotTarget(m)) > 0.01);
+  if (!moving && redraw <= 0 && !wantShot) return;
+  redraw--;
+  frameN++;
+  GLOW_SHARED.uTime.value = t;
   mo.dim += (m.dim - mo.dim) * k;
   mo.spot += ((state.show.spotlight ? m.spot : 0) - mo.spot) * k;
   mo.party += (m.party - mo.party) * k;
@@ -2744,11 +2981,14 @@ function tick() {
   // warm lights come up as the evening goes on, and dip for the spotlight moments
   const warm = 0.12 + 0.88 * nf;
   for (const l of Object.values(layers)) {
-    for (const { light, base, kind } of l.lights) light.intensity = base * (kind === 'tree' ? nf * (0.5 + 0.5 * mo.dim) : warm * mo.dim) * 2.2;
+    for (const { light, base, kind } of l.lights) {
+      light.intensity = base * (kind === 'tree' ? nf * (0.5 + 0.5 * mo.dim) : kind === 'lantern' ? warm * (0.6 + 0.4 * mo.dim) : warm * mo.dim) * 2.2;
+    }
     for (const gs of l.glows) gs.points.material.uniforms.uIntensity.value = gs.day + (gs.night - gs.day) * nf;
   }
   BULB.color.copy(BULB_BASE).multiplyScalar(0.7 + 0.6 * nf);
   FLAME.color.copy(FLAME_BASE).multiplyScalar(0.6 + 0.9 * nf);
+  for (const g of GLOW_MATS) g.emissiveIntensity = 0.08 + 1.5 * nf;
 
   // figures for each moment
   const { dance, cake, speech } = lay;
@@ -2767,12 +3007,7 @@ function tick() {
   }
 
   // follow spot
-  let target;
-  if (state.moment === 'speech') target = v3(speech.x, 1.0, speech.z);
-  else if (state.moment === 'waltz') target = v3(couple.position.x, 0.5, couple.position.z);
-  else if (state.moment === 'cake') target = v3(cake.x + 0.35, 0.8, cake.z - 0.1);
-  else target = v3(dance.x, 0, dance.z);
-  spotAim.lerp(target, 1 - Math.exp(-dt * 6));
+  spotAim.lerp(spotTarget(m), 1 - Math.exp(-dt * 6));
   spot.target.position.copy(spotAim);
   spot.angle = mo.angle;
   spot.intensity = 160 * mo.spot;
@@ -2794,19 +3029,16 @@ function tick() {
     anim.sparkles.visible = mo.party > 0.02;
   }
 
-  if (state.view === 'walk') stepWalk(dt);
-  else controls.update();
-
   // live feed on the screens for speeches, waltz and cake
   const screens = layers.items.reg.screens || [];
-  if (m.live && state.show.screens && screens.length && frameN % 2 === 0) {
+  if (m.live && state.show.screens && screens.length) {
     let pos, look;
     const hr = lay.head.rot || 0, fx = Math.cos(hr), fz = -Math.sin(hr);
     if (m.live === 'speech') { pos = v3(speech.x + fx * 4.5 - fz * 1.4, 1.8, speech.z + fz * 4.5 + fx * 1.4); look = v3(speech.x, 1.45, speech.z); }
     else if (m.live === 'waltz') { pos = v3(dance.x + 5.2, 2.6, dance.z + 3.6); look = v3(couple.position.x, 1.0, couple.position.z); }
     else { pos = v3(cake.x + 3.4, 1.7, cake.z - 1.4); look = v3(cake.x + 0.4, 1.05, cake.z - 0.1); }
-    screenCam.position.lerp(pos, 0.2);
-    screenLook.lerp(look, 0.2);
+    screenCam.position.lerp(pos, 0.3);
+    screenLook.lerp(look, 0.3);
     screenCam.lookAt(screenLook);
     for (const o of screens) o.visible = false;
     renderer.setRenderTarget(rtTarget);
@@ -2820,11 +3052,16 @@ function tick() {
     wantShot = false;
     const a = document.createElement('a');
     a.href = renderer.domElement.toDataURL('image/png');
-    a.download = `tent-plan-${state.time}-${state.moment}.png`;
+    a.download = `tent-plan-${state.view}-${state.time}-${state.moment}.png`;
     a.click();
   }
-  if (frameN % 3 === 0) drawMini();
-  requestAnimationFrame(tick);
+}
+function spotTarget(m) {
+  const { dance, cake, speech } = lay;
+  if (state.moment === 'speech') return v3(speech.x, 1.0, speech.z);
+  if (state.moment === 'waltz') return v3(anim.couple.position.x, 0.5, anim.couple.position.z);
+  if (state.moment === 'cake') return v3(cake.x + 0.35, 0.8, cake.z - 0.1);
+  return v3(dance.x, 0, dance.z);
 }
 
 // ── Start ──────────────────────────────────────────
@@ -2836,7 +3073,7 @@ if (state.items) nextId = state.items.reduce((n, i) => Math.max(n, +i.id.split('
 rebuildAll(true);
 applyMoment();
 syncPanel();
-setView('orbit');
+setView(state.view);
 spotAim.set(lay.dance.x, 0, lay.dance.z);
 screenCam.position.set(lay.dance.x + 5, 2.5, 3);
 requestAnimationFrame(() => {
@@ -2852,16 +3089,18 @@ document.fonts.load('80px "Parfumerie Script"').then(() => {
     tex.image = neonTex(NEON_TEXT[label]).image;
     tex.needsUpdate = true;
   }
+  invalidate();
 }).catch(() => {});
 
 // handy when debugging from the console
 window.tentPlan = {
-  get state() { return state; }, get layout() { return lay; }, autoLayout, smallestFit, camera, walk, controls, arrange,
-  select, addItem, rotateSel, rebuildItems,
+  get state() { return state; }, get layout() { return lay; }, autoLayout, smallestFit, camera, controls, arrange,
+  select, addItem, rotateSel, retypeSel, rebuildItems, setView, invalidate,
   snap() {  // jump straight to the target lighting instead of easing
     const t = TIMES[state.time];
     for (const k in t) env[k] = t[k] instanceof THREE.Color ? t[k].clone() : t[k];
     const m = MOMENTS[state.moment];
     Object.assign(mo, { dim: m.dim, spot: state.show.spotlight ? m.spot : 0, party: m.party, angle: m.angle || mo.angle });
+    invalidate();
   },
 };
