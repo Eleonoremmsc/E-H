@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Tent Plan — Éléonore &amp; Hubert</title>
+  <link rel="preload" href="fonts/ParfumerieScriptOldStyle_new.41455b9c652.878ed817-62ff-40fe-8103-2536046.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Parfumerie Script';
+      src: url('fonts/ParfumerieScriptOldStyle_new.41455b9c652.878ed817-62ff-40fe-8103-2536046.woff2') format('woff2');
+      font-display: block;
+    }
+
+    /* Same palette as the wedding site (style.css) */
+    :root {
+      --cream: #F7F1E6;
+      --cream-lift: #FAF6EE;
+      --ink: #363B26;
+      --ink-mid: #4B5136;
+      --olive: #657252;
+      --olive-deep: #525C42;
+      --blue: #92AAC4;
+      --blue-deep: #4F6480;
+      --lavender-text: #726C7A;
+      --line: rgba(139, 132, 148, 0.28);
+      --warn: #9A4A2E;
+      --script: 'Parfumerie Script', cursive;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans: 'Montserrat', sans-serif;
+      --panel-w: 348px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { background: #0b0f1c; color: var(--ink); font-family: var(--sans); font-size: 13px; }
+
+    #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+
+    /* ── Side panel ───────────────────────────── */
+    #panel {
+      position: fixed; top: 0; right: 0; bottom: 0; width: var(--panel-w);
+      background: rgba(247, 241, 230, 0.95);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-left: 1px solid var(--line);
+      overflow-y: auto; overscroll-behavior: contain;
+      padding: 22px 20px 40px;
+      transition: transform 0.3s ease;
+      z-index: 10;
+    }
+    #panel.closed { transform: translateX(100%); }
+    .brand { text-align: center; padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+    .brand h1 { font-family: var(--script); font-weight: 400; color: var(--olive); font-size: 34px; line-height: 1.15; }
+    .brand p { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--ink-mid); }
+
+    section { padding: 14px 0 12px; border-bottom: 1px solid var(--line); }
+    section h2 {
+      font-family: var(--sans); font-weight: 500; font-size: 10.5px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--blue-deep); margin-bottom: 10px;
+    }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 7px 0; }
+    .row > span { color: var(--ink); }
+    .sub { margin-left: 22px; }
+
+    .seg { display: flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--cream-lift); }
+    .seg button {
+      flex: 1 1 auto; border: 0; background: none; padding: 7px 8px; font: inherit; font-size: 11.5px;
+      color: var(--ink-mid); cursor: pointer; white-space: nowrap;
+    }
+    .seg button + button { border-left: 1px solid var(--line); }
+    .seg button.on { background: var(--olive); color: var(--cream); }
+    .seg.small button { padding: 5px 6px; font-size: 11px; }
+    .seg-label { font-size: 11px; color: var(--lavender-text); margin: 10px 0 5px; }
+
+    .tog { display: flex; align-items: center; gap: 9px; margin: 6px 0; cursor: pointer; user-select: none; }
+    .tog input { appearance: none; width: 30px; height: 17px; border-radius: 999px; background: #d9d1c1; position: relative; flex: none; cursor: pointer; transition: background 0.2s; }
+    .tog input::after { content: ''; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; transition: left 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+    .tog input:checked { background: var(--olive); }
+    .tog input:checked::after { left: 15px; }
+    .tog small { color: var(--lavender-text); margin-left: auto; font-size: 11px; }
+
+    input[type=range] { width: 140px; accent-color: var(--olive); }
+    input[type=number], select {
+      font: inherit; width: 70px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px;
+      background: var(--cream-lift); color: var(--ink);
+    }
+    select { width: auto; }
+    output { min-width: 26px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-mid); }
+
+    .btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .btn {
+      font: inherit; font-size: 11.5px; padding: 7px 12px; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--olive); background: none; color: var(--olive-deep);
+    }
+    .btn.solid { background: var(--olive); color: var(--cream); }
+    .btn:hover { background: var(--olive-deep); color: var(--cream); }
+
+    #capacity { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--cream-lift); border: 1px solid var(--line); line-height: 1.55; }
+    #capacity b { font-weight: 500; }
+    #capacity .warn { color: var(--warn); }
+    #capacity .ok { color: var(--olive-deep); }
+    #inventory { list-style: none; line-height: 1.6; }
+    #inventory li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dotted var(--line); }
+    #inventory li span:last-child { text-align: right; color: var(--ink-mid); font-variant-numeric: tabular-nums; }
+    .note { font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--ink-mid); margin-top: 8px; line-height: 1.4; }
+
+    /* ── Overlays on the 3D view ──────────────── */
+    #panel-toggle {
+      position: fixed; top: 14px; right: calc(var(--panel-w) + 14px); z-index: 11;
+      font: inherit; font-size: 12px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
+      background: rgba(247, 241, 230, 0.92); color: var(--ink); cursor: pointer; transition: right 0.3s ease;
+    }
+    #panel.closed ~ #panel-toggle { right: 14px; }
+    #chip {
+      position: fixed; top: 14px; left: 14px; z-index: 5; padding: 8px 14px; border-radius: 999px;
+      background: rgba(247, 241, 230, 0.92); color: var(--ink); font-size: 12px; border: 1px solid var(--line);
+      max-width: calc(100vw - 150px);
+    }
+    #chip.warn { color: var(--warn); }
+    #minimap {
+      position: fixed; left: 14px; bottom: 14px; z-index: 5; border-radius: 10px;
+      background: rgba(247, 241, 230, 0.9); border: 1px solid var(--line); cursor: crosshair;
+    }
+    #help {
+      position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 5;
+      padding: 7px 14px; border-radius: 999px; background: rgba(20, 22, 14, 0.62); color: #f3ecdf;
+      font-size: 11.5px; pointer-events: none; white-space: nowrap;
+    }
+    #pad { position: fixed; right: calc(var(--panel-w) + 18px); bottom: 18px; z-index: 6; display: none; grid-template-columns: repeat(3, 46px); gap: 6px; }
+    #panel.closed ~ #pad { right: 18px; }
+    #pad.show { display: grid; }
+    #pad button {
+      width: 46px; height: 46px; border-radius: 12px; border: 1px solid var(--line);
+      background: rgba(247, 241, 230, 0.85); font-size: 18px; color: var(--ink); touch-action: none;
+    }
+    #pad .gap { visibility: hidden; }
+    #loading {
+      position: fixed; inset: 0; display: grid; place-items: center; z-index: 20;
+      background: var(--cream); color: var(--olive); font-family: var(--script); font-size: 40px; transition: opacity 0.6s;
+    }
+    #loading small { display: block; font-family: var(--serif); font-style: italic; font-size: 16px; color: var(--ink-mid); text-align: center; }
+    #loading.gone { opacity: 0; pointer-events: none; }
+
+    @media (max-width: 760px) {
+      :root { --panel-w: 0px; }
+      #panel { top: auto; left: 0; width: auto; height: 58vh; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; padding: 18px 16px 40px; }
+      #panel.closed { transform: translateY(100%); }
+      #panel-toggle { top: auto; bottom: calc(58vh + 10px); right: 14px; }
+      #panel.closed ~ #panel-toggle { bottom: 14px; }
+      #minimap { top: 58px; bottom: auto; }
+      #help { display: none; }
+      #pad { right: 14px; bottom: calc(58vh + 60px); }
+      #panel.closed ~ #pad { bottom: 64px; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene" tabindex="0"></canvas>
+  <div id="chip">Loading plan…</div>
+  <canvas id="minimap" width="200" height="200"></canvas>
+  <div id="help"></div>
+
+  <aside id="panel">
+    <div class="brand">
+      <h1>Éléonore &amp; Hubert</h1>
+      <p>Reception tent · Domaine des Pins · 26 June 2027</p>
+    </div>
+
+    <section>
+      <h2>Atmosphere</h2>
+      <div class="seg" data-key="time">
+        <button data-val="day">Day</button><button data-val="golden">Golden hour</button><button data-val="night">Night</button>
+      </div>
+      <div class="seg-label">Moment of the evening</div>
+      <div class="seg small" data-key="moment">
+        <button data-val="dinner">Dinner</button><button data-val="speech">Speeches</button><button data-val="waltz">Waltz</button><button data-val="cake">Cake</button><button data-val="party">Party</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>View</h2>
+      <div class="seg" data-key="view">
+        <button data-val="orbit">Overview</button><button data-val="walk">Walk through</button><button data-val="plan">Floor plan</button>
+      </div>
+      <div class="btns">
+        <button class="btn" id="btn-shot">Save image</button>
+        <button class="btn" id="btn-entrance">Walk in from the entrance</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Tent</h2>
+      <div class="row"><span>Size (width × length, m)</span>
+        <span><input type="number" data-key="tentW" min="12" max="40" step="1"> × <input type="number" data-key="tentL" min="15" max="70" step="1"></span>
+      </div>
+      <div class="row"><span>Standard sizes</span>
+        <select id="preset">
+          <option value="">Choose…</option>
+          <option>20×30</option><option>20×35</option><option>25×30</option><option>20×40</option><option>25×35</option><option>25×40</option>
+          <option>25×45</option><option>30×40</option><option>30×45</option><option>30×50</option>
+        </select>
+      </div>
+      <div class="seg-label">Side walls</div>
+      <div class="seg small" data-key="walls">
+        <button data-val="open">Rolled up</button><button data-val="glass">Glass</button><button data-val="closed">White</button>
+      </div>
+      <label class="tog"><input type="checkbox" data-show="roof"> Roof</label>
+      <label class="tog"><input type="checkbox" data-show="cutaway"> See inside from outside <small>cutaway</small></label>
+    </section>
+
+    <section>
+      <h2>Guests &amp; tables</h2>
+      <div class="row"><span>Guests</span><input type="number" data-key="guests" min="20" max="800" step="10"></div>
+      <div class="seg-label">Guests per round table</div>
+      <div class="seg small" data-key="perTable">
+        <button data-val="8">8 · Ø1.5 m</button><button data-val="10">10 · Ø1.8 m</button><button data-val="12">12 · Ø2.1 m</button>
+      </div>
+      <div class="row"><span>Head table seats</span><span><input type="range" data-key="headSeats" min="8" max="34" step="2"> <output data-for="headSeats"></output></span></div>
+      <div class="seg-label">Space between tables</div>
+      <div class="seg small" data-key="aisle">
+        <button data-val="0.7">Comfortable · 70 cm</button><button data-val="0.5">Snug · 50 cm</button>
+      </div>
+      <div class="row"><span>Speech spot</span><span style="color:var(--lavender-text)">in front of the head table</span></div>
+      <div class="row"><span>Dance floor after dinner (m)</span><span><input type="range" data-key="danceSize" min="5" max="14" step="1"> <output data-for="danceSize"></output></span></div>
+      <div id="capacity"></div>
+    </section>
+
+    <section>
+      <h2>Furniture</h2>
+      <label class="tog"><input type="checkbox" data-show="headTable"> Head table on a low stage</label>
+      <label class="tog"><input type="checkbox" data-show="rounds"> Round tables</label>
+      <label class="tog"><input type="checkbox" data-show="chairs"> Cane chairs</label>
+      <label class="tog"><input type="checkbox" data-show="tableware"> Tableware &amp; centrepieces</label>
+      <label class="tog"><input type="checkbox" data-show="dance"> Chevron oak dance floor <small>under the centre tables</small></label>
+      <label class="tog"><input type="checkbox" data-show="bars"> Two bars <small>champagne · cocktails</small></label>
+      <label class="tog"><input type="checkbox" data-show="dj"> DJ booth</label>
+      <label class="tog"><input type="checkbox" data-show="cake"> Cake table</label>
+      <label class="tog"><input type="checkbox" data-show="lounge"> Lounge corner</label>
+      <label class="tog"><input type="checkbox" data-show="screens"> Screens at both ends</label>
+    </section>
+
+    <section>
+      <h2>Decoration</h2>
+      <label class="tog"><input type="checkbox" data-show="ceilingDrapes"> Ivory ceiling drapes</label>
+      <label class="tog"><input type="checkbox" data-show="wallDrapes"> Wall drapes &amp; swags</label>
+      <label class="tog"><input type="checkbox" data-show="garlands"> Warm guirlandes</label>
+      <div class="sub seg small" data-key="garlandStyle">
+        <button data-val="canopy">Starburst canopy</button><button data-val="across">Festoons across</button>
+      </div>
+      <label class="tog"><input type="checkbox" data-show="chandeliers"> Olive-wreath chandeliers</label>
+      <label class="tog"><input type="checkbox" data-show="photophores"> Photophores</label>
+      <div class="sub row"><span>Per table</span>
+        <div class="seg small" data-key="photophores"><button data-val="3">3</button><button data-val="5">5</button><button data-val="7">7</button></div>
+      </div>
+      <label class="tog"><input type="checkbox" data-show="olives"> Lit olive trees in Anduze pots</label>
+      <div class="sub row"><span>How many</span><span><input type="range" data-key="oliveCount" min="0" max="16" step="1"> <output data-for="oliveCount"></output></span></div>
+      <label class="tog"><input type="checkbox" data-show="curtain"> Fairy-light curtain behind head table</label>
+      <label class="tog"><input type="checkbox" data-show="neon"> Neon signs over the bars</label>
+      <label class="tog"><input type="checkbox" data-show="disco"> Mirror ball</label>
+    </section>
+
+    <section>
+      <h2>Lighting</h2>
+      <label class="tog"><input type="checkbox" data-show="spotlight"> Follow spot <small>speeches · waltz · cake</small></label>
+      <label class="tog"><input type="checkbox" data-show="bloom"> Soft glow <small>turn off if slow</small></label>
+    </section>
+
+    <section>
+      <h2>Inventory</h2>
+      <ul id="inventory"></ul>
+      <div class="btns">
+        <button class="btn" id="btn-list">Download list</button>
+        <button class="btn" id="btn-reset">Reset plan</button>
+      </div>
+      <p class="note">Your choices are saved in this browser only.</p>
+    </section>
+  </aside>
+  <button id="panel-toggle">Hide panel</button>
+  <div id="pad">
+    <button class="gap"></button><button data-move="f">▲</button><button class="gap"></button>
+    <button data-move="l">◀</button><button data-move="b">▼</button><button data-move="r">▶</button>
+  </div>
+
+  <div id="loading"><div>Éléonore &amp; Hubert<small>Setting the tables…</small></div></div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="tent-planner.js"></script>
+</body>
+</html>
