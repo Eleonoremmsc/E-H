@@ -50,6 +50,12 @@ const EVENT_FRIDAY = {
 // ── Translations ────────────────────────────────
 const T = {
   en: {
+    nav_before:          'Before the day',
+    before_title:        'Before the day',
+    cal_lead:            'The date is a long way off, and diaries have a way of filling up. Add it to yours now — we will do the remembering.',
+    cal_title:           'Save the date',
+    btn_calendar:        'Add to my calendar',
+    songs_lead:          'The dance floor is the part we most want to get right. Tell us the song that will get you onto it.',
     gate_date:           '26 June 2027 · Crillon-le-Brave',
     gate_label:          'Enter your invitation code',
     gate_submit:         'Enter',
@@ -286,8 +292,7 @@ const T = {
     rsvp_country_other:          'Please tell us which country',
     rsvp_allergies:              'Allergies or intolerances (optional)',
     rsvp_allergies_placeholder:  'e.g. nuts, gluten, vegetarian',
-    songs_title:         "Songs to which you'll be dancing all night long!",
-    songs_note:          'One track at a time — we are building the playlist as they come in.',
+    songs_title:         'Build the playlist',
     songs_placeholder:   'Artist — Song title',
     songs_add:           'Add',
     songs_view:          'See the playlist so far',
@@ -302,6 +307,12 @@ const T = {
   },
 
   fr: {
+    nav_before:          'Avant le jour J',
+    before_title:        'Avant le jour J',
+    cal_lead:            "La date est encore loin, et les agendas se remplissent vite. Notez-la dès maintenant — nous nous chargeons du reste.",
+    cal_title:           'Gardez la date',
+    btn_calendar:        'Ajouter à mon agenda',
+    songs_lead:          "La piste de danse est ce que nous tenons le plus à réussir. Dites-nous la chanson qui vous y entraînera.",
     gate_date:           '26 juin 2027 · Crillon-le-Brave',
     gate_label:          "Entrez votre code d'invitation",
     gate_submit:         'Entrer',
@@ -538,8 +549,7 @@ const T = {
     rsvp_country_other:          'Indiquez votre pays',
     rsvp_allergies:              'Allergies ou intolérances (facultatif)',
     rsvp_allergies_placeholder:  'ex. fruits à coque, gluten, végétarien',
-    songs_title:         'Les chansons pour danser toute la nuit !',
-    songs_note:          'Un titre à la fois — la playlist se construit au fur et à mesure.',
+    songs_title:         'Composez la playlist',
     songs_placeholder:   'Artiste — Titre',
     songs_add:           'Ajouter',
     songs_view:          'Voir la playlist',
@@ -554,6 +564,12 @@ const T = {
   },
 
   de: {
+    nav_before:          'Vor dem Tag',
+    before_title:        'Vor dem großen Tag',
+    cal_lead:            'Der Tag ist noch weit weg, und Kalender füllen sich schnell. Gleich eintragen — ans Erinnern denken wir.',
+    cal_title:           'Den Tag merken',
+    btn_calendar:        'Zum Kalender hinzufügen',
+    songs_lead:          'Die Tanzfläche ist uns das Wichtigste. Welches Lied darf dafür nicht fehlen?',
     gate_date:           '26. Juni 2027 · Crillon-le-Brave',
     gate_label:          'Geben Sie Ihren Einladungscode ein',
     gate_submit:         'Weiter',
@@ -790,8 +806,7 @@ const T = {
     rsvp_country_other:          'Bitte nennen Sie Ihr Land',
     rsvp_allergies:              'Allergien oder Unverträglichkeiten (optional)',
     rsvp_allergies_placeholder:  'z. B. Nüsse, Gluten, vegetarisch',
-    songs_title:         'Lieder, zu denen wir tanzen werden!',
-    songs_note:          'Ein Lied nach dem anderen — die Playlist wächst mit jedem Vorschlag.',
+    songs_title:         'Die Playlist füllen',
     songs_placeholder:   'Interpret — Titel',
     songs_add:           'Hinzufügen',
     songs_view:          'Playlist ansehen',
@@ -1059,7 +1074,7 @@ function initModal() {
   });
 }
 
-// ── Language Modal (mobile) ───────────────────────
+// ── Language Modal (compact nav) ──────────────────
 function initLangModal() {
   const trigger  = document.getElementById('lang-icon-btn');
   const overlay  = document.getElementById('lang-overlay');

@@ -11,29 +11,29 @@
 }
 
 :root {
-  --cream:      #F7F1E6;
-  --cream-alt:  #F0E8D9;
+  --cream:      #FBF7EF;
+  --cream-alt:  #F4EEE2;
   /* Lifts a panel off the cream instead of sinking it. A darker tint fills
      a narrow phone screen and reads heavy; a lighter one stays airy at any
      width, and the blue edge does the separating. */
-  --cream-lift: #FAF6EE;
+  --cream-lift: #FFFCF6;
 
   /* Ink — dark, ~11:1 contrast on cream. Used for all body copy, menus, labels, form fields. */
-  --ink:       #363B26;
-  --ink-deep:  #23260F;
-  --ink-mid:   #4B5136;
+  --ink:       #3A4030;
+  --ink-deep:  #272C1D;
+  --ink-mid:   #555C45;
 
   /* Olive — the lighter sage-green brand color, reserved for display type only
      (names, section titles, the wordmark) where a softer tone reads elegant. */
-  --olive:      #657252;
-  --olive-deep: #525C42;
+  --olive:      #7A8A6B;
+  --olive-deep: #65745A;
 
   /* Dusty blue — the one saturated accent, used sparingly and only to mark
      structure (the numbered steps of the RSVP, the rule between one guest and
      the next). --blue carries fills and rules; --blue-deep is the text-safe
      variant at 5.4:1 on cream, and ink on --blue measures 4.8:1. */
-  --blue:      #92AAC4;
-  --blue-deep: #4F6480;
+  --blue:      #96A8BC;
+  --blue-deep: #4E6A84;
 
   /* Smoky lavender — subtle accent, desaturated and used mostly as fine hairlines
      threaded throughout the site rather than solid fills. */
@@ -210,13 +210,13 @@ body {
   min-width: 72px;
 }
 .nav-links {
-  display: flex; align-items: center; gap: 36px;
+  display: flex; align-items: center; gap: 22px;
 }
 .nav-link {
   font-family: var(--sans);
-  font-size: 0.76rem;
+  font-size: 0.73rem;
   font-weight: 500;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--ink);
   text-decoration: none;
@@ -375,6 +375,81 @@ body {
 .recognition-clear:hover { color: var(--ink); }
 .recognition-sep { color: var(--lavender); }
 
+/* ── Before the day ─────────────────────────────── */
+/* The two things a guest can usefully do now, side by side: keep the date,
+   and name a song. Each is introduced by a sentence rather than left to
+   explain itself with a bare button. */
+.before-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: 1fr 1fr;
+  max-width: 920px;
+  margin: 0 auto;
+}
+.before-card {
+  background: var(--cream-lift);
+  border: 0.5px solid var(--lavender-line);
+  border-radius: 2px;
+  padding: 34px 30px 30px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.before-lead {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.04rem;
+  line-height: 1.62;
+  color: var(--ink-mid);
+  max-width: 34ch;
+  /* Three lines are reserved whatever the language, so the two cards'
+     ornaments, names and controls stay on the same lines as each other. */
+  min-height: 4.9em;
+}
+.before-mark {
+  font-size: 1.15rem;
+  color: var(--blue-deep);
+  margin-top: 14px;
+  line-height: 1;
+}
+.before-name {
+  font-family: var(--script);
+  font-weight: 400;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--olive);
+  margin-top: 10px;
+}
+/* Top-aligned, not pushed to the foot: the song card's controls are taller
+   than the lone calendar button, and bottom-aligning them opened a hole in
+   the middle of the shorter card. */
+.before-body {
+  padding-top: 22px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.before-body .songs-form { margin: 0; width: 100%; }
+.before-body .songs-status { margin: 0; }
+
+/* The blue button: the one place the accent carries a filled shape. */
+.btn-blue {
+  background: var(--blue-deep);
+  color: var(--cream-lift);
+  border: 1px solid var(--blue-deep);
+}
+.btn-blue:hover { background: var(--blue); color: var(--ink); border-color: var(--blue); }
+
+@media (max-width: 760px) {
+  .before-grid { grid-template-columns: 1fr; gap: 18px; }
+  .before-card { padding: 28px 22px 24px; }
+  /* Stacked, there is nothing to line up with. */
+  .before-lead { min-height: 0; }
+}
+
 /* ── Song suggestions (welcome page) ────────────── */
 .songs-card {
   position: relative;
@@ -407,7 +482,7 @@ body {
   /* Scales down on narrow screens so the French and German wordings, which
      are longer than the English, still hold a single line on a phone. */
   font-size: clamp(0.98rem, 3.9vw, 1.5rem); font-weight: 300; font-style: italic;
-  color: var(--olive);
+  color: var(--olive-deep);
   line-height: 1.3;
   margin-bottom: 8px;
 }
@@ -837,7 +912,7 @@ body {
 .accom-search-title {
   font-family: var(--serif);
   font-size: 1.4rem; font-weight: 300; font-style: italic;
-  color: var(--olive);
+  color: var(--olive-deep);
   margin-bottom: 12px;
 }
 .accom-search-intro {
@@ -1093,7 +1168,7 @@ body {
 .travel-subheading {
   font-family: var(--serif);
   font-size: 1.26rem; font-weight: 300; font-style: italic;
-  color: var(--olive);
+  color: var(--olive-deep);
   text-align: center;
   margin-bottom: 28px;
 }
@@ -1339,12 +1414,21 @@ body {
 }
 
 /* ── Responsive ────────────────────────────────── */
-@media (max-width: 900px) {
-  .nav-inner { padding: 20px 28px; }
-  .nav-links, .lang-switcher { display: none; }
-  .nav-hamburger { display: flex; }
+/* Seven tabs need the whole bar. The spelled-out languages give way to
+   the globe first; only then does the menu fold into the hamburger. */
+@media (max-width: 1200px) {
+  .nav-inner { padding: 24px 32px; }
+  .lang-switcher { display: none; }
   .lang-icon-btn { display: flex; }
+}
 
+@media (max-width: 1040px) {
+  .nav-inner { padding: 20px 28px; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+}
+
+@media (max-width: 900px) {
   .prog-event {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -1451,7 +1535,7 @@ body {
   font-size: 0.82rem; font-weight: 400;
   letter-spacing: 0; text-transform: none;
   font-style: italic;
-  color: var(--olive);
+  color: var(--olive-deep);
   margin-top: 4px;
 }
 
