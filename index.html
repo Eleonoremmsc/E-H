@@ -44,6 +44,7 @@
       <div class="nav-logo">É &amp; H</div>
       <div class="nav-links">
         <a href="#welcome" class="nav-link" data-i18n="nav_welcome">Welcome</a>
+        <a href="#before" class="nav-link" data-i18n="nav_before">Before the day</a>
         <a href="#programme" class="nav-link" data-i18n="nav_programme">Programme</a>
         <a href="#map" class="nav-link" data-i18n="nav_map">Map</a>
         <a href="#accommodation" class="nav-link" data-i18n="nav_accommodation">Accommodation</a>
@@ -72,6 +73,7 @@
     </div>
     <div class="nav-mobile" id="mobile-menu">
       <a href="#welcome" class="nav-link" data-i18n="nav_welcome">Welcome</a>
+      <a href="#before" class="nav-link" data-i18n="nav_before">Before the day</a>
       <a href="#programme" class="nav-link" data-i18n="nav_programme">Programme</a>
       <a href="#map" class="nav-link" data-i18n="nav_map">Map</a>
       <a href="#accommodation" class="nav-link" data-i18n="nav_accommodation">Accommodation</a>
@@ -110,7 +112,6 @@
       </p>
       <div class="welcome-buttons">
         <button class="btn btn-primary" id="rsvp-btn" data-i18n="btn_rsvp">Receive my invitation</button>
-        <button class="btn btn-secondary" id="save-the-date-btn" data-i18n="btn_save">Save the Date</button>
       </div>
       <div id="recognition-banner" class="recognition-banner" style="display:none;">
         <p class="recognition-text" id="recognition-text"></p>
@@ -123,20 +124,6 @@
     </div>
     </div>
 
-    <!-- Playlist suggestions — below the fold, still part of Bienvenue -->
-    <div class="songs-card">
-      <span class="songs-note-icon" aria-hidden="true">♪</span>
-      <h2 class="songs-title" data-i18n="songs_title">Songs to which you'll be dancing all night long!</h2>
-      <p class="songs-note" data-i18n="songs_note">One track at a time — we are building the playlist as they come in.</p>
-      <form class="songs-form" id="songs-form" autocomplete="off">
-        <input type="text" id="songs-input" class="songs-input" maxlength="160"
-               data-i18n-placeholder="songs_placeholder" placeholder="Artist — Song title"
-               data-i18n-aria="songs_title" aria-label="Songs to which you'll be dancing all night long!">
-        <button type="submit" class="songs-submit" id="songs-submit" data-i18n="songs_add">Add</button>
-      </form>
-      <p class="songs-status" id="songs-status" role="status" aria-live="polite"></p>
-      <button type="button" class="songs-view" id="songs-view-btn" data-i18n="songs_view">See the playlist so far</button>
-    </div>
   </section>
 
   <!-- PLAYLIST POPUP -->
@@ -148,6 +135,43 @@
       <ul class="songs-list" id="songs-list"></ul>
     </div>
   </div>
+
+  <!-- BEFORE THE DAY — the two things a guest can do now -->
+  <section id="before" class="section-content">
+    <div class="content-inner">
+      <div class="section-header">
+        <h2 class="section-title" data-i18n="before_title">Before the day</h2>
+        <div class="section-rule"></div>
+      </div>
+
+      <div class="before-grid">
+        <div class="before-card">
+          <p class="before-lead" data-i18n="cal_lead">The date is a long way off, and diaries have a way of filling up. Add it to yours now — we will do the remembering.</p>
+          <span class="before-mark" aria-hidden="true">&#10022;</span>
+          <h3 class="before-name" data-i18n="cal_title">Keep the day</h3>
+          <div class="before-body">
+            <button class="btn btn-blue" id="save-the-date-btn" data-i18n="btn_calendar">Add to my calendar</button>
+          </div>
+        </div>
+
+        <div class="before-card">
+          <p class="before-lead" data-i18n="songs_lead">The dance floor is the part we most want to get right. Tell us the song that will get you onto it.</p>
+          <span class="before-mark" aria-hidden="true">&#9834;</span>
+          <h3 class="before-name" data-i18n="songs_title">Build the playlist</h3>
+          <div class="before-body">
+            <form class="songs-form" id="songs-form" autocomplete="off">
+        <input type="text" id="songs-input" class="songs-input" maxlength="160"
+               data-i18n-placeholder="songs_placeholder" placeholder="Artist — Song title"
+               data-i18n-aria="songs_title" aria-label="Songs to which you'll be dancing all night long!">
+        <button type="submit" class="songs-submit" id="songs-submit" data-i18n="songs_add">Add</button>
+      </form>
+            <p class="songs-status" id="songs-status" role="status" aria-live="polite"></p>
+            <button type="button" class="songs-view" id="songs-view-btn" data-i18n="songs_view">See the playlist so far</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- PROGRAMME -->
   <section id="programme" class="section-content">
