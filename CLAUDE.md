@@ -106,9 +106,17 @@ One spreadsheet (`SHEET_ID` in `Code.gs`), five tabs:
 | `Cartons` | The updated per-card list, for reconciliation. |
 | `Songs` | Playlist suggestions. |
 
-New columns are **appended at the end**, never inserted — `Country`, then
-`Friday`. Inserting mid-row shifts columns that existing rows already fill.
+On `RSVPs`, new columns are **appended at the end**, never inserted —
+inserting mid-row shifts columns that existing rows already fill.
 `ensureHeaders()` tops up tabs that predate a column.
+
+`Guests` is different: it is derived entirely from `RSVPs` (the Friday and
+Saturday answers live in the `Attendees (JSON)` column). If its header row does
+not match `GUEST_HEADERS`, the next RSVP — or `rebuildGuests()` run by hand —
+wipes and rewrites the tab. So its columns may be reordered, but anything typed
+into `Guests` by hand is lost on rebuild. `Submitted` there is a date-only cell
+(`dd/MM/yyyy`); `RSVPs` keeps the full timestamp. RSVPs sent before 16 Sep 2026
+predate the Friday question and have no Friday answer.
 
 ### Households
 
