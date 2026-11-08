@@ -782,12 +782,67 @@ function scoreHousehold(queryTokens, blobTokens) {
 
 // ── Guests sheet ──────────────────────────────────
 // One row per attendee — easy to filter/sort for headcount.
-// Columns: RSVP ID | Submitted | First Name | Last Name | Status |
+// Columns: RSVP ID | Submitted | First Name | Last Name | Saturday | Friday |
 //          Household Email | Contact First | Contact Last | Relationship |
 //          Allergies
+//
+// The tab is entirely derived from RSVPs, so it can always be thrown away and
+// rebuilt — which is what happens when its header row is not the one below
+// (an older layout, or a column added by hand). That is also why Friday can sit
+// next to Saturday here, unlike columns on RSVPs, which must only be appended.
+
+function guestRows(id, submitted, data) {
+  const day = toDay(submitted);
+  return (data.attendees || []).map(function(a) {
+    a = a || {};
+    // The form closes off Friday when Saturday is declined, but the sheet is
+    // the record — normalise here too rather than trusting whatever arrived.
+    const friday = a.status === 'no' && a.friday === 'yes' ? 'no' : (a.friday || '');
+    return [
+      id,
+      day,
+      a.firstName || '',
+      a.lastName || '',
+      a.status || '',
+      friday,
+      data.email || '',
+      data.firstName || '',
+      data.lastName || '',
+      a.relationship || '',
+      a.allergies || '',
+    ];
+  });
+}
+
+// A real date cell (so it sorts and filters), shown as 08/11/2026.
+function toDay(v) {
+  const d = v instanceof Date ? v : new Date(v);
+  if (isNaN(d.getTime())) return v || '';
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function guestHeadersMatch(sheet) {
+  if (sheet.getLastColumn() !== GUEST_HEADERS.length) return false;
+  const current = sheet.getRange(1, 1, 1, GUEST_HEADERS.length).getValues()[0];
+  return GUEST_HEADERS.every(function(h, i) { return (current[i] || '').toString().trim() === h; });
+}
+
+function appendGuestRows(sheet, rows) {
+  if (!rows.length) return;
+  const start = sheet.getLastRow() + 1;
+  sheet.getRange(start, 1, rows.length, GUEST_HEADERS.length).setValues(rows);
+  sheet.getRange(start, 2, rows.length, 1).setNumberFormat('dd/MM/yyyy');
+}
 
 function writeGuests(id, submitted, data, isUpdate) {
   const sheet = getGuestsSheet();
+
+  // Old layout: rebuild everything from RSVPs, which already holds this
+  // submission, so there is nothing left to append afterwards.
+  if (!guestHeadersMatch(sheet)) {
+    rebuildGuests();
+    return;
+  }
 
   if (isUpdate) {
     // Remove existing rows for this RSVP ID (iterate backwards to avoid index shift)
@@ -797,27 +852,35 @@ function writeGuests(id, submitted, data, isUpdate) {
     }
   }
 
-  // The form closes off Friday when Saturday is declined, but the sheet is the
-  // record — normalise here too rather than trusting whatever arrived.
-  const attendees = (data.attendees || []).map(function(a) {
-    if (a && a.status === 'no' && a.friday === 'yes') a.friday = 'no';
-    return a;
-  });
-  attendees.forEach(function(a) {
-    sheet.appendRow([
-      id,
-      submitted,
-      a.firstName,
-      a.lastName,
-      a.status,
-      data.email,
-      data.firstName,
-      data.lastName,
-      a.relationship || '',
-      a.allergies || '',
-      a.friday || '',
-    ]);
-  });
+  appendGuestRows(sheet, guestRows(id, submitted, data));
+}
+
+// Run by hand from the Apps Script editor (or automatically, see above).
+// Wipes the Guests tab and rewrites it from RSVPs: clean dates, Saturday and
+// Friday side by side. Anything typed by hand into Guests is lost — keep notes
+// on another tab.
+function rebuildGuests() {
+  const rsvps = getSheet().getDataRange().getValues();
+  const out = [];
+  for (let i = 1; i < rsvps.length; i++) {
+    const r = rsvps[i];
+    if (!r[0]) continue;
+    let attendees = [];
+    try { attendees = JSON.parse(r[6] || '[]'); } catch (e) {
+      Logger.log('Row ' + (i + 1) + ': unreadable attendees JSON, skipped');
+      continue;
+    }
+    guestRows(r[0], r[1], {
+      email: r[2], lastName: r[3], firstName: r[4], attendees: attendees,
+    }).forEach(function(row) { out.push(row); });
+  }
+
+  const sheet = getGuestsSheet();
+  sheet.clear();
+  sheet.getRange(1, 1, 1, GUEST_HEADERS.length).setValues([GUEST_HEADERS]);
+  sheet.setFrozenRows(1);
+  appendGuestRows(sheet, out);
+  Logger.log('Guests rebuilt: ' + out.length + ' guest(s) from ' + (rsvps.length - 1) + ' RSVP(s)');
 }
 
 // ── Email quota ───────────────────────────────────
@@ -963,12 +1026,11 @@ const RSVP_HEADERS = [
   'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
   'Country', 'Confirmation email',
 ];
-// Friday is appended at the end for the same reason Country was on the RSVP
-// tab: inserting mid-row would shift columns that existing rows already fill.
+// Guests is rebuilt from RSVPs whenever this layout changes (rebuildGuests),
+// so unlike RSVP_HEADERS its columns may be reordered.
 const GUEST_HEADERS = [
-  'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Status',
+  'RSVP ID', 'Submitted', 'First Name', 'Last Name', 'Saturday', 'Friday',
   'Household Email', 'Contact First', 'Contact Last', 'Relationship', 'Allergies',
-  'Friday',
 ];
 
 // Headers used to be written only when a tab was first created, so tabs that
@@ -2053,9 +2115,9 @@ function getGuestsSheet() {
     sheet = ss.insertSheet(GUESTS_NAME);
     sheet.appendRow(GUEST_HEADERS);
     sheet.setFrozenRows(1);
-  } else {
-    ensureHeaders(sheet, GUEST_HEADERS);
   }
+  // No ensureHeaders() here: relabelling a Guests tab in an older layout would
+  // put the wrong names over its data. writeGuests() rebuilds it instead.
   return sheet;
 }
 
