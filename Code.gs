@@ -980,15 +980,15 @@ const EMAIL_TEXT = {
                 maybe: 'Ich hoffe, dabei sein zu können',
                 no: 'Leider kann ich nicht teilnehmen' },
     friday:   { yes: 'Freitagabend: ja', no: 'Freitagabend: nein' },
-    subject:  { create: 'Ihre Zusage zur Hochzeit von Éléonore & Hubert',
-                update: 'Ihre geänderte Antwort – Hochzeit von Éléonore & Hubert' },
+    subject:  { create: 'Eure Zusage zur Hochzeit von Éléonore & Hubert',
+                update: 'Eure geänderte Antwort – Hochzeit von Éléonore & Hubert' },
     greeting: function(n) { return 'Vielen Dank, ' + n + '.'; },
     intro:    function(u) {
-      return 'Wir haben ' + (u ? 'Ihre geänderte Antwort' : 'Ihre Antwort') +
+      return 'Wir haben ' + (u ? 'eure geänderte Antwort' : 'eure Antwort') +
              ' zur Hochzeit von Éléonore & Hubert am 26. Juni 2027 in Crillon-le-Brave, Provence, erhalten.';
     },
-    response: 'Ihre Antwort:',
-    editNote: 'Möchten Sie etwas ändern? Nutzen Sie Ihren persönlichen Link:',
+    response: 'Eure Antwort:',
+    editNote: 'Möchtet ihr etwas ändern? Nutzt euren persönlichen Link:',
     signoff:  'Herzliche Grüße,\nÉléonore & Hubert',
   },
 };

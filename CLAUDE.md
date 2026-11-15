@@ -214,10 +214,16 @@ Three rules:
 - **French:** a plain space before `:` `?` `!` `»` — this is the house convention
   across the site, not the narrow no-break space. One exception, `accom_distance`,
   uses a NBSP because it was wrapping badly.
-- **German:** the website **siezt** (~40 strings), the Save the Date **duzt**. This
-  is inconsistent and known; converting the site to *ihr* has been offered and not
-  taken up. New German copy in shared components should avoid the pronoun entirely
-  where it can, so it reads naturally either way.
+- **German:** the whole website is on **ihr / euch / euer**, matching the Save the
+  Date. There is no *Sie* left anywhere in `script.js` or the `Code.gs` emails, and
+  none should be added.
+  The one deliberate exception is the guest-recognition flow — the "is this you?"
+  step and the greeting banner — which names **one** person and so uses **du**
+  (`Bist du das?`, `Dein Name`, `Hallo {name}, du bist für {count} bestätigt.`).
+  Mixing du for an individual with ihr for the invited household is ordinary
+  German, not an inconsistency; *ihr* in those strings would be wrong.
+  Beware the lowercase `ihnen` / `ihre` in `rsvp_guests_note` — that is *them* /
+  *their*, referring to the other guests on the invitation, not an address.
 - "**Website**", never "site".
 
 ---
@@ -301,12 +307,18 @@ sentences, not a bulleted changelog.
 - Never paste a Booking.com link with its `aid=` / `sid=` / `label=` parameters
   onto the site — those carry a personal session identifier. Strip to the bare URL.
 
+**The Save the Date card has no generator in this repo.** It was built by a script
+that lived only in a session scratchpad, which has since been cleared, so the card
+cannot be re-rendered or amended from anything here — only `images/save-the-date.JPG`,
+its photograph, survives. If it is wanted again it has to be rebuilt from scratch,
+and that rebuild belongs in the repository this time. Its German already uses
+*ihr*, which is now the whole website's voice too.
+
 **Open, waiting on her:**
 
 1. Save the Date footer — **A** QR code, **B** address alone, or **C** a sentence.
 2. The pocketfold invitation mockup still says 16h30 for the ceremony; it is 11:00.
 3. The eight-hour Saturday gap is unexplained on the website.
-4. The German *Sie* / *du* inconsistency (§5).
-5. **Buy a real domain** (~€12/yr). `eleonorehubert2027.netlify.app` is one typo
+4. **Buy a real domain** (~€12/yr). `eleonorehubert2027.netlify.app` is one typo
    from a "Site not found" page — typing `.com` instead of `.app` has already
    caused a scare.
