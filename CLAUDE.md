@@ -48,6 +48,7 @@ time means changing all three.
 | `script.js` | ~2100 | Config, event data, the `T` translation table, all behaviour |
 | `Code.gs` | ~2150 | Google Apps Script backend — **lives in Apps Script, not Netlify** |
 | `Gantt.gs` | ~330 | Unrelated: weekly planning reminders from a separate sheet |
+| `save-the-date/` | — | The printed card, in three languages — see its own README |
 
 `Code.gs` is version-controlled here for history, but the copy that actually runs
 is the one pasted into the Apps Script editor. Editing it here changes nothing
@@ -307,18 +308,12 @@ sentences, not a bulleted changelog.
 - Never paste a Booking.com link with its `aid=` / `sid=` / `label=` parameters
   onto the site — those carry a personal session identifier. Strip to the bare URL.
 
-**The Save the Date card has no generator in this repo.** It was built by a script
-that lived only in a session scratchpad, which has since been cleared, so the card
-cannot be re-rendered or amended from anything here — only `images/save-the-date.JPG`,
-its photograph, survives. If it is wanted again it has to be rebuilt from scratch,
-and that rebuild belongs in the repository this time. Its German already uses
-*ihr*, which is now the whole website's voice too.
-
 **Open, waiting on her:**
 
-1. Save the Date footer — **A** QR code, **B** address alone, or **C** a sentence.
+1. **Buy a real domain (~€12/yr) — now blocking.** `eleonorehubert2027.netlify.app`
+   is one typo from a "Site not found" page; typing `.com` instead of `.app` has
+   already caused a scare. It is now also printed on the Save the Date, and a
+   printed address cannot be changed afterwards, so this has to be settled before
+   the card goes to print.
 2. The pocketfold invitation mockup still says 16h30 for the ceremony; it is 11:00.
 3. The eight-hour Saturday gap is unexplained on the website.
-4. **Buy a real domain** (~€12/yr). `eleonorehubert2027.netlify.app` is one typo
-   from a "Site not found" page — typing `.com` instead of `.app` has already
-   caused a scare.

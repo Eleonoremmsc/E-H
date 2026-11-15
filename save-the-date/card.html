@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Éléonore &amp; Hubert — Save the Date</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'Parfumerie Script';
+  src: url('../fonts/ParfumerieScriptOldStyle_new.41455b9c652.878ed817-62ff-40fe-8103-2536046.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: block;
+}
+
+/* The website's own tokens, so card and website read as one thing. */
+:root {
+  --cream:      #FBF7EF;
+  --cream-lift: #FFFCF6;
+  --ink:        #3A4030;
+  --ink-mid:    #555C45;
+  --olive:      #7A8A6B;
+  --olive-deep: #65745A;
+  --blue-deep:  #4E6A84;
+  --line:       rgba(139, 132, 148, 0.34);
+  --script:     'Parfumerie Script', cursive;
+  --serif:      'Cormorant Garamond', Georgia, serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #8d8d8d; font-family: var(--serif); }
+
+/* 750 × 1050 at scale 2 gives 1500 × 2100 — 5 × 7in at 300dpi. */
+.card {
+  position: relative;
+  width: 750px; height: 1050px;
+  background: var(--cream);
+  padding: 30px;
+  overflow: hidden;
+}
+/* The frame: a hairline inset, doubled at a hair's distance. */
+.frame {
+  position: absolute; inset: 30px;
+  border: 1px solid var(--line);
+}
+.frame::after {
+  content: ''; position: absolute; inset: 5px;
+  border: 0.5px solid var(--line);
+}
+
+.inner {
+  position: relative; z-index: 1;
+  height: 100%;
+  padding: 52px 56px 46px;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+}
+
+.eyebrow {
+  font-family: var(--serif);
+  font-size: 15px; font-weight: 500;
+  letter-spacing: 0.44em; text-indent: 0.44em;
+  text-transform: uppercase;
+  color: var(--olive-deep);
+}
+
+.photo {
+  width: 100%; height: 396px;
+  margin-top: 30px;
+  overflow: hidden;
+  border: 0.5px solid var(--line);
+}
+.photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 34%; display: block; }
+
+/* The names carry the card. Everything else is support. */
+.names {
+  font-family: var(--script);
+  font-size: 108px; font-weight: 400;
+  line-height: 1;
+  color: var(--olive);
+  margin-top: 48px;
+}
+
+.rule { width: 54px; height: 0.5px; background: var(--line); margin-top: 30px; }
+
+/* Deliberately well below the names: letterspaced caps carry far more ink
+   per point than the script does, and at parity the month wins the card. */
+.date {
+  font-size: 25px; font-weight: 500;
+  letter-spacing: 0.3em; text-indent: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-top: 28px;
+}
+.place {
+  font-size: 14px; font-weight: 400;
+  letter-spacing: 0.26em; text-indent: 0.26em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  margin-top: 16px;
+}
+
+.foot { margin-top: auto; width: 100%; }
+.foot-rule { width: 100%; height: 0.5px; background: var(--line); }
+.call {
+  font-size: 21px; font-style: italic; font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-mid);
+  margin-top: 22px;
+}
+/* The address is the one thing a guest has to act on, so it is the one
+   thing on the card set in the accent. */
+.url {
+  font-size: 16px; font-weight: 600;
+  letter-spacing: 0.17em; text-indent: 0.17em;
+  text-transform: lowercase;
+  color: var(--blue-deep);
+  margin-top: 16px;
+}
+</style>
+</head>
+<body>
+
+<div class="card" id="card-en">
+  <div class="frame"></div>
+  <div class="inner">
+    <div class="eyebrow">Save the Date</div>
+    <div class="photo"><img src="../images/save-the-date.JPG" alt=""></div>
+    <div class="names">Éléonore &amp; Hubert</div>
+    <div class="rule"></div>
+    <div class="date">Saturday 26 June 2027</div>
+    <div class="place">Crillon-le-Brave &middot; Provence</div>
+    <div class="foot">
+      <div class="foot-rule"></div>
+      <div class="call">Visit our website<br>to reply and find out everything</div>
+      <div class="url">eleonorehubert2027.netlify.app</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="card-fr">
+  <div class="frame"></div>
+  <div class="inner">
+    <div class="eyebrow">Save the Date</div>
+    <div class="photo"><img src="../images/save-the-date.JPG" alt=""></div>
+    <div class="names">Éléonore &amp; Hubert</div>
+    <div class="rule"></div>
+    <div class="date">Samedi 26 juin 2027</div>
+    <div class="place">Crillon-le-Brave &middot; Provence</div>
+    <div class="foot">
+      <div class="foot-rule"></div>
+      <div class="call">Rendez-vous sur notre site web<br>pour répondre et tout savoir</div>
+      <div class="url">eleonorehubert2027.netlify.app</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="card-de">
+  <div class="frame"></div>
+  <div class="inner">
+    <div class="eyebrow">Save the Date</div>
+    <div class="photo"><img src="../images/save-the-date.JPG" alt=""></div>
+    <div class="names">Éléonore &amp; Hubert</div>
+    <div class="rule"></div>
+    <div class="date">Samstag, 26. Juni 2027</div>
+    <div class="place">Crillon-le-Brave &middot; Provence</div>
+    <div class="foot">
+      <div class="foot-rule"></div>
+      <div class="call">Besucht unsere Website,<br>um zu antworten und alles zu erfahren</div>
+      <div class="url">eleonorehubert2027.netlify.app</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
