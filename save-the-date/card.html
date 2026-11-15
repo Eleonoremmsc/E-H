@@ -14,16 +14,21 @@
   font-display: block;
 }
 
-/* The website's own tokens, so card and website read as one thing. */
+/* These are the website's ORIGINAL palette, not the lighter palette B it
+   moved to later. They are what the printed card was set in, sampled back
+   out of it pixel by pixel, and they are kept so a reprint matches the
+   cards already sent. See README. */
 :root {
-  --cream:      #FBF7EF;
-  --cream-lift: #FFFCF6;
-  --ink:        #3A4030;
-  --ink-mid:    #555C45;
-  --olive:      #7A8A6B;
-  --olive-deep: #65745A;
-  --blue-deep:  #4E6A84;
-  --line:       rgba(139, 132, 148, 0.34);
+  --cream:      #F7F1E6;
+  --ink:        #363B26;
+  --olive:      #657252;
+  --blue:       #92AAC4;
+  --blue-deep:  #4F6480;
+  --eyebrow:    #828E9F;
+  --place:      #797F68;
+  --foot:       #55593F;
+  --frame:      #C5C6B3;
+  --rule:       #BFC0AE;
   --script:     'Parfumerie Script', cursive;
   --serif:      'Cormorant Garamond', Georgia, serif;
 }
@@ -36,87 +41,91 @@ body { background: #8d8d8d; font-family: var(--serif); }
   position: relative;
   width: 750px; height: 1050px;
   background: var(--cream);
-  padding: 30px;
   overflow: hidden;
 }
-/* The frame: a hairline inset, doubled at a hair's distance. */
-.frame {
-  position: absolute; inset: 30px;
-  border: 1px solid var(--line);
-}
-.frame::after {
-  content: ''; position: absolute; inset: 5px;
-  border: 0.5px solid var(--line);
-}
+.frame { position: absolute; inset: 28px; border: 1px solid var(--frame); }
 
 .inner {
   position: relative; z-index: 1;
   height: 100%;
-  padding: 52px 56px 46px;
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
 }
 
 .eyebrow {
-  font-family: var(--serif);
-  font-size: 15px; font-weight: 500;
-  letter-spacing: 0.44em; text-indent: 0.44em;
+  font-size: 14px; font-weight: 500;
+  letter-spacing: 0.42em; text-indent: 0.42em;
   text-transform: uppercase;
-  color: var(--olive-deep);
+  color: var(--eyebrow);
+  margin-top: 110px;
 }
 
+/* The arch is a true semicircle: its radius is half the photo's width. */
 .photo {
-  width: 100%; height: 396px;
-  margin-top: 30px;
+  width: 325px; height: 462px;
+  margin-top: 35px;
+  border-radius: 162.5px 162.5px 0 0;
   overflow: hidden;
-  border: 0.5px solid var(--line);
+  box-shadow: 0 2px 16px rgba(90, 84, 70, 0.17);
 }
-.photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 34%; display: block; }
+.photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 28%; display: block; }
 
-/* The names carry the card. Everything else is support. */
 .names {
   font-family: var(--script);
-  font-size: 108px; font-weight: 400;
+  font-size: 94px; font-weight: 400;
   line-height: 1;
   color: var(--olive);
-  margin-top: 48px;
+  margin-top: 9px;
 }
 
-.rule { width: 54px; height: 0.5px; background: var(--line); margin-top: 30px; }
+/* A hairline with a small lozenge set into the middle of it. */
+.ornament {
+  position: relative;
+  width: 191px; height: 7px;
+  margin-top: 14px;
+}
+.ornament::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 3px;
+  height: 1px; background: var(--rule);
+}
+.ornament::after {
+  content: ''; position: absolute; left: 50%; top: 0;
+  width: 7px; height: 7px; margin-left: -3.5px;
+  background: var(--blue);
+  transform: rotate(45deg);
+}
 
-/* Deliberately well below the names: letterspaced caps carry far more ink
-   per point than the script does, and at parity the month wins the card. */
 .date {
-  font-size: 25px; font-weight: 500;
-  letter-spacing: 0.3em; text-indent: 0.3em;
+  font-size: 19px; font-weight: 500;
+  letter-spacing: 0.36em; text-indent: 0.36em;
   text-transform: uppercase;
   color: var(--ink);
   margin-top: 28px;
 }
 .place {
-  font-size: 14px; font-weight: 400;
-  letter-spacing: 0.26em; text-indent: 0.26em;
-  text-transform: uppercase;
-  color: var(--ink-mid);
-  margin-top: 16px;
+  font-size: 17px; font-style: italic; font-weight: 400;
+  color: var(--place);
+  margin-top: 29px;
 }
 
-.foot { margin-top: auto; width: 100%; }
-.foot-rule { width: 100%; height: 0.5px; background: var(--line); }
+.foot-rule { width: 431px; height: 1px; background: var(--frame); margin-top: 39px; }
 .call {
-  font-size: 21px; font-style: italic; font-weight: 400;
-  line-height: 1.5;
-  color: var(--ink-mid);
-  margin-top: 22px;
+  font-size: 17px; font-style: italic; font-weight: 400;
+  line-height: 1.4;
+  color: var(--foot);
+  margin-top: 25px;
 }
-/* The address is the one thing a guest has to act on, so it is the one
-   thing on the card set in the accent. */
+.call span { display: block; }
+/* The address is the only thing a guest has to act on, so it is the one
+   thing on the card set in the accent — and the only thing underlined. */
 .url {
-  font-size: 16px; font-weight: 600;
-  letter-spacing: 0.17em; text-indent: 0.17em;
-  text-transform: lowercase;
+  font-size: 17px; font-weight: 500;
+  letter-spacing: 0.2em; text-indent: 0.2em;
+  text-transform: uppercase;
   color: var(--blue-deep);
-  margin-top: 16px;
+  margin-top: 28px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--blue);
 }
 </style>
 </head>
@@ -128,48 +137,42 @@ body { background: #8d8d8d; font-family: var(--serif); }
     <div class="eyebrow">Save the Date</div>
     <div class="photo"><img src="../images/save-the-date.JPG" alt=""></div>
     <div class="names">Éléonore &amp; Hubert</div>
-    <div class="rule"></div>
-    <div class="date">Saturday 26 June 2027</div>
-    <div class="place">Crillon-le-Brave &middot; Provence</div>
-    <div class="foot">
-      <div class="foot-rule"></div>
-      <div class="call">Visit our website<br>to reply and find out everything</div>
-      <div class="url">eleonorehubert2027.netlify.app</div>
-    </div>
+    <div class="ornament"></div>
+    <div class="date">26 June 2027</div>
+    <div class="place">Crillon-le-Brave, Provence</div>
+    <div class="foot-rule"></div>
+    <div class="call"><span>Visit our website</span><span>to reply and find out everything</span></div>
+    <div class="url">eleonorehubert2027.netlify.app</div>
   </div>
 </div>
 
 <div class="card" id="card-fr">
   <div class="frame"></div>
   <div class="inner">
-    <div class="eyebrow">Save the Date</div>
+    <div class="eyebrow">Réservez la date</div>
     <div class="photo"><img src="../images/save-the-date.JPG" alt=""></div>
     <div class="names">Éléonore &amp; Hubert</div>
-    <div class="rule"></div>
-    <div class="date">Samedi 26 juin 2027</div>
-    <div class="place">Crillon-le-Brave &middot; Provence</div>
-    <div class="foot">
-      <div class="foot-rule"></div>
-      <div class="call">Rendez-vous sur notre site web<br>pour répondre et tout savoir</div>
-      <div class="url">eleonorehubert2027.netlify.app</div>
-    </div>
+    <div class="ornament"></div>
+    <div class="date">26 juin 2027</div>
+    <div class="place">Crillon-le-Brave, Provence</div>
+    <div class="foot-rule"></div>
+    <div class="call"><span>Rendez-vous sur notre site internet</span><span>pour répondre et tout savoir</span></div>
+    <div class="url">eleonorehubert2027.netlify.app</div>
   </div>
 </div>
 
 <div class="card" id="card-de">
   <div class="frame"></div>
   <div class="inner">
-    <div class="eyebrow">Save the Date</div>
+    <div class="eyebrow">Merkt euch den Tag</div>
     <div class="photo"><img src="../images/save-the-date.JPG" alt=""></div>
     <div class="names">Éléonore &amp; Hubert</div>
-    <div class="rule"></div>
-    <div class="date">Samstag, 26. Juni 2027</div>
-    <div class="place">Crillon-le-Brave &middot; Provence</div>
-    <div class="foot">
-      <div class="foot-rule"></div>
-      <div class="call">Besucht unsere Website,<br>um zu antworten und alles zu erfahren</div>
-      <div class="url">eleonorehubert2027.netlify.app</div>
-    </div>
+    <div class="ornament"></div>
+    <div class="date">26. Juni 2027</div>
+    <div class="place">Crillon-le-Brave, Provence</div>
+    <div class="foot-rule"></div>
+    <div class="call"><span>Besucht unsere Website,</span><span>um zu antworten und alles zu erfahren</span></div>
+    <div class="url">eleonorehubert2027.netlify.app</div>
   </div>
 </div>
 

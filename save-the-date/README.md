@@ -19,17 +19,24 @@ changed afterwards, so the domain has to be settled first — see the open item 
 `../CLAUDE.md` §9. If a real domain is bought, change the `.url` line in all three
 cards and re-render.
 
-## Choices made here
+## This matches the card that was already sent
 
-- **Two typefaces only.** Parfumerie Script for the names, Cormorant Garamond for
-  everything else. An earlier draft mixed more and was rejected for it.
-- **The names dominate and the date is well below them.** Letterspaced caps carry
-  far more ink per point than the script, so at nominal parity the month wins the
-  card. The sizes here were set from the rendered image, not from the numbers.
-- **"Save the Date" is left in English on all three cards.** It is the card's name
-  and is used as-is by French and German stationers. Translate it in `card.html`
-  if that is not wanted.
-- **The address is the only thing set in the blue**, because it is the only thing
-  on the card a guest has to act on.
-- The palette tokens are copied from `../style.css`. If the website's palette
-  changes, they do not follow by themselves.
+The layout is not a fresh design. It reproduces the card printed earlier —
+measured back out of a copy of it pixel by pixel — so a reprint and a new
+language sit beside the existing cards without looking different:
+
+- arched photo, a true semicircle whose radius is half its width
+- a hairline with a small blue lozenge set into the middle of it
+- the date with **no weekday**, letterspaced
+- the place in italic sentence case, with a comma
+- the address in letterspaced caps, underlined, the one thing in the accent
+
+Every element lands within about 3px of the original's position and ink width.
+
+The eyebrow is translated per language — *Réservez la date*, *Save the Date*,
+*Merkt euch den Tag*. The German is the one line with no original to copy.
+
+**The palette here is the website's ORIGINAL one, not the lighter palette B the
+website moved to later.** That is deliberate: it is what the printed cards were
+set in. If a reprint should match the website instead, swap the tokens at the
+top of `card.html` for the ones in `../style.css`.
