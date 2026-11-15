@@ -33,8 +33,8 @@ language sit beside the existing cards without looking different:
 
 Every element lands within about 3px of the original's position and ink width.
 
-The eyebrow is translated per language — *Réservez la date*, *Save the Date*,
-*Merkt euch den Tag*. The German is the one line with no original to copy.
+The eyebrow is *Réservez la date* on the French card and *Save the Date* on the
+English and German ones.
 
 **The palette here is the website's ORIGINAL one, not the lighter palette B the
 website moved to later.** That is deliberate: it is what the printed cards were
