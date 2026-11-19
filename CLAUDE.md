@@ -48,6 +48,7 @@ time means changing all three.
 | `script.js` | ~2100 | Config, event data, the `T` translation table, all behaviour |
 | `Code.gs` | ~2150 | Google Apps Script backend — **lives in Apps Script, not Netlify** |
 | `Gantt.gs` | ~330 | Unrelated: weekly planning reminders from a separate sheet |
+| `save-the-date/` | — | The printed card, in three languages — see its own README |
 
 `Code.gs` is version-controlled here for history, but the copy that actually runs
 is the one pasted into the Apps Script editor. Editing it here changes nothing
@@ -105,6 +106,7 @@ One spreadsheet (`SHEET_ID` in `Code.gs`), five tabs:
 | `Invites` | The invited guest list. |
 | `Cartons` | The updated per-card list, for reconciliation. |
 | `Songs` | Playlist suggestions. |
+| `Dashboard` | Written by `buildDashboard()`. Wiped and rewritten each run. |
 
 On `RSVPs`, new columns are **appended at the end**, never inserted —
 inserting mid-row shifts columns that existing rows already fill.
@@ -117,6 +119,34 @@ wipes and rewrites the tab. So its columns may be reordered, but anything typed
 into `Guests` by hand is lost on rebuild. `Submitted` there is a date-only cell
 (`dd/MM/yyyy`); `RSVPs` keeps the full timestamp. RSVPs sent before 16 Sep 2026
 predate the Friday question and have no Friday answer.
+
+### The dashboard
+
+`buildDashboard()` writes the `Dashboard` tab: invitations, how many have been
+sent a Save the Date, how many have answered, and the expected headcount. It only
+reads; it wipes and rewrites that one tab.
+
+It needs a tick column on `Cartons` headed **`Save the Date`** (or `Envoyé`,
+`Sent`, `STD` — see `STD_HEADERS`). Any non-empty value counts as sent except
+`0`, `no`, `non`, `nein`, `false`, `-`, `n`. Without the column it still reports
+everything else and says the column is missing.
+
+**Expected headcount is counted per person, not per household**: yes = 1,
+maybe = 0.5, no = 0. A couple answering yes and maybe is 1.5, which a
+per-household rule could not express.
+
+The **FORECAST** section is kept separate from everything above it, because
+everything above is counted and everything in it is inferred: the rate of
+yes among people who have answered, applied to the people who have not. It
+projects twice — over the people already sent a Save the Date, and over the
+whole list — and says on the tab that early replies lean yes, so both read
+high. Do not merge it into the counted sections.
+
+The join is `Cartons` → (by name) `Invites` → (by household token) `RSVPs`. Two
+things fall out of it and are reported rather than hidden: cards whose names are
+not on `Invites` (marked in the card table), and replies whose token is
+`Self-added` or matches no card, which are listed at the foot of the tab and
+still counted in the totals.
 
 ### Households
 
@@ -214,10 +244,16 @@ Three rules:
 - **French:** a plain space before `:` `?` `!` `»` — this is the house convention
   across the site, not the narrow no-break space. One exception, `accom_distance`,
   uses a NBSP because it was wrapping badly.
-- **German:** the website **siezt** (~40 strings), the Save the Date **duzt**. This
-  is inconsistent and known; converting the site to *ihr* has been offered and not
-  taken up. New German copy in shared components should avoid the pronoun entirely
-  where it can, so it reads naturally either way.
+- **German:** the whole website is on **ihr / euch / euer**, matching the Save the
+  Date. There is no *Sie* left anywhere in `script.js` or the `Code.gs` emails, and
+  none should be added.
+  The one deliberate exception is the guest-recognition flow — the "is this you?"
+  step and the greeting banner — which names **one** person and so uses **du**
+  (`Bist du das?`, `Dein Name`, `Hallo {name}, du bist für {count} bestätigt.`).
+  Mixing du for an individual with ihr for the invited household is ordinary
+  German, not an inconsistency; *ihr* in those strings would be wrong.
+  Beware the lowercase `ihnen` / `ihre` in `rsvp_guests_note` — that is *them* /
+  *their*, referring to the other guests on the invitation, not an address.
 - "**Website**", never "site".
 
 ---
@@ -303,10 +339,10 @@ sentences, not a bulleted changelog.
 
 **Open, waiting on her:**
 
-1. Save the Date footer — **A** QR code, **B** address alone, or **C** a sentence.
+1. **Buy a real domain (~€12/yr) — now blocking.** `eleonorehubert2027.netlify.app`
+   is one typo from a "Site not found" page; typing `.com` instead of `.app` has
+   already caused a scare. It is now also printed on the Save the Date, and a
+   printed address cannot be changed afterwards, so this has to be settled before
+   the card goes to print.
 2. The pocketfold invitation mockup still says 16h30 for the ceremony; it is 11:00.
 3. The eight-hour Saturday gap is unexplained on the website.
-4. The German *Sie* / *du* inconsistency (§5).
-5. **Buy a real domain** (~€12/yr). `eleonorehubert2027.netlify.app` is one typo
-   from a "Site not found" page — typing `.com` instead of `.app` has already
-   caused a scare.
