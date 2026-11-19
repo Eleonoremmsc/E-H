@@ -636,7 +636,8 @@ function expandCartons(sheet) {
 
   const out = [];
   let cardCounter = 0;
-  rows.slice(1).forEach(function(r) {
+  rows.slice(1).forEach(function(r, idx) {
+    const sheetRow = idx + 2;              // +1 for the header, +1 for 1-based rows
     if (S(r[cTag]) !== 'Invit') return;
     const first = S(r[cFirst]), extra = S(r[cExtra]), wife = S(r[cWife]);
     let last = S(r[cLast]);
@@ -680,8 +681,10 @@ function expandCartons(sheet) {
         fn = bits[0];
         ln = bits.slice(1).join(' ');
       }
+      // sheetRow lets the dashboard read other columns of the same card —
+      // the Save the Date tick, for one — without re-deriving the expansion.
       out.push({ firstName: fn, lastName: ln, card: cardLabel.trim(),
-                 cardIndex: cardCounter, partySize: nb });
+                 cardIndex: cardCounter, partySize: nb, sheetRow: sheetRow });
     }
   });
   return out;
@@ -2212,4 +2215,283 @@ function jsonOut(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+// ══════════════════════════════════════════════════
+// DASHBOARD — who was invited, who was told, who answered
+//
+// Run buildDashboard() from the editor. It only ever reads; it writes one
+// tab, "Dashboard", and nothing else is touched.
+//
+// It answers four questions in order, because each one only makes sense
+// against the one before it:
+//   1. how many invitations are there, and how many people do they seat
+//   2. how many of those have been sent a Save the Date
+//   3. of the ones told, how many have answered
+//   4. of the answers, how many people are actually expected
+//
+// Expected numbers are counted PER PERSON, not per household: a yes is 1,
+// a maybe is 0.5, a no is 0. A couple where one says yes and the other
+// maybe therefore counts 1.5, which a per-household rule could not express.
+// ══════════════════════════════════════════════════
+
+const DASHBOARD_TAB = 'Dashboard';
+
+// The tick column on Cartons. Any of these header names is recognised, so
+// the column can be called whatever reads best in the sheet. Add to the list
+// rather than renaming the column if neither fits.
+const STD_HEADERS = ['save the date', 'save-the-date', 'std', 'sdt', 'envoyé',
+                     'envoye', 'sent', 'faire-part', 'invitation envoyée'];
+
+// A tick is whatever a person would naturally type: a cross, a check, a
+// word, a date, TRUE. Only genuinely empty means "not sent".
+function isTicked(v) {
+  if (v === true) return true;
+  if (v === false || v === null || v === undefined) return false;
+  if (Object.prototype.toString.call(v) === '[object Date]') return true;
+  const s = v.toString().trim().toLowerCase();
+  if (!s) return false;
+  return ['0', 'no', 'non', 'nein', 'false', '-', 'n'].indexOf(s) === -1;
+}
+
+function buildDashboard() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const cartons = getCartonsSheet();
+  if (!cartons) { Logger.log('PROBLEM: could not find the card list.'); return; }
+
+  const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+  const cRows  = cartons.getDataRange().getValues();
+  const cHead  = cRows[0].map(function(h) { return S(h).toLowerCase(); });
+
+  // Find the Save the Date column. Its absence is not an error — it just
+  // means that half of the picture is not being tracked yet, and the sheet
+  // says so rather than quietly reporting zero.
+  let cStd = -1;
+  for (let i = 0; i < cHead.length && cStd === -1; i++) {
+    if (STD_HEADERS.indexOf(cHead[i]) !== -1) cStd = i;
+  }
+
+  // ── Cards, one entry per invitation ──
+  const people = expandCartons(cartons);
+  const cards = {};
+  const cardOrder = [];
+  people.forEach(function(p) {
+    if (!cards[p.cardIndex]) {
+      cards[p.cardIndex] = {
+        label: p.card, seats: p.partySize, row: p.sheetRow,
+        std: cStd === -1 ? false : isTicked(cRows[p.sheetRow - 1][cStd]),
+        names: [], token: '', answered: false,
+        yes: 0, maybe: 0, no: 0, fridayYes: 0,
+      };
+      cardOrder.push(p.cardIndex);
+    }
+    if (p.firstName || p.lastName) cards[p.cardIndex].names.push(p);
+  });
+
+  // ── Guest list: name -> household token ──
+  const tokenByName = {};
+  getGuestListRows().forEach(function(g) {
+    if (!g.token) return;
+    const k = normalizeName(g.firstName + ' ' + g.lastName);
+    if (k && !tokenByName[k]) tokenByName[k] = g.token;
+  });
+
+  // ── Replies, keyed by household token ──
+  const sheet = getSheet();
+  const rRows = sheet.getDataRange().getValues();
+  const rHead = rRows[0].map(function(h) { return S(h).toLowerCase(); });
+  const cAtt  = rHead.indexOf('attendees (json)');
+  const cTok  = rHead.indexOf('household token');
+  const cName = rHead.indexOf('first name(s)');
+  const cSurn = rHead.indexOf('last name');
+
+  const replyByToken = {};
+  const loose = [];                     // replies that belong to no card
+  for (let i = 1; i < rRows.length; i++) {
+    const raw = S(rRows[i][cAtt]);
+    if (!raw) continue;
+    let att;
+    try { att = JSON.parse(raw); } catch (e) { continue; }
+    if (!att || !att.length) continue;
+    const tok = S(rRows[i][cTok]);
+    const entry = { attendees: att, who: S(rRows[i][cName]) + ' ' + S(rRows[i][cSurn]) };
+    // "Self-added" is what the form writes when the recogniser did not find
+    // the guest: a real reply that cannot be attributed to a card.
+    if (!tok || tok === 'Self-added') loose.push(entry);
+    else if (!replyByToken[tok]) replyByToken[tok] = entry;
+  }
+
+  // ── Join the three together ──
+  const seen = {};
+  cardOrder.forEach(function(ci) {
+    const c = cards[ci];
+    for (let i = 0; i < c.names.length && !c.token; i++) {
+      const k = normalizeName(c.names[i].firstName + ' ' + c.names[i].lastName);
+      if (k && tokenByName[k]) c.token = tokenByName[k];
+    }
+    const r = c.token && replyByToken[c.token];
+    if (!r) return;
+    seen[c.token] = true;
+    c.answered = true;
+    r.attendees.forEach(function(a) {
+      const st = S(a.status).toLowerCase();
+      if (st === 'yes') c.yes++;
+      else if (st === 'maybe') c.maybe++;
+      else if (st === 'no') c.no++;
+      if (st !== 'no' && S(a.friday).toLowerCase() === 'yes') c.fridayYes++;
+    });
+  });
+
+  // Replies whose token matched no card still count — they are guests too.
+  Object.keys(replyByToken).forEach(function(tok) {
+    if (!seen[tok]) loose.push(replyByToken[tok]);
+  });
+
+  // ── Totals ──
+  const t = { cards: 0, seats: 0, stdCards: 0, stdSeats: 0,
+              answered: 0, answeredStd: 0, yes: 0, maybe: 0, no: 0, fridayYes: 0 };
+  cardOrder.forEach(function(ci) {
+    const c = cards[ci];
+    t.cards++; t.seats += c.seats;
+    if (c.std) { t.stdCards++; t.stdSeats += c.seats; }
+    if (c.answered) {
+      t.answered++;
+      if (c.std) t.answeredStd++;
+      t.yes += c.yes; t.maybe += c.maybe; t.no += c.no; t.fridayYes += c.fridayYes;
+    }
+  });
+  const looseStats = { people: 0, yes: 0, maybe: 0, no: 0, fridayYes: 0 };
+  loose.forEach(function(r) {
+    r.attendees.forEach(function(a) {
+      const st = S(a.status).toLowerCase();
+      looseStats.people++;
+      if (st === 'yes') looseStats.yes++;
+      else if (st === 'maybe') looseStats.maybe++;
+      else if (st === 'no') looseStats.no++;
+      if (st !== 'no' && S(a.friday).toLowerCase() === 'yes') looseStats.fridayYes++;
+    });
+  });
+
+  const allYes   = t.yes + looseStats.yes;
+  const allMaybe = t.maybe + looseStats.maybe;
+  const allNo    = t.no + looseStats.no;
+  const answeredPeople = allYes + allMaybe + allNo;
+  const expected = allYes + 0.5 * allMaybe;
+  const pct = function(a, b) { return b ? Math.round(1000 * a / b) / 10 + '%' : '—'; };
+
+  // ── Write the tab ──
+  let out = ss.getSheetByName(DASHBOARD_TAB);
+  if (!out) out = ss.insertSheet(DASHBOARD_TAB);
+  out.clear();
+
+  const rowsOut = [];
+  const head = function(s) { rowsOut.push(['', '', '']); rowsOut.push([s, '', '']); };
+  const line = function(a, b, c) { rowsOut.push([a, b, c === undefined ? '' : c]); };
+
+  rowsOut.push(['Éléonore & Hubert — guest list at a glance', '', '']);
+  line('Last rebuilt', new Date(), '');
+
+  head('INVITATIONS');
+  line('Cards on the list', t.cards);
+  line('People they seat', t.seats);
+
+  head('SAVE THE DATE');
+  if (cStd === -1) {
+    line('No tick column found on "' + cartons.getName() + '".', '', '');
+    line('Add a column headed "Save the Date" and tick the cards you have sent.', '', '');
+  } else {
+    line('Cards sent', t.stdCards, pct(t.stdCards, t.cards) + ' of cards');
+    line('Cards not sent yet', t.cards - t.stdCards);
+    line('People reached', t.stdSeats, pct(t.stdSeats, t.seats) + ' of people');
+  }
+
+  head('REPLIES');
+  line('Cards that have answered', t.answered, pct(t.answered, t.cards) + ' of all cards');
+  if (cStd !== -1) {
+    line('  of the cards sent a Save the Date', t.answeredStd,
+         pct(t.answeredStd, t.stdCards) + ' of those sent');
+    line('  sent, still silent', t.stdCards - t.answeredStd);
+  }
+  line('Cards still to answer', t.cards - t.answered);
+  if (loose.length) {
+    line('Replies not matched to a card', loose.length,
+         'people who were not on the list, or whose name did not match');
+  }
+
+  head('WHO IS COMING');
+  line('People who have answered', answeredPeople);
+  line('Yes', allYes, pct(allYes, answeredPeople) + ' of answers');
+  line('Maybe', allMaybe, pct(allMaybe, answeredPeople) + ' of answers');
+  line('No', allNo, pct(allNo, answeredPeople) + ' of answers');
+  line('', '', '');
+  line('Expected to come', expected, 'yes + half of each maybe');
+  line('Still unanswered, people', Math.max(0, t.seats - answeredPeople),
+       'at most this many more could come');
+  line('Best case', expected + Math.max(0, t.seats - answeredPeople),
+       'if every remaining person said yes');
+
+  head('FRIDAY COCKTAIL');
+  line('Coming on the Friday', t.fridayYes + looseStats.fridayYes,
+       'among those not saying no to the Saturday');
+
+  // ── Card by card, so the silent ones can be chased ──
+  rowsOut.push(['', '', '']);
+  rowsOut.push(['', '', '']);
+  const detailStart = rowsOut.length + 1;
+  rowsOut.push(['Card', 'Seats', 'Save the Date', 'Answered', 'Yes', 'Maybe', 'No', 'Expected', 'On the list?']);
+  cardOrder.forEach(function(ci) {
+    const c = cards[ci];
+    rowsOut.push([
+      c.label, c.seats,
+      cStd === -1 ? '' : (c.std ? 'sent' : ''),
+      c.answered ? 'yes' : '',
+      c.answered ? c.yes : '', c.answered ? c.maybe : '', c.answered ? c.no : '',
+      c.answered ? c.yes + 0.5 * c.maybe : '',
+      c.token ? '' : 'not found on Invites',
+    ]);
+  });
+  if (loose.length) {
+    rowsOut.push(['', '', '']);
+    rowsOut.push(['Replies that match no card', '', '', '', '', '', '', '', '']);
+    loose.forEach(function(r) {
+      let y = 0, m = 0, n = 0;
+      r.attendees.forEach(function(a) {
+        const st = S(a.status).toLowerCase();
+        if (st === 'yes') y++; else if (st === 'maybe') m++; else if (st === 'no') n++;
+      });
+      rowsOut.push([r.who.trim(), r.attendees.length, '', 'yes', y, m, n, y + 0.5 * m, 'self-added']);
+    });
+  }
+
+  const width = rowsOut.reduce(function(w, r) { return Math.max(w, r.length); }, 3);
+  const padded = rowsOut.map(function(r) {
+    const copy = r.slice();
+    while (copy.length < width) copy.push('');
+    return copy;
+  });
+  out.getRange(1, 1, padded.length, width).setValues(padded);
+
+  // Light formatting: the title, the section headings and the table header.
+  out.getRange(1, 1, 1, width).setFontWeight('bold').setFontSize(13);
+  padded.forEach(function(r, i) {
+    const label = S(r[0]);
+    if (label && label === label.toUpperCase() && !S(r[1]) && label.length > 2) {
+      out.getRange(i + 1, 1, 1, width).setFontWeight('bold');
+    }
+  });
+  out.getRange(detailStart, 1, 1, width).setFontWeight('bold');
+  out.setFrozenRows(1);
+  for (let c = 1; c <= width; c++) out.autoResizeColumn(c);
+
+  Logger.log('Dashboard rebuilt. ' + t.cards + ' cards, ' + t.seats + ' seats, ' +
+             t.answered + ' answered, expected ' + expected + '.');
+  if (cStd === -1) {
+    Logger.log('No Save the Date column found — add one headed "Save the Date" on "' +
+               cartons.getName() + '" and run this again.');
+  }
+  if (loose.length) {
+    Logger.log(loose.length + ' repl(y/ies) could not be matched to a card; ' +
+               'they are listed at the foot of the tab.');
+  }
 }

@@ -106,6 +106,7 @@ One spreadsheet (`SHEET_ID` in `Code.gs`), five tabs:
 | `Invites` | The invited guest list. |
 | `Cartons` | The updated per-card list, for reconciliation. |
 | `Songs` | Playlist suggestions. |
+| `Dashboard` | Written by `buildDashboard()`. Wiped and rewritten each run. |
 
 On `RSVPs`, new columns are **appended at the end**, never inserted —
 inserting mid-row shifts columns that existing rows already fill.
@@ -118,6 +119,27 @@ wipes and rewrites the tab. So its columns may be reordered, but anything typed
 into `Guests` by hand is lost on rebuild. `Submitted` there is a date-only cell
 (`dd/MM/yyyy`); `RSVPs` keeps the full timestamp. RSVPs sent before 16 Sep 2026
 predate the Friday question and have no Friday answer.
+
+### The dashboard
+
+`buildDashboard()` writes the `Dashboard` tab: invitations, how many have been
+sent a Save the Date, how many have answered, and the expected headcount. It only
+reads; it wipes and rewrites that one tab.
+
+It needs a tick column on `Cartons` headed **`Save the Date`** (or `Envoyé`,
+`Sent`, `STD` — see `STD_HEADERS`). Any non-empty value counts as sent except
+`0`, `no`, `non`, `nein`, `false`, `-`, `n`. Without the column it still reports
+everything else and says the column is missing.
+
+**Expected headcount is counted per person, not per household**: yes = 1,
+maybe = 0.5, no = 0. A couple answering yes and maybe is 1.5, which a
+per-household rule could not express.
+
+The join is `Cartons` → (by name) `Invites` → (by household token) `RSVPs`. Two
+things fall out of it and are reported rather than hidden: cards whose names are
+not on `Invites` (marked in the card table), and replies whose token is
+`Self-added` or matches no card, which are listed at the foot of the tab and
+still counted in the totals.
 
 ### Households
 
