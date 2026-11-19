@@ -135,6 +135,15 @@ everything else and says the column is missing.
 maybe = 0.5, no = 0. A couple answering yes and maybe is 1.5, which a
 per-household rule could not express.
 
+**Invited and answered come from different places and can disagree.** How many
+a card seats is `Nb` on `Cartons`; how many were answered for is the length of
+that reply's attendee list. A card seating two where only one person replied is
+an answered card contributing one person, with one seat still outstanding.
+Seats still to hear from are therefore summed **card by card**, as
+`max(0, seats − answered)` per card: subtracting one total from the other let a
+card answered for more people than it seats — a guest bringing someone — cancel
+out a card nobody had answered.
+
 The **FORECAST** section is kept separate from everything above it, because
 everything above is counted and everything in it is inferred: the rate of
 yes among people who have answered, applied to the people who have not. It

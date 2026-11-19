@@ -2365,6 +2365,18 @@ function buildDashboard() {
       if (c.std) t.sentAnsweredPeople += c.yes + c.maybe + c.no;
     }
   });
+  // Seats still to hear from, counted CARD BY CARD. Summing the two totals
+  // and subtracting would let a card answered for more people than it seats
+  // — a guest bringing someone — cancel out a card nobody has answered.
+  let silentAll = 0, silentTold = 0;
+  cardOrder.forEach(function(ci) {
+    const c = cards[ci];
+    const got = c.yes + c.maybe + c.no;
+    const gap = Math.max(0, c.seats - got);
+    silentAll += gap;
+    if (c.std) silentTold += gap;
+  });
+
   const looseStats = { people: 0, yes: 0, maybe: 0, no: 0, fridayYes: 0 };
   loose.forEach(function(r) {
     r.attendees.forEach(function(a) {
@@ -2430,9 +2442,9 @@ function buildDashboard() {
   line('No', allNo, pct(allNo, answeredPeople) + ' of answers');
   line('', '', '');
   line('Expected to come', expected, 'yes + half of each maybe');
-  line('Still unanswered, people', Math.max(0, t.seats - answeredPeople),
-       'at most this many more could come');
-  line('Best case', expected + Math.max(0, t.seats - answeredPeople),
+  line('Still unanswered, people', silentAll,
+       'seats on cards nobody has answered for');
+  line('Best case', expected + silentAll,
        'if every remaining person said yes');
 
   head('FRIDAY COCKTAIL');
@@ -2444,10 +2456,7 @@ function buildDashboard() {
   // counted; everything here is inferred from a rate, and a rate taken this
   // early leans high — the certain reply first, the unsure and the regrets
   // last. Read it as a direction, not a headcount.
-  const cardAnswered = t.yes + t.maybe + t.no;
   const rate = answeredPeople ? expected / answeredPeople : 0;
-  const silentTold = Math.max(0, t.stdSeats - t.sentAnsweredPeople);
-  const silentAll  = Math.max(0, t.seats - cardAnswered);
   const round1 = function(n) { return Math.round(n * 10) / 10; };
 
   head('FORECAST — inferred, not counted');
