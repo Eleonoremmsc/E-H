@@ -2350,7 +2350,8 @@ function buildDashboard() {
 
   // ── Totals ──
   const t = { cards: 0, seats: 0, stdCards: 0, stdSeats: 0,
-              answered: 0, answeredStd: 0, yes: 0, maybe: 0, no: 0, fridayYes: 0 };
+              answered: 0, answeredStd: 0, yes: 0, maybe: 0, no: 0, fridayYes: 0,
+              sentAnsweredPeople: 0 };
   cardOrder.forEach(function(ci) {
     const c = cards[ci];
     t.cards++; t.seats += c.seats;
@@ -2359,6 +2360,9 @@ function buildDashboard() {
       t.answered++;
       if (c.std) t.answeredStd++;
       t.yes += c.yes; t.maybe += c.maybe; t.no += c.no; t.fridayYes += c.fridayYes;
+      // People who answered having actually been sent something: the only
+      // honest denominator for an answer rate.
+      if (c.std) t.sentAnsweredPeople += c.yes + c.maybe + c.no;
     }
   });
   const looseStats = { people: 0, yes: 0, maybe: 0, no: 0, fridayYes: 0 };
@@ -2434,6 +2438,40 @@ function buildDashboard() {
   head('FRIDAY COCKTAIL');
   line('Coming on the Friday', t.fridayYes + looseStats.fridayYes,
        'among those not saying no to the Saturday');
+
+  // ── Forecast ──
+  // Kept apart from the numbers above on purpose. Everything above is
+  // counted; everything here is inferred from a rate, and a rate taken this
+  // early leans high — the certain reply first, the unsure and the regrets
+  // last. Read it as a direction, not a headcount.
+  const cardAnswered = t.yes + t.maybe + t.no;
+  const rate = answeredPeople ? expected / answeredPeople : 0;
+  const silentTold = Math.max(0, t.stdSeats - t.sentAnsweredPeople);
+  const silentAll  = Math.max(0, t.seats - cardAnswered);
+  const round1 = function(n) { return Math.round(n * 10) / 10; };
+
+  head('FORECAST — inferred, not counted');
+  if (!answeredPeople) {
+    line('Nothing to project from yet.', '', '');
+  } else {
+    if (cStd !== -1) {
+      line('Answer rate', pct(t.sentAnsweredPeople, t.stdSeats),
+           'of the people sent a Save the Date');
+    }
+    line('Yes rate', pct(allYes, answeredPeople), 'of people who answered');
+    line('Maybe rate', pct(allMaybe, answeredPeople));
+    line('No rate', pct(allNo, answeredPeople));
+    line('Worth per person answering', Math.round(rate * 100) / 100,
+         'yes counts 1, maybe 0.5, no 0');
+    line('', '', '');
+    if (cStd !== -1) {
+      line('Projected — those already told', round1(expected + rate * silentTold),
+           'counted ' + round1(expected) + ' + the ' + silentTold + ' sent but silent at that rate');
+    }
+    line('Projected — whole list', round1(expected + rate * silentAll),
+         'counted ' + round1(expected) + ' + the ' + silentAll + ' still to answer at that rate');
+    line('Early replies lean yes, so both of these read high.', '', '');
+  }
 
   // ── Card by card, so the silent ones can be chased ──
   rowsOut.push(['', '', '']);

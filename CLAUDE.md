@@ -135,6 +135,13 @@ everything else and says the column is missing.
 maybe = 0.5, no = 0. A couple answering yes and maybe is 1.5, which a
 per-household rule could not express.
 
+The **FORECAST** section is kept separate from everything above it, because
+everything above is counted and everything in it is inferred: the rate of
+yes among people who have answered, applied to the people who have not. It
+projects twice — over the people already sent a Save the Date, and over the
+whole list — and says on the tab that early replies lean yes, so both read
+high. Do not merge it into the counted sections.
+
 The join is `Cartons` → (by name) `Invites` → (by household token) `RSVPs`. Two
 things fall out of it and are reported rather than hidden: cards whose names are
 not on `Invites` (marked in the card table), and replies whose token is
