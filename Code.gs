@@ -588,6 +588,13 @@ function cartonHasCoupleTitle(text) {
 }
 
 // Expand per-card rows into one entry per seat, matching the original import.
+// Names a resolved column for the log, so a header that is read wrongly is
+// visible in one line rather than inferred from the damage downstream.
+function colName(header, i) {
+  if (i === -1 || i === undefined) return '(none)';
+  return '"' + (header[i] === undefined ? '?' : header[i]) + '"';
+}
+
 function expandCartons(sheet) {
   const rows = sheet.getDataRange().getValues();
   if (rows.length < 2) return [];
@@ -597,7 +604,8 @@ function expandCartons(sheet) {
   const taken = {};
   // Exact header matches first: "prénom" contains "nom", so a substring
   // search would resolve the surname column onto the first-name column.
-  const find = function(names, fallback) {
+  // Returns -1 when the column is genuinely not there; see below.
+  const find = function(names) {
     for (let j = 0; j < names.length; j++) {
       for (let i = 0; i < header.length; i++) {
         if (!taken[i] && header[i] === names[j]) { taken[i] = true; return i; }
@@ -608,15 +616,38 @@ function expandCartons(sheet) {
         if (!taken[i] && header[i].indexOf(names[j]) !== -1) { taken[i] = true; return i; }
       }
     }
-    taken[fallback] = true;
-    return fallback;
+    return -1;
   };
-  const cTag   = find(['invite', 'invité'], 3);
-  const cFirst = find(['prénom', 'prenom', 'first name', 'first'], 4);
-  const cWife  = find(['prénom femme', 'prenom femme', 'femme', 'wife'], 7);
-  const cLast  = find(['nom', 'last name', 'last', 'surname'], 5);
-  const cExtra = find(['supplément', 'supplement'], 6);
-  const cNb    = find(['nb', 'nombre', 'count'], 8);
+  let cTag   = find(['invite', 'invité']);
+  let cFirst = find(['prénom', 'prenom', 'first name', 'first']);
+  // The partner column has been called several things. "prénom partner" must
+  // be tried before the bare "prénom" synonyms or it would never be reached,
+  // and before "partner" so a column called only "Partner" still works.
+  let cWife  = find(['prénom partner', 'prenom partner', 'prénom femme', 'prenom femme',
+                     'prénom conjoint', 'prenom conjoint', 'partner', 'femme', 'épouse',
+                     'epouse', 'conjoint', 'conjointe', 'spouse', 'wife']);
+  let cLast  = find(['nom', 'last name', 'last', 'surname']);
+  let cExtra = find(['supplément', 'supplement']);
+  let cNb    = find(['nb', 'nombre', 'count']);
+
+  // A column we cannot find by name is ABSENT, not at some guessed position.
+  // These used to fall back to fixed indexes, so renaming "Prénom Femme" to
+  // "Prénom Partner" silently resolved the partner onto "Enfants (sans diner)"
+  // and every card with children produced a guest named "2" or "3".
+  // The fixed positions are kept for a sheet whose header row says nothing at
+  // all, which is the only case they were ever right for.
+  if (cFirst === -1 || cLast === -1 || cNb === -1) {
+    if (cTag   === -1) cTag   = 3;
+    if (cFirst === -1) cFirst = 4;
+    if (cWife  === -1) cWife  = 7;
+    if (cLast  === -1) cLast  = 5;
+    if (cExtra === -1) cExtra = 6;
+    if (cNb    === -1) cNb    = 8;
+  }
+  Logger.log('Card columns read as — tag:' + colName(header, cTag) +
+             ' first:' + colName(header, cFirst) + ' last:' + colName(header, cLast) +
+             ' partner:' + colName(header, cWife) + ' extra:' + colName(header, cExtra) +
+             ' nb:' + colName(header, cNb));
 
   const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
 
@@ -2365,6 +2396,18 @@ function buildDashboard() {
       if (c.std) t.sentAnsweredPeople += c.yes + c.maybe + c.no;
     }
   });
+  // Seats still to hear from, counted CARD BY CARD. Summing the two totals
+  // and subtracting would let a card answered for more people than it seats
+  // — a guest bringing someone — cancel out a card nobody has answered.
+  let silentAll = 0, silentTold = 0;
+  cardOrder.forEach(function(ci) {
+    const c = cards[ci];
+    const got = c.yes + c.maybe + c.no;
+    const gap = Math.max(0, c.seats - got);
+    silentAll += gap;
+    if (c.std) silentTold += gap;
+  });
+
   const looseStats = { people: 0, yes: 0, maybe: 0, no: 0, fridayYes: 0 };
   loose.forEach(function(r) {
     r.attendees.forEach(function(a) {
@@ -2430,9 +2473,9 @@ function buildDashboard() {
   line('No', allNo, pct(allNo, answeredPeople) + ' of answers');
   line('', '', '');
   line('Expected to come', expected, 'yes + half of each maybe');
-  line('Still unanswered, people', Math.max(0, t.seats - answeredPeople),
-       'at most this many more could come');
-  line('Best case', expected + Math.max(0, t.seats - answeredPeople),
+  line('Still unanswered, people', silentAll,
+       'seats on cards nobody has answered for');
+  line('Best case', expected + silentAll,
        'if every remaining person said yes');
 
   head('FRIDAY COCKTAIL');
@@ -2444,10 +2487,7 @@ function buildDashboard() {
   // counted; everything here is inferred from a rate, and a rate taken this
   // early leans high — the certain reply first, the unsure and the regrets
   // last. Read it as a direction, not a headcount.
-  const cardAnswered = t.yes + t.maybe + t.no;
   const rate = answeredPeople ? expected / answeredPeople : 0;
-  const silentTold = Math.max(0, t.stdSeats - t.sentAnsweredPeople);
-  const silentAll  = Math.max(0, t.seats - cardAnswered);
   const round1 = function(n) { return Math.round(n * 10) / 10; };
 
   head('FORECAST — inferred, not counted');

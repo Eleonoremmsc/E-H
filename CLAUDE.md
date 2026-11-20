@@ -135,6 +135,15 @@ everything else and says the column is missing.
 maybe = 0.5, no = 0. A couple answering yes and maybe is 1.5, which a
 per-household rule could not express.
 
+**Invited and answered come from different places and can disagree.** How many
+a card seats is `Nb` on `Cartons`; how many were answered for is the length of
+that reply's attendee list. A card seating two where only one person replied is
+an answered card contributing one person, with one seat still outstanding.
+Seats still to hear from are therefore summed **card by card**, as
+`max(0, seats − answered)` per card: subtracting one total from the other let a
+card answered for more people than it seats — a guest bringing someone — cancel
+out a card nobody had answered.
+
 The **FORECAST** section is kept separate from everything above it, because
 everything above is counted and everything in it is inferred: the rate of
 yes among people who have answered, applied to the people who have not. It
@@ -147,6 +156,22 @@ things fall out of it and are reported rather than hidden: cards whose names are
 not on `Invites` (marked in the card table), and replies whose token is
 `Self-added` or matches no card, which are listed at the foot of the tab and
 still counted in the totals.
+
+### Reading the `Cartons` columns
+
+`expandCartons()` finds each column by header name, not by position, so columns
+can be added or reordered freely. The partner column is recognised as `Prénom
+Partner`, `Prénom Femme`, `Partner`, `Conjoint`, `Épouse`, `Spouse` or `Wife`.
+
+**A column it cannot find by name is treated as absent, never guessed at.** It
+used to fall back to a fixed position, so renaming `Prénom Femme` to `Prénom
+Partner` resolved the partner onto `Enfants (sans diner)` and every card with
+children produced a guest whose first name was the number of children — "2
+Amr", "3 Aubéry". The fixed positions survive only for a sheet whose header row
+is unrecognisable, which is the one case they were ever right for.
+
+`compareGuestLists()` logs which column each field resolved to, in one line at
+the top of its output. Read it first when the comparison looks wrong.
 
 ### Households
 
@@ -336,6 +361,11 @@ sentences, not a bulleted changelog.
   sheet. That is inherent to this design and discoverable from the live site.
 - Never paste a Booking.com link with its `aid=` / `sid=` / `label=` parameters
   onto the site — those carry a personal session identifier. Strip to the bare URL.
+- **Never commit anything derived from the guest list** — names, addresses, who
+  has replied and what they said. The repository is public and git history keeps
+  a file even after it is deleted. Analysis output goes in a scratch directory
+  outside the repo and is handed to her directly; `.gitignore` carries patterns
+  for the usual names, but the rule is the point, not the patterns.
 
 **Open, waiting on her:**
 

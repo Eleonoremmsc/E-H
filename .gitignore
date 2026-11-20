@@ -3,3 +3,12 @@ node_modules
 .env
 .DS_Store
 save-the-date/out
+
+# This repository is public. Anything derived from the guest list — names,
+# addresses, who has replied and what they said — must not be committed, and
+# git history would keep it even after a delete. Analysis output belongs in a
+# scratch directory outside the repo.
+going-but-no-rsvp.txt
+*guest*list*.csv
+*guests*.csv
+rsvps*.txt
