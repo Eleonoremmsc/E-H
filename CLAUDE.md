@@ -157,6 +157,22 @@ not on `Invites` (marked in the card table), and replies whose token is
 `Self-added` or matches no card, which are listed at the foot of the tab and
 still counted in the totals.
 
+### Reading the `Cartons` columns
+
+`expandCartons()` finds each column by header name, not by position, so columns
+can be added or reordered freely. The partner column is recognised as `Prénom
+Partner`, `Prénom Femme`, `Partner`, `Conjoint`, `Épouse`, `Spouse` or `Wife`.
+
+**A column it cannot find by name is treated as absent, never guessed at.** It
+used to fall back to a fixed position, so renaming `Prénom Femme` to `Prénom
+Partner` resolved the partner onto `Enfants (sans diner)` and every card with
+children produced a guest whose first name was the number of children — "2
+Amr", "3 Aubéry". The fixed positions survive only for a sheet whose header row
+is unrecognisable, which is the one case they were ever right for.
+
+`compareGuestLists()` logs which column each field resolved to, in one line at
+the top of its output. Read it first when the comparison looks wrong.
+
 ### Households
 
 One row per guest, with a shared `household_token` per invitation. A couple is
