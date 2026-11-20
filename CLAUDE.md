@@ -345,6 +345,11 @@ sentences, not a bulleted changelog.
   sheet. That is inherent to this design and discoverable from the live site.
 - Never paste a Booking.com link with its `aid=` / `sid=` / `label=` parameters
   onto the site — those carry a personal session identifier. Strip to the bare URL.
+- **Never commit anything derived from the guest list** — names, addresses, who
+  has replied and what they said. The repository is public and git history keeps
+  a file even after it is deleted. Analysis output goes in a scratch directory
+  outside the repo and is handed to her directly; `.gitignore` carries patterns
+  for the usual names, but the rule is the point, not the patterns.
 
 **Open, waiting on her:**
 
