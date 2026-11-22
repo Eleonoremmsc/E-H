@@ -2576,25 +2576,37 @@ function buildDashboard() {
 
 
 // ══════════════════════════════════════════════════
-// THE FACEBOOK LIST — who has said they are coming over there
+// BOTH ANSWERS, SIDE BY SIDE, ON Invites
 //
-// The party invitation lives on another list as well, and people answer on
-// whichever one reaches them. tagFacebookReplies() reads that export and
-// ticks the matching cards on Cartons, so one sheet shows both answers.
+// People reply wherever the invitation reached them: on the website, or on
+// the party list kept elsewhere. Neither sheet alone says who is coming.
+// tagReplies() writes two columns on Invites — "Rep FB" and "Rep Website" —
+// each holding yes, maybe, no, or blank for no answer yet.
 //
-// To use it: paste the export into a tab called "FB" — two columns, a name
-// and a status, with a header row. Then run tagFacebookReplies(). It writes
-// the "Rep FB" column on Cartons and nothing else; run it again whenever the
-// export changes and it rewrites that column from scratch.
+// They go on Invites, not Cartons, because Invites has ONE ROW PER PERSON
+// and the answers are per person: there are couples here where one says yes
+// and the other maybe, which a single cell on a shared card could not hold.
+// Not on Guests either — that tab is wiped and rebuilt from RSVPs, so
+// anything written there is lost.
+//
+// To use it: paste the party-list export into a tab called "FB" (a name
+// column and a status column, with a header row), then run tagReplies().
+// It rewrites both columns from scratch each run and touches nothing else.
 // ══════════════════════════════════════════════════
 
-const FB_TAB        = 'FB';
-const FB_COLUMN     = 'Rep FB';
-const FB_YES        = ['going', 'yes', 'oui', 'ja'];
+const FB_TAB    = 'FB';
+const COL_FB    = 'Rep FB';
+const COL_WEB   = 'Rep Website';
+
+// What the two lists call an answer. Anything not listed is treated as no
+// answer yet — "Invited" on the party export means exactly that, not a no.
+const FB_YES   = ['going', 'yes', 'oui', 'ja', 'attending'];
+const FB_MAYBE = ['maybe', 'peut-etre', 'peut-être', 'vielleicht', 'interested'];
+const FB_NO    = ['no', 'non', 'nein', 'not going', "can't go", 'cant go', 'declined'];
 
 // Names that differ between the two lists, because people appear on one
 // under a married name, a maiden name or a shortened contact name. The key
-// is what the export says; the value is the name on the cards. Add to this
+// is what the export says; the value is the name on Invites. Add to this
 // rather than editing either list — neither of them is wrong.
 const FB_ALIASES = {
   'coralie assier de pompignan': 'Coralie Dabas',
@@ -2625,10 +2637,17 @@ function fbSurnameTokens(s) {
   });
 }
 
+function fbStatus(raw) {
+  const s = (raw || '').toString().trim().toLowerCase();
+  if (FB_YES.indexOf(s)   !== -1) return 'yes';
+  if (FB_MAYBE.indexOf(s) !== -1) return 'maybe';
+  if (FB_NO.indexOf(s)    !== -1) return 'no';
+  return '';
+}
+
 // Every way a written name could divide into given name and surname. Given
 // names here run to two words — Jean-Christophe, Louis Barthélémy — and the
-// export sometimes puts the surname first ("Huyghues Despointes Dimitri"),
-// so both ends are tried.
+// export sometimes puts the surname first ("Huyghues Despointes Dimitri").
 function fbSplits(name) {
   const t = normalizeName(name).split(' ').filter(Boolean);
   if (t.length < 2) return [{ first: t.join(' '), surn: [] }];
@@ -2638,94 +2657,148 @@ function fbSplits(name) {
   };
   // Longest given name first. "Anne-Isabelle de Bokay" must be tried as
   // Anne-Isabelle before it is tried as Anne, or it matches the Anne on a
-  // different card — there is one — and ticks the wrong invitation.
+  // different invitation — there is one — and marks the wrong person.
   for (let k = t.length - 1; k >= 1; k--) out.push({ first: t.slice(0, k).join(' '), surn: keep(t.slice(k)) });
   for (let k = t.length - 1; k >= 1; k--) out.push({ first: t.slice(-k).join(' '),  surn: keep(t.slice(0, -k)) });
   return out;
 }
 
-function tagFacebookReplies() {
+// Finds or appends a column by its header, so nothing already on the sheet
+// moves and running this twice does not add a second copy.
+function columnByHeader(sheet, title) {
+  const width = Math.max(1, sheet.getLastColumn());
+  const head = sheet.getRange(1, 1, 1, width).getValues()[0]
+    .map(function(h) { return (h === null || h === undefined ? '' : h.toString().trim().toLowerCase()); });
+  const at = head.indexOf(title.toLowerCase());
+  if (at !== -1) return at + 1;
+  const col = width + 1;
+  sheet.getRange(1, col).setValue(title);
+  return col;
+}
+
+function tagReplies() {
   const ss = SpreadsheetApp.openById(SHEET_ID);
-  const fb = ss.getSheetByName(FB_TAB);
-  if (!fb) {
-    Logger.log('PROBLEM: no "' + FB_TAB + '" tab. Paste the export into one — ' +
-               'a name column and a status column, with a header row.');
-    return;
-  }
-  const cartons = getCartonsSheet();
-  if (!cartons) { Logger.log('PROBLEM: could not find the card list.'); return; }
+  const invites = getGuestListSheet();
+  if (!invites) { Logger.log('PROBLEM: no guest-list tab found.'); return; }
 
   const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+  const rows = invites.getDataRange().getValues();
 
-  // ── Read the export. Find the name and status columns by header, and fall
-  //    back to the first two columns, which is what these exports look like.
-  const fbRows = fb.getDataRange().getValues();
-  if (fbRows.length < 2) { Logger.log('PROBLEM: the "' + FB_TAB + '" tab is empty.'); return; }
-  const fbHead = fbRows[0].map(function(h) { return S(h).toLowerCase(); });
-  let cName = fbHead.indexOf('name');
-  let cStat = fbHead.indexOf('status');
-  if (cName === -1) cName = 0;
-  if (cStat === -1) cStat = 1;
-
-  const going = [];
-  for (let i = 1; i < fbRows.length; i++) {
-    const n = S(fbRows[i][cName]);
-    const st = S(fbRows[i][cStat]).toLowerCase();
-    if (n && FB_YES.indexOf(st) !== -1) going.push(n);
+  // One entry per person on the guest list, carrying the row to write back to.
+  const people = [];
+  for (let i = 1; i < rows.length; i++) {
+    const first = S(rows[i][1]), last = S(rows[i][2]);
+    if (!first && !last) continue;
+    people.push({ row: i + 1, first: first, last: last, token: S(rows[i][4]),
+                  fn: normalizeName(first), surn: fbSurnameTokens(last),
+                  fb: '', web: '' });
   }
-  if (!going.length) {
-    Logger.log('PROBLEM: no row on "' + FB_TAB + '" has a status of ' + FB_YES.join(' / ') + '.');
-    return;
-  }
+  if (!people.length) { Logger.log('PROBLEM: no named rows on the guest list.'); return; }
 
-  // ── Expand the cards into people, exactly as the comparison does.
-  const people = expandCartons(cartons).map(function(p) {
-    return { row: p.sheetRow, first: normalizeName(p.firstName),
-             surn: fbSurnameTokens(p.lastName),
-             label: p.firstName + ' ' + p.lastName };
-  });
+  // ── The party list ───────────────────────────────
+  let fbSeen = 0;
+  const fbMissed = [];
+  const fb = ss.getSheetByName(FB_TAB);
+  if (!fb) {
+    Logger.log('No "' + FB_TAB + '" tab, so "' + COL_FB + '" is left empty. ' +
+               'Paste the export into one to fill it.');
+  } else {
+    const fbRows = fb.getDataRange().getValues();
+    const fbHead = (fbRows[0] || []).map(function(h) { return S(h).toLowerCase(); });
+    let cName = fbHead.indexOf('name');   if (cName === -1) cName = 0;
+    let cStat = fbHead.indexOf('status'); if (cStat === -1) cStat = 1;
 
-  const tick = {}, matched = [], missed = [];
-  going.forEach(function(name) {
-    const target = FB_ALIASES[normalizeName(name)] || name;
-    const tries = fbSplits(target);
-    let hit = null;
-    for (let i = 0; i < tries.length && !hit; i++) {
-      const t = tries[i];
-      if (!t.surn.length) continue;
-      for (let j = 0; j < people.length && !hit; j++) {
-        const p = people[j];
-        if (p.first !== t.first) continue;
-        for (let k = 0; k < t.surn.length; k++) {
-          if (p.surn.indexOf(t.surn[k]) !== -1) { hit = p; break; }
+    for (let i = 1; i < fbRows.length; i++) {
+      const name = S(fbRows[i][cName]);
+      const answer = fbStatus(fbRows[i][cStat]);
+      if (!name || !answer) continue;              // "Invited" is not an answer
+      fbSeen++;
+      const target = FB_ALIASES[normalizeName(name)] || name;
+      const tries = fbSplits(target);
+      let hit = null;
+      for (let t = 0; t < tries.length && !hit; t++) {
+        if (!tries[t].surn.length) continue;
+        for (let j = 0; j < people.length && !hit; j++) {
+          if (people[j].fn !== tries[t].first) continue;
+          for (let k = 0; k < tries[t].surn.length; k++) {
+            if (people[j].surn.indexOf(tries[t].surn[k]) !== -1) { hit = people[j]; break; }
+          }
         }
       }
+      if (hit) hit.fb = answer;
+      else fbMissed.push(name + ' (' + answer + ')');
     }
-    if (hit) { tick[hit.row] = true; matched.push(name + '  ->  ' + hit.label); }
-    else missed.push(name);
-  });
-
-  // ── Write the column. Its position is found by header, and it is appended
-  //    if it is not there yet, so nothing already on the sheet moves.
-  const head = cartons.getRange(1, 1, 1, cartons.getLastColumn()).getValues()[0]
-    .map(function(h) { return S(h).toLowerCase(); });
-  let col = head.indexOf(FB_COLUMN.toLowerCase()) + 1;
-  if (col === 0) {
-    col = cartons.getLastColumn() + 1;
-    cartons.getRange(1, col).setValue(FB_COLUMN);
   }
 
-  const lastRow = people.reduce(function(m, p) { return Math.max(m, p.row); }, 1);
-  const out = [];
-  for (let r = 2; r <= lastRow; r++) out.push([tick[r] ? true : '']);
-  cartons.getRange(2, col, out.length, 1).setValues(out);
+  // ── The website ──────────────────────────────────
+  // Replies are keyed by household token; within a household the attendees
+  // are matched to people by given name, which is how the form collected them.
+  const byToken = {};
+  people.forEach(function(p) {
+    if (!p.token) return;
+    (byToken[p.token] = byToken[p.token] || []).push(p);
+  });
 
-  Logger.log('"' + FB_COLUMN + '" written in column ' + col + '. ' +
-             going.length + ' said yes on the other list, ' + matched.length +
-             ' matched to a card, ' + Object.keys(tick).length + ' cards ticked.');
-  if (missed.length) {
-    Logger.log('  NOT MATCHED to any card (' + missed.length + ') — add them to ' +
-               'FB_ALIASES if they are on the cards under another name:');
-    missed.forEach(function(m) { Logger.log('    ' + m); });
+  const rsvps = getSheet().getDataRange().getValues();
+  const rHead = (rsvps[0] || []).map(function(h) { return S(h).toLowerCase(); });
+  const cAtt = rHead.indexOf('attendees (json)');
+  const cTok = rHead.indexOf('household token');
+  let webSeen = 0;
+  const webMissed = [];
+
+  for (let i = 1; i < rsvps.length; i++) {
+    const raw = S(rsvps[i][cAtt]);
+    if (!raw) continue;
+    let attendees;
+    try { attendees = JSON.parse(raw); } catch (e) { continue; }
+    const token = S(rsvps[i][cTok]);
+    const household = byToken[token] || [];
+    (attendees || []).forEach(function(a) {
+      const answer = S(a.status).toLowerCase();
+      if (['yes', 'maybe', 'no'].indexOf(answer) === -1) return;
+      webSeen++;
+      const want = normalizeName(a.firstName);
+      let hit = null;
+      for (let j = 0; j < household.length && !hit; j++) {
+        if (household[j].fn === want) hit = household[j];
+      }
+      // A household of one that answered for one person needs no name match.
+      if (!hit && household.length === 1 && (attendees || []).length === 1) hit = household[0];
+      if (hit) hit.web = answer;
+      else webMissed.push(S(a.firstName) + ' ' + S(a.lastName) + ' (' + answer + ')' +
+                          (token && token !== 'Self-added' ? '' : ' — self-added'));
+    });
+  }
+
+  // ── Write both columns ───────────────────────────
+  const colFb  = columnByHeader(invites, COL_FB);
+  const colWeb = columnByHeader(invites, COL_WEB);
+  const lastRow = people[people.length - 1].row;
+  const outFb = [], outWeb = [];
+  const byRow = {};
+  people.forEach(function(p) { byRow[p.row] = p; });
+  for (let r = 2; r <= lastRow; r++) {
+    outFb.push([byRow[r] ? byRow[r].fb : '']);
+    outWeb.push([byRow[r] ? byRow[r].web : '']);
+  }
+  invites.getRange(2, colFb,  outFb.length,  1).setValues(outFb);
+  invites.getRange(2, colWeb, outWeb.length, 1).setValues(outWeb);
+
+  const count = function(key, val) {
+    return people.filter(function(p) { return p[key] === val; }).length;
+  };
+  Logger.log('"' + COL_FB + '" in column ' + colFb + ', "' + COL_WEB + '" in column ' + colWeb + '.');
+  Logger.log('  party list : ' + fbSeen + ' answers read — yes ' + count('fb', 'yes') +
+             ', maybe ' + count('fb', 'maybe') + ', no ' + count('fb', 'no'));
+  Logger.log('  website    : ' + webSeen + ' answers read — yes ' + count('web', 'yes') +
+             ', maybe ' + count('web', 'maybe') + ', no ' + count('web', 'no'));
+  if (fbMissed.length) {
+    Logger.log('  party-list names not on the guest list (' + fbMissed.length + ') — ' +
+               'add them to FB_ALIASES if they are there under another name:');
+    fbMissed.forEach(function(m) { Logger.log('    ' + m); });
+  }
+  if (webMissed.length) {
+    Logger.log('  website answers not placed on a person (' + webMissed.length + '):');
+    webMissed.forEach(function(m) { Logger.log('    ' + m); });
   }
 }
