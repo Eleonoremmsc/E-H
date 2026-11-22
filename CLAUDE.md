@@ -157,6 +157,38 @@ not on `Invites` (marked in the card table), and replies whose token is
 `Self-added` or matches no card, which are listed at the foot of the tab and
 still counted in the totals.
 
+### Both answers side by side
+
+`tagReplies()` writes two columns on **`Invites`** — `Rep FB` and
+`Rep Website` — each holding `yes`, `maybe`, `no`, or blank for no answer yet.
+It rewrites both from scratch on every run, finds each column by header and
+appends it if absent, and touches nothing else.
+
+**They live on `Invites`, not `Cartons`, because `Invites` has one row per
+person and the answers are per person.** There are couples here where one
+says yes and the other maybe — a single cell on a shared card could not hold
+that. Not `Guests` either: that tab is wiped and rebuilt from `RSVPs`.
+
+The party-list export goes in a tab called **`FB`** (Name + Status, with
+headers). Its statuses map through `FB_YES` / `FB_MAYBE` / `FB_NO`; anything
+else, **`Invited` included**, means no answer yet, not a no.
+
+Matching the two lists is the hard part and `FB_ALIASES` is where it is
+solved: the same person is Maud Grand on one list and Maud Arminjon on the
+other, Guilherme Fabre and Guillaume Fabre, Pierre Mlr and Pierre Muller.
+Add to that map rather than editing either sheet — neither is wrong.
+
+Beyond the aliases a name is split into given name and surname every way it
+could divide, because given names run to two words and the export sometimes
+writes the surname first. **The splits are tried longest-given-name-first,
+and that ordering is load-bearing**: tried the other way, `Anne-Isabelle de
+Bokay` matches the `Anne de Bokay` on another invitation and marks the wrong
+person. Both exist. An earlier version did exactly that.
+
+Website answers are placed by household token, then by given name within
+that household. Anything that cannot be placed — a self-added reply, a name
+on neither list — is reported by name in the log rather than dropped.
+
 ### Reading the `Cartons` columns
 
 `expandCartons()` finds each column by header name, not by position, so columns
