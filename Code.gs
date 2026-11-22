@@ -2573,3 +2573,159 @@ function buildDashboard() {
                'they are listed at the foot of the tab.');
   }
 }
+
+
+// ══════════════════════════════════════════════════
+// THE FACEBOOK LIST — who has said they are coming over there
+//
+// The party invitation lives on another list as well, and people answer on
+// whichever one reaches them. tagFacebookReplies() reads that export and
+// ticks the matching cards on Cartons, so one sheet shows both answers.
+//
+// To use it: paste the export into a tab called "FB" — two columns, a name
+// and a status, with a header row. Then run tagFacebookReplies(). It writes
+// the "Rep FB" column on Cartons and nothing else; run it again whenever the
+// export changes and it rewrites that column from scratch.
+// ══════════════════════════════════════════════════
+
+const FB_TAB        = 'FB';
+const FB_COLUMN     = 'Rep FB';
+const FB_YES        = ['going', 'yes', 'oui', 'ja'];
+
+// Names that differ between the two lists, because people appear on one
+// under a married name, a maiden name or a shortened contact name. The key
+// is what the export says; the value is the name on the cards. Add to this
+// rather than editing either list — neither of them is wrong.
+const FB_ALIASES = {
+  'coralie assier de pompignan': 'Coralie Dabas',
+  'guilherme fabre':             'Guillaume Fabre',
+  'jean christophe rey':         'Jean-Christophe de Reynal de Saint-Michel',
+  'marion assier de pompignan':  'Marion de Curieres de Castelnau',
+  'maud grand':                  'Maud Arminjon',
+  'victoria frey':               'Victoria Mattei',
+  'gwendoline fabre':            'Gwendoline Lafosse-Marin',
+  'anne isabelle deebee':        'Anne-Isabelle de Bokay',
+  'laetitia djhm':               'Laeticia de Jaham',
+  'pierre mlr':                  'Pierre Muller',
+  'guillaume trrnr gr':          'Guillaume Gouyer',
+  'l barth fbr':                 'Louis Barthelemy Fabre',
+  'louis lm':                    'Louis Lafosse-Marin',
+  'philippe lm':                 'Philippe Lafosse-Marin',
+  'tonie jneid':                 'Antoinette Jneid',
+};
+
+// Particles carry no weight in a surname comparison: "de Ligny" on one list
+// is "de Ligny Tandefelt" on the other, and only "ligny" tells them apart.
+const FB_PARTICLES = ['de','du','des','da','di','del','la','le','von','van',
+                      'der','den','zu','of','freiin','et','and','und'];
+
+function fbSurnameTokens(s) {
+  return normalizeName(s).split(' ').filter(function(t) {
+    return t && FB_PARTICLES.indexOf(t) === -1;
+  });
+}
+
+// Every way a written name could divide into given name and surname. Given
+// names here run to two words — Jean-Christophe, Louis Barthélémy — and the
+// export sometimes puts the surname first ("Huyghues Despointes Dimitri"),
+// so both ends are tried.
+function fbSplits(name) {
+  const t = normalizeName(name).split(' ').filter(Boolean);
+  if (t.length < 2) return [{ first: t.join(' '), surn: [] }];
+  const out = [];
+  const keep = function(a) {
+    return a.filter(function(x) { return FB_PARTICLES.indexOf(x) === -1; });
+  };
+  // Longest given name first. "Anne-Isabelle de Bokay" must be tried as
+  // Anne-Isabelle before it is tried as Anne, or it matches the Anne on a
+  // different card — there is one — and ticks the wrong invitation.
+  for (let k = t.length - 1; k >= 1; k--) out.push({ first: t.slice(0, k).join(' '), surn: keep(t.slice(k)) });
+  for (let k = t.length - 1; k >= 1; k--) out.push({ first: t.slice(-k).join(' '),  surn: keep(t.slice(0, -k)) });
+  return out;
+}
+
+function tagFacebookReplies() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const fb = ss.getSheetByName(FB_TAB);
+  if (!fb) {
+    Logger.log('PROBLEM: no "' + FB_TAB + '" tab. Paste the export into one — ' +
+               'a name column and a status column, with a header row.');
+    return;
+  }
+  const cartons = getCartonsSheet();
+  if (!cartons) { Logger.log('PROBLEM: could not find the card list.'); return; }
+
+  const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+
+  // ── Read the export. Find the name and status columns by header, and fall
+  //    back to the first two columns, which is what these exports look like.
+  const fbRows = fb.getDataRange().getValues();
+  if (fbRows.length < 2) { Logger.log('PROBLEM: the "' + FB_TAB + '" tab is empty.'); return; }
+  const fbHead = fbRows[0].map(function(h) { return S(h).toLowerCase(); });
+  let cName = fbHead.indexOf('name');
+  let cStat = fbHead.indexOf('status');
+  if (cName === -1) cName = 0;
+  if (cStat === -1) cStat = 1;
+
+  const going = [];
+  for (let i = 1; i < fbRows.length; i++) {
+    const n = S(fbRows[i][cName]);
+    const st = S(fbRows[i][cStat]).toLowerCase();
+    if (n && FB_YES.indexOf(st) !== -1) going.push(n);
+  }
+  if (!going.length) {
+    Logger.log('PROBLEM: no row on "' + FB_TAB + '" has a status of ' + FB_YES.join(' / ') + '.');
+    return;
+  }
+
+  // ── Expand the cards into people, exactly as the comparison does.
+  const people = expandCartons(cartons).map(function(p) {
+    return { row: p.sheetRow, first: normalizeName(p.firstName),
+             surn: fbSurnameTokens(p.lastName),
+             label: p.firstName + ' ' + p.lastName };
+  });
+
+  const tick = {}, matched = [], missed = [];
+  going.forEach(function(name) {
+    const target = FB_ALIASES[normalizeName(name)] || name;
+    const tries = fbSplits(target);
+    let hit = null;
+    for (let i = 0; i < tries.length && !hit; i++) {
+      const t = tries[i];
+      if (!t.surn.length) continue;
+      for (let j = 0; j < people.length && !hit; j++) {
+        const p = people[j];
+        if (p.first !== t.first) continue;
+        for (let k = 0; k < t.surn.length; k++) {
+          if (p.surn.indexOf(t.surn[k]) !== -1) { hit = p; break; }
+        }
+      }
+    }
+    if (hit) { tick[hit.row] = true; matched.push(name + '  ->  ' + hit.label); }
+    else missed.push(name);
+  });
+
+  // ── Write the column. Its position is found by header, and it is appended
+  //    if it is not there yet, so nothing already on the sheet moves.
+  const head = cartons.getRange(1, 1, 1, cartons.getLastColumn()).getValues()[0]
+    .map(function(h) { return S(h).toLowerCase(); });
+  let col = head.indexOf(FB_COLUMN.toLowerCase()) + 1;
+  if (col === 0) {
+    col = cartons.getLastColumn() + 1;
+    cartons.getRange(1, col).setValue(FB_COLUMN);
+  }
+
+  const lastRow = people.reduce(function(m, p) { return Math.max(m, p.row); }, 1);
+  const out = [];
+  for (let r = 2; r <= lastRow; r++) out.push([tick[r] ? true : '']);
+  cartons.getRange(2, col, out.length, 1).setValues(out);
+
+  Logger.log('"' + FB_COLUMN + '" written in column ' + col + '. ' +
+             going.length + ' said yes on the other list, ' + matched.length +
+             ' matched to a card, ' + Object.keys(tick).length + ' cards ticked.');
+  if (missed.length) {
+    Logger.log('  NOT MATCHED to any card (' + missed.length + ') — add them to ' +
+               'FB_ALIASES if they are on the cards under another name:');
+    missed.forEach(function(m) { Logger.log('    ' + m); });
+  }
+}
