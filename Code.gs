@@ -96,6 +96,7 @@ function handleSubmit(data) {
   // Captured straight after the append so the confirmation result lands on
   // the row we just wrote.
   const row = sheet.getLastRow();
+  sheet.getRange(row, 13).setValue(data.phone || '');
 
   writeGuests(id, now, data);
   markHouseholdResponded(householdToken);
@@ -133,6 +134,7 @@ function handleUpdate(data) {
       sheet.getRange(row, 9).setValue(new Date().toISOString());
       sheet.getRange(row, 10).setValue(householdToken || 'Self-added');
       sheet.getRange(row, 11).setValue(data.country || '');
+      sheet.getRange(row, 13).setValue(data.phone || '');
 
       writeGuests(id, submitted, data, true);
       markHouseholdResponded(householdToken);
@@ -169,6 +171,7 @@ function getByToken(token) {
         success: true,
         data: {
           email:          rows[i][2],
+          phone:          rows[i][12] || '',
           lastName:       rows[i][3],
           firstName:      rows[i][4],
           address:        rows[i][5],
@@ -289,6 +292,7 @@ function lookupByToken(data) {
         editToken: rows[i][7],
         data: {
           email:     rows[i][2],
+          phone:     rows[i][12] || '',
           lastName:  rows[i][3],
           firstName: rows[i][4],
           address:   rows[i][5],
@@ -1058,7 +1062,7 @@ function sendEmail(data, editUrl, isUpdate) {
 const RSVP_HEADERS = [
   'ID', 'Submitted', 'Email', 'Last Name', 'First Name(s)',
   'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
-  'Country', 'Confirmation email',
+  'Country', 'Confirmation email', 'Phone',
 ];
 // Guests is rebuilt from RSVPs whenever this layout changes (rebuildGuests),
 // so unlike RSVP_HEADERS its columns may be reordered.
@@ -2817,8 +2821,8 @@ function tagReplies() {
 // already holds something different it reports a conflict and leaves the
 // existing value alone, because yours may well be the better of the two.
 //
-// Phone is not copied: the RSVP form does not ask for one. Invites has a
-// phone column, but nothing on the website fills it.
+// Phone travels with the email: both belong to the person who filled the
+// form in, not to the whole invitation.
 // ══════════════════════════════════════════════════
 
 const CONTACT_REPORT_TAB = 'Contact import';
@@ -2841,7 +2845,8 @@ function runRsvpContactImport(apply) {
     if (!tok) continue;
     (byToken[tok] = byToken[tok] || []).push({
       row: i + 1, first: S(invRows[i][1]), last: S(invRows[i][2]),
-      email: S(invRows[i][8]), address: S(invRows[i][12]), country: S(invRows[i][13]),
+      email: S(invRows[i][8]), phone: S(invRows[i][9]),
+      address: S(invRows[i][12]), country: S(invRows[i][13]),
     });
   }
 
@@ -2852,6 +2857,7 @@ function runRsvpContactImport(apply) {
   const cFirst = rHead.indexOf('first name(s)'), cAddr = rHead.indexOf('address');
   const cTok = rHead.indexOf('household token'), cCountry = rHead.indexOf('country');
   const cUpd = rHead.indexOf('updated'), cSub = rHead.indexOf('submitted');
+  const cPhone = rHead.indexOf('phone');
 
   const latest = {};
   for (let i = 1; i < rsvps.length; i++) {
@@ -2862,6 +2868,7 @@ function runRsvpContactImport(apply) {
       latest[tok] = { when: when, row: i + 1,
                       email: S(rsvps[i][cEmail]), address: S(rsvps[i][cAddr]),
                       country: S(rsvps[i][cCountry]),
+                      phone: cPhone === -1 ? '' : S(rsvps[i][cPhone]),
                       first: S(rsvps[i][cFirst]), last: S(rsvps[i][cLast]) };
     }
   }
@@ -2872,6 +2879,7 @@ function runRsvpContactImport(apply) {
   const place = function(target, col, field, value, label) {
     if (!value) return;
     const have = field === 'email' ? target.email
+               : field === 'phone' ? target.phone
                : field === 'address' ? target.address : target.country;
     if (have && normalizeName(have) === normalizeName(value)) {
       report.push([label, field, value, 'already the same', target.row]); already++; return;
@@ -2913,7 +2921,10 @@ function runRsvpContactImport(apply) {
         if (!who && normalizeName(m.first) === normalizeName(r.first)) who = m;
       });
     }
-    if (who) place(who, 9, 'email', r.email, label);
+    if (who) {
+      place(who, 9, 'email', r.email, label);
+      place(who, 10, 'phone', r.phone, label);
+    }
     else if (r.email) {
       report.push([label, 'email', r.email,
                    'NOT PLACED — "' + r.first + ' ' + r.last + '" matches nobody on this invitation', '']);

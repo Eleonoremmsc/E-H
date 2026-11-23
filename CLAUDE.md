@@ -87,6 +87,28 @@ instead.
 `script.js` POSTs JSON to `RSVP_ENDPOINT`, a Google Apps Script Web App.
 Actions: `submit`, `update`, `lookupByName`, `lookupByToken`, `addSong`, `listSongs`.
 
+### The two links that open somebody's own RSVP
+
+| Parameter | Carries | Where it comes from |
+| --- | --- | --- |
+| `?rsvp=<edit token>` | one **reply** | the confirmation email |
+| `?h=<household token>` | one **invitation** | the QR on a printed invitation |
+
+**Both skip the password gate**, and `?h=` does so deliberately: the token
+identifies the invitation, so the password has nothing left to protect, and
+asking for one after somebody scans their own invitation puts back the
+friction the QR removes. Anyone holding the paper can then see and change
+that invitation's answer — the same as the emailed edit links.
+
+Both are stripped from the URL on arrival, open the RSVP automatically, and
+are remembered in `localStorage`, so a guest who comes back without the
+paper is still recognised. `?h=` **replaces** whatever that browser had
+stored, because a phone may be shared.
+
+The household token is per **invitation**, not per person. Everyone on a card
+shares one, which is how these replies actually arrive — a parent answering
+for children, one partner for both.
+
 ### ⚠️ The deployment rule
 
 **Deploy → Manage deployments → ✏️ edit → New version.** This keeps the URL.
@@ -203,10 +225,10 @@ Writing it across the household would claim a wife's address is her
 husband's. If the name on the reply matches nobody there, it is reported
 rather than placed on a guessed row.
 
-**Phone is not copied, because the RSVP form does not ask for one.** There is
-no phone input on the page and no phone column in `RSVP_HEADERS`; `Invites`
-column J is filled only by hand. Adding one means a form field, a new column
-appended to `RSVPs`, and a line here.
+**Phone travels with the email**, onto the same one person: both were given
+by whoever filled the form in. The field is optional on the form, and
+`Phone` is the last column of `RSVPs` — appended, like every column added
+there since.
 
 Nothing copies contact details automatically when a reply arrives — only
 `rsvp_status` is written back to `Invites`, by `markHouseholdResponded()`.
@@ -313,7 +335,7 @@ than French** — test all three after any nav change, not just English.
 
 Three rules:
 
-1. **All three languages must stay in parity** — same keys, same count. Currently 254 each.
+1. **All three languages must stay in parity** — same keys, same count. Currently 255 each.
 2. **`applyLang()` assigns `textContent`, not `innerHTML`.** HTML entities render
    literally: write `&`, never `&amp;`. This has caused a visible bug before
    ("Trauung &amp; Empfang").
