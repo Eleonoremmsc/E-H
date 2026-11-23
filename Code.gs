@@ -2802,3 +2802,133 @@ function tagReplies() {
     webMissed.forEach(function(m) { Logger.log('    ' + m); });
   }
 }
+
+
+// ══════════════════════════════════════════════════
+// CONTACT DETAILS FROM THE REPLIES
+//
+// A guest typing their address into the RSVP is the only place some of those
+// addresses exist — the name search deliberately never sends an address to
+// the browser, so what they type is their own, not a confirmation of yours.
+// importRsvpContacts() copies those details onto Invites.
+//
+// Run previewRsvpContacts() first. Both write a report tab; only the second
+// one touches Invites, and it FILLS EMPTY CELLS ONLY. Where the guest list
+// already holds something different it reports a conflict and leaves the
+// existing value alone, because yours may well be the better of the two.
+//
+// Phone is not copied: the RSVP form does not ask for one. Invites has a
+// phone column, but nothing on the website fills it.
+// ══════════════════════════════════════════════════
+
+const CONTACT_REPORT_TAB = 'Contact import';
+
+function previewRsvpContacts() { runRsvpContactImport(false); }
+function importRsvpContacts()  { runRsvpContactImport(true); }
+
+function runRsvpContactImport(apply) {
+  const ss     = SpreadsheetApp.openById(SHEET_ID);
+  const sheet  = getGuestListSheet();
+  if (!sheet) { Logger.log('PROBLEM: no guest-list tab found.'); return; }
+
+  const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+  const invRows = sheet.getDataRange().getValues();
+
+  // Guest-list rows grouped by the invitation they belong to.
+  const byToken = {};
+  for (let i = 1; i < invRows.length; i++) {
+    const tok = S(invRows[i][4]);
+    if (!tok) continue;
+    (byToken[tok] = byToken[tok] || []).push({
+      row: i + 1, first: S(invRows[i][1]), last: S(invRows[i][2]),
+      email: S(invRows[i][8]), address: S(invRows[i][12]), country: S(invRows[i][13]),
+    });
+  }
+
+  // One reply per invitation: the most recently updated, if there are two.
+  const rsvps = getSheet().getDataRange().getValues();
+  const rHead = (rsvps[0] || []).map(function(h) { return S(h).toLowerCase(); });
+  const cEmail = rHead.indexOf('email'), cLast = rHead.indexOf('last name');
+  const cFirst = rHead.indexOf('first name(s)'), cAddr = rHead.indexOf('address');
+  const cTok = rHead.indexOf('household token'), cCountry = rHead.indexOf('country');
+  const cUpd = rHead.indexOf('updated'), cSub = rHead.indexOf('submitted');
+
+  const latest = {};
+  for (let i = 1; i < rsvps.length; i++) {
+    const tok = S(rsvps[i][cTok]);
+    if (!tok || tok === 'Self-added' || !byToken[tok]) continue;
+    const when = S(rsvps[i][cUpd]) || S(rsvps[i][cSub]);
+    if (!latest[tok] || when > latest[tok].when) {
+      latest[tok] = { when: when, row: i + 1,
+                      email: S(rsvps[i][cEmail]), address: S(rsvps[i][cAddr]),
+                      country: S(rsvps[i][cCountry]),
+                      first: S(rsvps[i][cFirst]), last: S(rsvps[i][cLast]) };
+    }
+  }
+
+  const report = [['Invitation', 'Field', 'From the reply', 'Result', 'Guest-list row']];
+  let filled = 0, conflict = 0, already = 0;
+
+  const place = function(target, col, field, value, label) {
+    if (!value) return;
+    const have = field === 'email' ? target.email
+               : field === 'address' ? target.address : target.country;
+    if (have && normalizeName(have) === normalizeName(value)) {
+      report.push([label, field, value, 'already the same', target.row]); already++; return;
+    }
+    if (have) {
+      report.push([label, field, value,
+                   'CONFLICT — guest list has "' + have + '", left unchanged', target.row]);
+      conflict++; return;
+    }
+    if (apply) sheet.getRange(target.row, col).setValue(value);
+    report.push([label, field, value, apply ? 'filled in' : 'would be filled in', target.row]);
+    filled++;
+  };
+
+  Object.keys(latest).forEach(function(tok) {
+    const r = latest[tok];
+    const members = byToken[tok];
+    const label = buildHouseholdLabel(members.map(function(m) {
+      return { firstName: m.first, lastName: m.last };
+    })) || members[0].first + ' ' + members[0].last;
+
+    // The address belongs to the invitation, so it goes on every member.
+    members.forEach(function(m) {
+      place(m, 13, 'address', r.address, label);
+      place(m, 14, 'country', r.country, label);
+    });
+
+    // The email belongs to ONE person — whoever filled the form in. Writing
+    // it onto the whole household would claim a wife's address is her
+    // husband's. Match by name; if the name does not match anyone, say so
+    // rather than guessing a row.
+    const want = normalizeName(r.first + ' ' + r.last);
+    let who = null;
+    members.forEach(function(m) {
+      if (!who && normalizeName(m.first + ' ' + m.last) === want) who = m;
+    });
+    if (!who) {
+      members.forEach(function(m) {
+        if (!who && normalizeName(m.first) === normalizeName(r.first)) who = m;
+      });
+    }
+    if (who) place(who, 9, 'email', r.email, label);
+    else if (r.email) {
+      report.push([label, 'email', r.email,
+                   'NOT PLACED — "' + r.first + ' ' + r.last + '" matches nobody on this invitation', '']);
+    }
+  });
+
+  let out = ss.getSheetByName(CONTACT_REPORT_TAB);
+  if (!out) out = ss.insertSheet(CONTACT_REPORT_TAB);
+  out.clear();
+  out.getRange(1, 1, report.length, report[0].length).setValues(report);
+  out.getRange(1, 1, 1, report[0].length).setFontWeight('bold');
+  out.setFrozenRows(1);
+
+  Logger.log((apply ? 'Contacts imported. ' : 'PREVIEW — nothing written. ') +
+             'filled ' + filled + ' · already the same ' + already + ' · conflicts ' + conflict);
+  Logger.log('Full report on the "' + CONTACT_REPORT_TAB + '" tab.');
+  if (!apply) Logger.log('Run importRsvpContacts() to apply.');
+}

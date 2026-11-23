@@ -189,6 +189,30 @@ Website answers are placed by household token, then by given name within
 that household. Anything that cannot be placed — a self-added reply, a name
 on neither list — is reported by name in the log rather than dropped.
 
+### Contact details from the replies
+
+`previewRsvpContacts()` / `importRsvpContacts()` copy email, address and
+country from `RSVPs` onto `Invites`, matched by household token. **They fill
+empty cells only**: where the guest list already holds something different
+the report says CONFLICT and the existing value stays, because yours may be
+the better of the two.
+
+Address and country are written to every member of the invitation; **email
+is written to one person** — whoever filled the form in, matched by name.
+Writing it across the household would claim a wife's address is her
+husband's. If the name on the reply matches nobody there, it is reported
+rather than placed on a guessed row.
+
+**Phone is not copied, because the RSVP form does not ask for one.** There is
+no phone input on the page and no phone column in `RSVP_HEADERS`; `Invites`
+column J is filled only by hand. Adding one means a form field, a new column
+appended to `RSVPs`, and a line here.
+
+Nothing copies contact details automatically when a reply arrives — only
+`rsvp_status` is written back to `Invites`, by `markHouseholdResponded()`.
+That is deliberate: a guest editing their RSVP months later would otherwise
+silently rewrite records you may have corrected by hand.
+
 ### Reading the `Cartons` columns
 
 `expandCartons()` finds each column by header name, not by position, so columns
