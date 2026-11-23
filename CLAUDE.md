@@ -157,6 +157,31 @@ everything else and says the column is missing.
 maybe = 0.5, no = 0. A couple answering yes and maybe is 1.5, which a
 per-household rule could not express.
 
+### ⚠️ `Nb Invit` and `Enfants (sans diner)` count different people
+
+`Nb Invit` on `Cartons` counts **dinner seats**. `Enfants (sans diner)` is a
+separate column for the young children who come to the wedding but sit at a
+kids' table, and they are **not** in `Nb Invit`. Two parents with two grown
+children who get seats and two small ones who do not reads `Nb Invit` 4,
+`Enfants` 2 — a family of six, seating four. Currently 18 cards carry
+children, 31 children in all.
+
+A **reply**, on the other hand, lists everybody who is coming, children
+included. So a reply is routinely longer than the card's `Nb Invit` and that
+is correct, not a discrepancy. The dashboard says which of the two it is
+reporting: `Expected to come` is people in the room, with the children
+identified as the part of a reply that runs past the card's seats (capped at
+that card's `Enfants`, so a plus-one is never mistaken for a child) and
+subtracted to give `expected at dinner`. Headers are matched through
+`KIDS_HEADERS`; without the column the dashboard still reports everything
+else and says the headcount mixes the two.
+
+**One reply answers one invitation.** Where two cards resolve to the same
+household — somebody holding a card of their own who also appears on their
+family's — only the first card to claim the reply counts it, and the other
+stays outstanding. Without that guard the household's people and its answered
+cards were both counted twice.
+
 **Invited and answered come from different places and can disagree.** How many
 a card seats is `Nb` on `Cartons`; how many were answered for is the length of
 that reply's attendee list. A card seating two where only one person replied is
@@ -172,6 +197,10 @@ yes among people who have answered, applied to the people who have not. It
 projects twice — over the people already sent a Save the Date, and over the
 whole list — and says on the tab that early replies lean yes, so both read
 high. Do not merge it into the counted sections.
+
+Its **answer rate** is seats answered for over seats sent to, capped card by
+card like the silent seats. Counting every name on a reply against the seat
+total instead let children and plus-ones push the rate past 100%.
 
 The join is `Cartons` → (by name) `Invites` → (by household token) `RSVPs`. Two
 things fall out of it and are reported rather than hidden: cards whose names are

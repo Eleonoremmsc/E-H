@@ -2279,6 +2279,17 @@ const DASHBOARD_TAB = 'Dashboard';
 const STD_HEADERS = ['save the date', 'save-the-date', 'std', 'sdt', 'envoyé',
                      'envoye', 'sent', 'faire-part', 'invitation envoyée'];
 
+// The young children who come to the wedding but sit at a kids' table rather
+// than at dinner. They are NOT part of "Nb Invit", which counts seats, so a
+// card for two parents with two small children reads Nb 2 and Enfants 2 — a
+// family of four, seating two. Replies, on the other hand, list everybody who
+// is coming, children included, so the headcount drawn from them is larger
+// than the number of dinner seats. The dashboard says so rather than letting
+// the two quietly add up.
+const KIDS_HEADERS = ['enfants (sans diner)', 'enfants (sans dîner)',
+                      'enfants sans diner', 'enfants sans dîner',
+                      'enfants', 'kids', 'children'];
+
 // A tick is whatever a person would naturally type: a cross, a check, a
 // word, a date, TRUE. Only genuinely empty means "not sent".
 function isTicked(v) {
@@ -2307,6 +2318,12 @@ function buildDashboard() {
     if (STD_HEADERS.indexOf(cHead[i]) !== -1) cStd = i;
   }
 
+  // The kids'-table column, found the same way and equally optional.
+  let cKids = -1;
+  for (let i = 0; i < cHead.length && cKids === -1; i++) {
+    if (KIDS_HEADERS.indexOf(cHead[i]) !== -1) cKids = i;
+  }
+
   // ── Cards, one entry per invitation ──
   const people = expandCartons(cartons);
   const cards = {};
@@ -2316,8 +2333,9 @@ function buildDashboard() {
       cards[p.cardIndex] = {
         label: p.card, seats: p.partySize, row: p.sheetRow,
         std: cStd === -1 ? false : isTicked(cRows[p.sheetRow - 1][cStd]),
+        kids: cKids === -1 ? 0 : (parseInt(S(cRows[p.sheetRow - 1][cKids]), 10) || 0),
         names: [], token: '', answered: false,
-        yes: 0, maybe: 0, no: 0, fridayYes: 0,
+        yes: 0, maybe: 0, no: 0, fridayYes: 0, kidsAnswered: 0,
       };
       cardOrder.push(p.cardIndex);
     }
@@ -2367,15 +2385,28 @@ function buildDashboard() {
     }
     const r = c.token && replyByToken[c.token];
     if (!r) return;
+    // One reply answers for one invitation. Where two cards resolve to the
+    // same household — somebody given a card of their own who also appears on
+    // their family's — the reply belongs to the first card that claimed it,
+    // and the second is still waiting to be answered. Counting it twice used
+    // to double that household's people and its answered cards.
+    if (seen[c.token]) return;
     seen[c.token] = true;
     c.answered = true;
+    let notNo = 0;
     r.attendees.forEach(function(a) {
       const st = S(a.status).toLowerCase();
       if (st === 'yes') c.yes++;
       else if (st === 'maybe') c.maybe++;
       else if (st === 'no') c.no++;
+      if (st !== 'no') notNo++;
       if (st !== 'no' && S(a.friday).toLowerCase() === 'yes') c.fridayYes++;
     });
+    // Children are not named as such on a reply, so they are identified the
+    // only way the sheet allows: by the reply running past the seats on the
+    // card. The excess is children, up to however many the card records —
+    // never more, so a guest bringing a plus-one is not mistaken for a child.
+    c.kidsAnswered = Math.min(Math.max(0, notNo - c.seats), c.kids);
   });
 
   // Replies whose token matched no card still count — they are guests too.
@@ -2386,18 +2417,16 @@ function buildDashboard() {
   // ── Totals ──
   const t = { cards: 0, seats: 0, stdCards: 0, stdSeats: 0,
               answered: 0, answeredStd: 0, yes: 0, maybe: 0, no: 0, fridayYes: 0,
-              sentAnsweredPeople: 0 };
+              kids: 0, kidsAnswered: 0 };
   cardOrder.forEach(function(ci) {
     const c = cards[ci];
-    t.cards++; t.seats += c.seats;
+    t.cards++; t.seats += c.seats; t.kids += c.kids;
     if (c.std) { t.stdCards++; t.stdSeats += c.seats; }
     if (c.answered) {
       t.answered++;
       if (c.std) t.answeredStd++;
+      t.kidsAnswered += c.kidsAnswered;
       t.yes += c.yes; t.maybe += c.maybe; t.no += c.no; t.fridayYes += c.fridayYes;
-      // People who answered having actually been sent something: the only
-      // honest denominator for an answer rate.
-      if (c.std) t.sentAnsweredPeople += c.yes + c.maybe + c.no;
     }
   });
   // Seats still to hear from, counted CARD BY CARD. Summing the two totals
@@ -2446,6 +2475,13 @@ function buildDashboard() {
   head('INVITATIONS');
   line('Cards on the list', t.cards);
   line('People they seat', t.seats);
+  if (cKids === -1) {
+    line('No "Enfants (sans diner)" column found on "' + cartons.getName() + '".', '',
+         'the headcount below therefore mixes dinner guests and kids’-table children');
+  } else {
+    line('Children at the kids’ table', t.kids,
+         'from "Enfants (sans diner)" — not part of the seats above');
+  }
 
   head('SAVE THE DATE');
   if (cStd === -1) {
@@ -2477,6 +2513,15 @@ function buildDashboard() {
   line('No', allNo, pct(allNo, answeredPeople) + ' of answers');
   line('', '', '');
   line('Expected to come', expected, 'yes + half of each maybe');
+  if (cKids !== -1) {
+    // Replies count everybody who is coming; the seats on a card do not count
+    // the young children. So the figure above is people in the room, and the
+    // number of dinner places is smaller by the children among them.
+    line('  of which children at the kids’ table', t.kidsAnswered,
+         'in the room, but not at a dinner seat');
+    line('  so, expected at dinner', expected - t.kidsAnswered,
+         'what to count places and plates for');
+  }
   line('Still unanswered, people', silentAll,
        'seats on cards nobody has answered for');
   line('Best case', expected + silentAll,
@@ -2499,7 +2544,11 @@ function buildDashboard() {
     line('Nothing to project from yet.', '', '');
   } else {
     if (cStd !== -1) {
-      line('Answer rate', pct(t.sentAnsweredPeople, t.stdSeats),
+      // Seats answered for, against seats sent to — capped card by card, like
+      // the silent seats above. Counting every name on a reply instead let a
+      // card answered for more people than it seats (children, a plus-one)
+      // push this past 100%.
+      line('Answer rate', pct(t.stdSeats - silentTold, t.stdSeats),
            'of the people sent a Save the Date');
     }
     line('Yes rate', pct(allYes, answeredPeople), 'of people who answered');
