@@ -240,6 +240,22 @@ Website answers are placed by household token, then by given name within
 that household. Anything that cannot be placed — a self-added reply, a name
 on neither list — is reported by name in the log rather than dropped.
 
+**The kids'-table children can never be placed, and that is not a fault.**
+They have no row on `Invites` at all (they are counted per card in `Enfants
+(sans diner)`), so no cell exists to carry their answer, and they would
+otherwise be reprinted as failures on every single run — burying the real
+ones. They are reported in a block of their own, labelled as expected,
+identified by what the guest typed in `relationship` and tested with
+`isChildRelation()` against `CHILD_RELATIONS`.
+
+That test strips a leading possessive and then matches the **whole**
+remainder, so `son` on its own is a child while `son mari` — her husband —
+is not. A loose word search would have read the second as the first. A child
+on a **self-added** reply still goes in the needs-eyes block, because it is
+the reply that has not been attached to anybody. A child whose
+`relationship` was left blank also stays there, which is the safe direction:
+reported, never hidden.
+
 ### Contact details from the replies
 
 `previewRsvpContacts()` / `importRsvpContacts()` copy email, address and

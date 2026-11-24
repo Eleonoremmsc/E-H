@@ -2657,6 +2657,29 @@ const FB_YES   = ['going', 'yes', 'oui', 'ja', 'attending'];
 const FB_MAYBE = ['maybe', 'peut-etre', 'peut-être', 'vielleicht', 'interested'];
 const FB_NO    = ['no', 'non', 'nein', 'not going', "can't go", 'cant go', 'declined'];
 
+// The young children at the kids' table have no row on Invites — they are
+// counted per card in "Enfants (sans diner)" instead — so their answers can
+// never be placed on a person, and saying so every run alongside the real
+// failures buries those. What the guest wrote in "relationship" is the only
+// statement of who the person is, and it is theirs, so it is what is read.
+//
+// A possessive or article is stripped and the rest must match a whole entry:
+// "son" on its own is a child, while "son mari" — her husband — is not, and a
+// loose word search would have read it as one.
+const CHILD_RELATIONS = ['enfant', 'enfants', 'fille', 'filles', 'fils',
+                         'son', 'sons', 'daughter', 'daughters',
+                         'child', 'children', 'kid', 'kids',
+                         'bébé', 'bebe', 'baby', 'babies',
+                         'sohn', 'tochter', 'kind', 'kinder'];
+
+function isChildRelation(v) {
+  const s = (v === null || v === undefined ? '' : v.toString())
+    .trim().toLowerCase()
+    .replace(/^(notre|nos|leur|leurs|mon|ma|mes|our|my|their|unser|unsere)\s+/, '')
+    .replace(/[.!]+$/, '');
+  return CHILD_RELATIONS.indexOf(s) !== -1;
+}
+
 // Names that differ between the two lists, because people appear on one
 // under a married name, a maiden name or a shortened contact name. The key
 // is what the export says; the value is the name on Invites. Add to this
@@ -2797,7 +2820,8 @@ function tagReplies() {
   const cAtt = rHead.indexOf('attendees (json)');
   const cTok = rHead.indexOf('household token');
   let webSeen = 0;
-  const webMissed = [];
+  const webMissed = [];                  // could not be placed — needs eyes
+  const webKids   = [];                  // expected to have no row at all
 
   for (let i = 1; i < rsvps.length; i++) {
     const raw = S(rsvps[i][cAtt]);
@@ -2817,9 +2841,17 @@ function tagReplies() {
       }
       // A household of one that answered for one person needs no name match.
       if (!hit && household.length === 1 && (attendees || []).length === 1) hit = household[0];
-      if (hit) hit.web = answer;
-      else webMissed.push(S(a.firstName) + ' ' + S(a.lastName) + ' (' + answer + ')' +
-                          (token && token !== 'Self-added' ? '' : ' — self-added'));
+      if (hit) { hit.web = answer; return; }
+      const who = S(a.firstName) + ' ' + S(a.lastName) + ' (' + answer + ')';
+      // A child named as one on a reply that does belong to an invitation is
+      // where it should be; there is simply no row to carry the answer. One
+      // on a self-added reply still needs looking at, because the reply
+      // itself has not been attached to anybody.
+      if (isChildRelation(a.relationship) && token && token !== 'Self-added') {
+        webKids.push(who + ' — ' + S(a.relationship));
+      } else {
+        webMissed.push(who + (token && token !== 'Self-added' ? '' : ' — self-added'));
+      }
     });
   }
 
@@ -2849,6 +2881,12 @@ function tagReplies() {
     Logger.log('  party-list names not on the guest list (' + fbMissed.length + ') — ' +
                'add them to FB_ALIASES if they are there under another name:');
     fbMissed.forEach(function(m) { Logger.log('    ' + m); });
+  }
+  if (webKids.length) {
+    Logger.log('  children at the kids’ table, so no guest-list row to put an ' +
+               'answer on (' + webKids.length + ') — nothing to fix, they are ' +
+               'counted per card in "Enfants (sans diner)":');
+    webKids.forEach(function(m) { Logger.log('    ' + m); });
   }
   if (webMissed.length) {
     Logger.log('  website answers not placed on a person (' + webMissed.length + '):');
