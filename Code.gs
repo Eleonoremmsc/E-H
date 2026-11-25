@@ -96,6 +96,7 @@ function handleSubmit(data) {
   // Captured straight after the append so the confirmation result lands on
   // the row we just wrote.
   const row = sheet.getLastRow();
+  sheet.getRange(row, 13).setValue(data.phone || '');
 
   writeGuests(id, now, data);
   markHouseholdResponded(householdToken);
@@ -133,6 +134,7 @@ function handleUpdate(data) {
       sheet.getRange(row, 9).setValue(new Date().toISOString());
       sheet.getRange(row, 10).setValue(householdToken || 'Self-added');
       sheet.getRange(row, 11).setValue(data.country || '');
+      sheet.getRange(row, 13).setValue(data.phone || '');
 
       writeGuests(id, submitted, data, true);
       markHouseholdResponded(householdToken);
@@ -169,6 +171,7 @@ function getByToken(token) {
         success: true,
         data: {
           email:          rows[i][2],
+          phone:          rows[i][12] || '',
           lastName:       rows[i][3],
           firstName:      rows[i][4],
           address:        rows[i][5],
@@ -289,6 +292,7 @@ function lookupByToken(data) {
         editToken: rows[i][7],
         data: {
           email:     rows[i][2],
+          phone:     rows[i][12] || '',
           lastName:  rows[i][3],
           firstName: rows[i][4],
           address:   rows[i][5],
@@ -1058,7 +1062,7 @@ function sendEmail(data, editUrl, isUpdate) {
 const RSVP_HEADERS = [
   'ID', 'Submitted', 'Email', 'Last Name', 'First Name(s)',
   'Address', 'Attendees (JSON)', 'Edit Token', 'Updated', 'Household Token',
-  'Country', 'Confirmation email',
+  'Country', 'Confirmation email', 'Phone',
 ];
 // Guests is rebuilt from RSVPs whenever this layout changes (rebuildGuests),
 // so unlike RSVP_HEADERS its columns may be reordered.
@@ -2084,6 +2088,11 @@ function checkInvites() {
   const problems = [];
   const seenGuestIds = {};
   const households = {};
+  // "side" breaks nothing if it is empty — nothing reads it but the exports —
+  // so these are reported apart from the problems, and the "no problems" line
+  // keeps meaning what it says. They are still worth knowing about: nothing
+  // writes that column after the first import, so blanks accumulate unseen.
+  const sideBlank = [];
 
   rows.forEach(function(r, i) {
     if (i === 0) return;
@@ -2100,13 +2109,20 @@ function checkInvites() {
     if (!token)       problems.push('Row ' + line + ': no household_token — this person cannot be found by search.');
     if (!named)       problems.push('Row ' + line + ': has an id but no name.');
 
+    // An unnamed placeholder seat is not somebody whose side is missing.
+    if (named && !S(r[6])) sideBlank.push({ line: line, who: (S(r[1]) + ' ' + S(r[2])).trim() });
+
     if (token) {
-      if (!households[token]) households[token] = { rows: [], sizes: {} };
+      if (!households[token]) households[token] = { rows: [], sizes: {}, sides: {} };
       households[token].rows.push(line);
       households[token].sizes[S(r[5])] = true;
+      // Only a filled cell can disagree with another; an empty one is already
+      // counted above and would otherwise be reported twice.
+      if (named && S(r[6])) households[token].sides[S(r[6])] = true;
     }
   });
 
+  const sideSplit = [];
   Object.keys(households).forEach(function(tok) {
     const h = households[tok];
     const sizes = Object.keys(h.sizes);
@@ -2116,6 +2132,13 @@ function checkInvites() {
     } else if (sizes[0] && parseInt(sizes[0], 10) !== h.rows.length) {
       problems.push('Token …' + tok.slice(-6) + ': party_size says ' + sizes[0] +
                     ' but ' + h.rows.length + ' row(s) carry that token (rows ' + h.rows.join(', ') + ').');
+    }
+    // One invitation, two sides. Harmless to the site, but one of them is
+    // wrong and only you can say which.
+    const sides = Object.keys(h.sides);
+    if (sides.length > 1) {
+      sideSplit.push('rows ' + h.rows.join(', ') + ' share one invitation but ' +
+                     'are marked ' + sides.join(' and ') + '.');
     }
   });
 
@@ -2127,6 +2150,29 @@ function checkInvites() {
   } else {
     Logger.log(problems.length + ' problem(s):');
     problems.forEach(function(p) { Logger.log('  ' + p); });
+  }
+
+  // ── The "side" column, reported apart because nothing here breaks ──
+  if (sideBlank.length || sideSplit.length) {
+    Logger.log('');
+    Logger.log('Nothing above depends on this, but worth filling in:');
+  }
+  if (sideBlank.length) {
+    Logger.log('  ' + sideBlank.length + ' named row(s) have no "side". Nothing writes ' +
+               'that column after the first import — fillNewGuests() does not, and ' +
+               'applyGuestListChanges() only passes it on to somebody joining an ' +
+               'existing household — so anyone invited on a new card starts blank.');
+    // The row numbers, in short lines, so they can be worked through in the
+    // sheet. The names would run to one line each and bury everything else.
+    const nums = sideBlank.map(function(s) { return s.line; });
+    for (let i = 0; i < nums.length; i += 15) {
+      Logger.log('      rows ' + nums.slice(i, i + 15).join(', '));
+    }
+    Logger.log('      first one: row ' + sideBlank[0].line + ', ' + sideBlank[0].who);
+  }
+  if (sideSplit.length) {
+    Logger.log('  ' + sideSplit.length + ' invitation(s) whose members disagree on "side":');
+    sideSplit.forEach(function(s) { Logger.log('      ' + s); });
   }
 }
 
@@ -2275,6 +2321,17 @@ const DASHBOARD_TAB = 'Dashboard';
 const STD_HEADERS = ['save the date', 'save-the-date', 'std', 'sdt', 'envoyé',
                      'envoye', 'sent', 'faire-part', 'invitation envoyée'];
 
+// The young children who come to the wedding but sit at a kids' table rather
+// than at dinner. They are NOT part of "Nb Invit", which counts seats, so a
+// card for two parents with two small children reads Nb 2 and Enfants 2 — a
+// family of four, seating two. Replies, on the other hand, list everybody who
+// is coming, children included, so the headcount drawn from them is larger
+// than the number of dinner seats. The dashboard says so rather than letting
+// the two quietly add up.
+const KIDS_HEADERS = ['enfants (sans diner)', 'enfants (sans dîner)',
+                      'enfants sans diner', 'enfants sans dîner',
+                      'enfants', 'kids', 'children'];
+
 // A tick is whatever a person would naturally type: a cross, a check, a
 // word, a date, TRUE. Only genuinely empty means "not sent".
 function isTicked(v) {
@@ -2303,6 +2360,12 @@ function buildDashboard() {
     if (STD_HEADERS.indexOf(cHead[i]) !== -1) cStd = i;
   }
 
+  // The kids'-table column, found the same way and equally optional.
+  let cKids = -1;
+  for (let i = 0; i < cHead.length && cKids === -1; i++) {
+    if (KIDS_HEADERS.indexOf(cHead[i]) !== -1) cKids = i;
+  }
+
   // ── Cards, one entry per invitation ──
   const people = expandCartons(cartons);
   const cards = {};
@@ -2312,8 +2375,9 @@ function buildDashboard() {
       cards[p.cardIndex] = {
         label: p.card, seats: p.partySize, row: p.sheetRow,
         std: cStd === -1 ? false : isTicked(cRows[p.sheetRow - 1][cStd]),
+        kids: cKids === -1 ? 0 : (parseInt(S(cRows[p.sheetRow - 1][cKids]), 10) || 0),
         names: [], token: '', answered: false,
-        yes: 0, maybe: 0, no: 0, fridayYes: 0,
+        yes: 0, maybe: 0, no: 0, fridayYes: 0, kidsAnswered: 0,
       };
       cardOrder.push(p.cardIndex);
     }
@@ -2363,15 +2427,28 @@ function buildDashboard() {
     }
     const r = c.token && replyByToken[c.token];
     if (!r) return;
+    // One reply answers for one invitation. Where two cards resolve to the
+    // same household — somebody given a card of their own who also appears on
+    // their family's — the reply belongs to the first card that claimed it,
+    // and the second is still waiting to be answered. Counting it twice used
+    // to double that household's people and its answered cards.
+    if (seen[c.token]) return;
     seen[c.token] = true;
     c.answered = true;
+    let notNo = 0;
     r.attendees.forEach(function(a) {
       const st = S(a.status).toLowerCase();
       if (st === 'yes') c.yes++;
       else if (st === 'maybe') c.maybe++;
       else if (st === 'no') c.no++;
+      if (st !== 'no') notNo++;
       if (st !== 'no' && S(a.friday).toLowerCase() === 'yes') c.fridayYes++;
     });
+    // Children are not named as such on a reply, so they are identified the
+    // only way the sheet allows: by the reply running past the seats on the
+    // card. The excess is children, up to however many the card records —
+    // never more, so a guest bringing a plus-one is not mistaken for a child.
+    c.kidsAnswered = Math.min(Math.max(0, notNo - c.seats), c.kids);
   });
 
   // Replies whose token matched no card still count — they are guests too.
@@ -2382,18 +2459,16 @@ function buildDashboard() {
   // ── Totals ──
   const t = { cards: 0, seats: 0, stdCards: 0, stdSeats: 0,
               answered: 0, answeredStd: 0, yes: 0, maybe: 0, no: 0, fridayYes: 0,
-              sentAnsweredPeople: 0 };
+              kids: 0, kidsAnswered: 0 };
   cardOrder.forEach(function(ci) {
     const c = cards[ci];
-    t.cards++; t.seats += c.seats;
+    t.cards++; t.seats += c.seats; t.kids += c.kids;
     if (c.std) { t.stdCards++; t.stdSeats += c.seats; }
     if (c.answered) {
       t.answered++;
       if (c.std) t.answeredStd++;
+      t.kidsAnswered += c.kidsAnswered;
       t.yes += c.yes; t.maybe += c.maybe; t.no += c.no; t.fridayYes += c.fridayYes;
-      // People who answered having actually been sent something: the only
-      // honest denominator for an answer rate.
-      if (c.std) t.sentAnsweredPeople += c.yes + c.maybe + c.no;
     }
   });
   // Seats still to hear from, counted CARD BY CARD. Summing the two totals
@@ -2442,6 +2517,13 @@ function buildDashboard() {
   head('INVITATIONS');
   line('Cards on the list', t.cards);
   line('People they seat', t.seats);
+  if (cKids === -1) {
+    line('No "Enfants (sans diner)" column found on "' + cartons.getName() + '".', '',
+         'the headcount below therefore mixes dinner guests and kids’-table children');
+  } else {
+    line('Children at the kids’ table', t.kids,
+         'from "Enfants (sans diner)" — not part of the seats above');
+  }
 
   head('SAVE THE DATE');
   if (cStd === -1) {
@@ -2473,6 +2555,15 @@ function buildDashboard() {
   line('No', allNo, pct(allNo, answeredPeople) + ' of answers');
   line('', '', '');
   line('Expected to come', expected, 'yes + half of each maybe');
+  if (cKids !== -1) {
+    // Replies count everybody who is coming; the seats on a card do not count
+    // the young children. So the figure above is people in the room, and the
+    // number of dinner places is smaller by the children among them.
+    line('  of which children at the kids’ table', t.kidsAnswered,
+         'in the room, but not at a dinner seat');
+    line('  so, expected at dinner', expected - t.kidsAnswered,
+         'what to count places and plates for');
+  }
   line('Still unanswered, people', silentAll,
        'seats on cards nobody has answered for');
   line('Best case', expected + silentAll,
@@ -2495,7 +2586,11 @@ function buildDashboard() {
     line('Nothing to project from yet.', '', '');
   } else {
     if (cStd !== -1) {
-      line('Answer rate', pct(t.sentAnsweredPeople, t.stdSeats),
+      // Seats answered for, against seats sent to — capped card by card, like
+      // the silent seats above. Counting every name on a reply instead let a
+      // card answered for more people than it seats (children, a plus-one)
+      // push this past 100%.
+      line('Answer rate', pct(t.stdSeats - silentTold, t.stdSeats),
            'of the people sent a Save the Date');
     }
     line('Yes rate', pct(allYes, answeredPeople), 'of people who answered');
@@ -2603,6 +2698,29 @@ const COL_WEB   = 'Rep Website';
 const FB_YES   = ['going', 'yes', 'oui', 'ja', 'attending'];
 const FB_MAYBE = ['maybe', 'peut-etre', 'peut-être', 'vielleicht', 'interested'];
 const FB_NO    = ['no', 'non', 'nein', 'not going', "can't go", 'cant go', 'declined'];
+
+// The young children at the kids' table have no row on Invites — they are
+// counted per card in "Enfants (sans diner)" instead — so their answers can
+// never be placed on a person, and saying so every run alongside the real
+// failures buries those. What the guest wrote in "relationship" is the only
+// statement of who the person is, and it is theirs, so it is what is read.
+//
+// A possessive or article is stripped and the rest must match a whole entry:
+// "son" on its own is a child, while "son mari" — her husband — is not, and a
+// loose word search would have read it as one.
+const CHILD_RELATIONS = ['enfant', 'enfants', 'fille', 'filles', 'fils',
+                         'son', 'sons', 'daughter', 'daughters',
+                         'child', 'children', 'kid', 'kids',
+                         'bébé', 'bebe', 'baby', 'babies',
+                         'sohn', 'tochter', 'kind', 'kinder'];
+
+function isChildRelation(v) {
+  const s = (v === null || v === undefined ? '' : v.toString())
+    .trim().toLowerCase()
+    .replace(/^(notre|nos|leur|leurs|mon|ma|mes|our|my|their|unser|unsere)\s+/, '')
+    .replace(/[.!]+$/, '');
+  return CHILD_RELATIONS.indexOf(s) !== -1;
+}
 
 // Names that differ between the two lists, because people appear on one
 // under a married name, a maiden name or a shortened contact name. The key
@@ -2744,7 +2862,8 @@ function tagReplies() {
   const cAtt = rHead.indexOf('attendees (json)');
   const cTok = rHead.indexOf('household token');
   let webSeen = 0;
-  const webMissed = [];
+  const webMissed = [];                  // could not be placed — needs eyes
+  const webKids   = [];                  // expected to have no row at all
 
   for (let i = 1; i < rsvps.length; i++) {
     const raw = S(rsvps[i][cAtt]);
@@ -2764,9 +2883,17 @@ function tagReplies() {
       }
       // A household of one that answered for one person needs no name match.
       if (!hit && household.length === 1 && (attendees || []).length === 1) hit = household[0];
-      if (hit) hit.web = answer;
-      else webMissed.push(S(a.firstName) + ' ' + S(a.lastName) + ' (' + answer + ')' +
-                          (token && token !== 'Self-added' ? '' : ' — self-added'));
+      if (hit) { hit.web = answer; return; }
+      const who = S(a.firstName) + ' ' + S(a.lastName) + ' (' + answer + ')';
+      // A child named as one on a reply that does belong to an invitation is
+      // where it should be; there is simply no row to carry the answer. One
+      // on a self-added reply still needs looking at, because the reply
+      // itself has not been attached to anybody.
+      if (isChildRelation(a.relationship) && token && token !== 'Self-added') {
+        webKids.push(who + ' — ' + S(a.relationship));
+      } else {
+        webMissed.push(who + (token && token !== 'Self-added' ? '' : ' — self-added'));
+      }
     });
   }
 
@@ -2797,8 +2924,151 @@ function tagReplies() {
                'add them to FB_ALIASES if they are there under another name:');
     fbMissed.forEach(function(m) { Logger.log('    ' + m); });
   }
+  if (webKids.length) {
+    Logger.log('  children at the kids’ table, so no guest-list row to put an ' +
+               'answer on (' + webKids.length + ') — nothing to fix, they are ' +
+               'counted per card in "Enfants (sans diner)":');
+    webKids.forEach(function(m) { Logger.log('    ' + m); });
+  }
   if (webMissed.length) {
     Logger.log('  website answers not placed on a person (' + webMissed.length + '):');
     webMissed.forEach(function(m) { Logger.log('    ' + m); });
   }
+}
+
+
+// ══════════════════════════════════════════════════
+// CONTACT DETAILS FROM THE REPLIES
+//
+// A guest typing their address into the RSVP is the only place some of those
+// addresses exist — the name search deliberately never sends an address to
+// the browser, so what they type is their own, not a confirmation of yours.
+// importRsvpContacts() copies those details onto Invites.
+//
+// Run previewRsvpContacts() first. Both write a report tab; only the second
+// one touches Invites, and it FILLS EMPTY CELLS ONLY. Where the guest list
+// already holds something different it reports a conflict and leaves the
+// existing value alone, because yours may well be the better of the two.
+//
+// Phone travels with the email: both belong to the person who filled the
+// form in, not to the whole invitation.
+// ══════════════════════════════════════════════════
+
+const CONTACT_REPORT_TAB = 'Contact import';
+
+function previewRsvpContacts() { runRsvpContactImport(false); }
+function importRsvpContacts()  { runRsvpContactImport(true); }
+
+function runRsvpContactImport(apply) {
+  const ss     = SpreadsheetApp.openById(SHEET_ID);
+  const sheet  = getGuestListSheet();
+  if (!sheet) { Logger.log('PROBLEM: no guest-list tab found.'); return; }
+
+  const S = function(v) { return v === null || v === undefined ? '' : v.toString().trim(); };
+  const invRows = sheet.getDataRange().getValues();
+
+  // Guest-list rows grouped by the invitation they belong to.
+  const byToken = {};
+  for (let i = 1; i < invRows.length; i++) {
+    const tok = S(invRows[i][4]);
+    if (!tok) continue;
+    (byToken[tok] = byToken[tok] || []).push({
+      row: i + 1, first: S(invRows[i][1]), last: S(invRows[i][2]),
+      email: S(invRows[i][8]), phone: S(invRows[i][9]),
+      address: S(invRows[i][12]), country: S(invRows[i][13]),
+    });
+  }
+
+  // One reply per invitation: the most recently updated, if there are two.
+  const rsvps = getSheet().getDataRange().getValues();
+  const rHead = (rsvps[0] || []).map(function(h) { return S(h).toLowerCase(); });
+  const cEmail = rHead.indexOf('email'), cLast = rHead.indexOf('last name');
+  const cFirst = rHead.indexOf('first name(s)'), cAddr = rHead.indexOf('address');
+  const cTok = rHead.indexOf('household token'), cCountry = rHead.indexOf('country');
+  const cUpd = rHead.indexOf('updated'), cSub = rHead.indexOf('submitted');
+  const cPhone = rHead.indexOf('phone');
+
+  const latest = {};
+  for (let i = 1; i < rsvps.length; i++) {
+    const tok = S(rsvps[i][cTok]);
+    if (!tok || tok === 'Self-added' || !byToken[tok]) continue;
+    const when = S(rsvps[i][cUpd]) || S(rsvps[i][cSub]);
+    if (!latest[tok] || when > latest[tok].when) {
+      latest[tok] = { when: when, row: i + 1,
+                      email: S(rsvps[i][cEmail]), address: S(rsvps[i][cAddr]),
+                      country: S(rsvps[i][cCountry]),
+                      phone: cPhone === -1 ? '' : S(rsvps[i][cPhone]),
+                      first: S(rsvps[i][cFirst]), last: S(rsvps[i][cLast]) };
+    }
+  }
+
+  const report = [['Invitation', 'Field', 'From the reply', 'Result', 'Guest-list row']];
+  let filled = 0, conflict = 0, already = 0;
+
+  const place = function(target, col, field, value, label) {
+    if (!value) return;
+    const have = field === 'email' ? target.email
+               : field === 'phone' ? target.phone
+               : field === 'address' ? target.address : target.country;
+    if (have && normalizeName(have) === normalizeName(value)) {
+      report.push([label, field, value, 'already the same', target.row]); already++; return;
+    }
+    if (have) {
+      report.push([label, field, value,
+                   'CONFLICT — guest list has "' + have + '", left unchanged', target.row]);
+      conflict++; return;
+    }
+    if (apply) sheet.getRange(target.row, col).setValue(value);
+    report.push([label, field, value, apply ? 'filled in' : 'would be filled in', target.row]);
+    filled++;
+  };
+
+  Object.keys(latest).forEach(function(tok) {
+    const r = latest[tok];
+    const members = byToken[tok];
+    const label = buildHouseholdLabel(members.map(function(m) {
+      return { firstName: m.first, lastName: m.last };
+    })) || members[0].first + ' ' + members[0].last;
+
+    // The address belongs to the invitation, so it goes on every member.
+    members.forEach(function(m) {
+      place(m, 13, 'address', r.address, label);
+      place(m, 14, 'country', r.country, label);
+    });
+
+    // The email belongs to ONE person — whoever filled the form in. Writing
+    // it onto the whole household would claim a wife's address is her
+    // husband's. Match by name; if the name does not match anyone, say so
+    // rather than guessing a row.
+    const want = normalizeName(r.first + ' ' + r.last);
+    let who = null;
+    members.forEach(function(m) {
+      if (!who && normalizeName(m.first + ' ' + m.last) === want) who = m;
+    });
+    if (!who) {
+      members.forEach(function(m) {
+        if (!who && normalizeName(m.first) === normalizeName(r.first)) who = m;
+      });
+    }
+    if (who) {
+      place(who, 9, 'email', r.email, label);
+      place(who, 10, 'phone', r.phone, label);
+    }
+    else if (r.email) {
+      report.push([label, 'email', r.email,
+                   'NOT PLACED — "' + r.first + ' ' + r.last + '" matches nobody on this invitation', '']);
+    }
+  });
+
+  let out = ss.getSheetByName(CONTACT_REPORT_TAB);
+  if (!out) out = ss.insertSheet(CONTACT_REPORT_TAB);
+  out.clear();
+  out.getRange(1, 1, report.length, report[0].length).setValues(report);
+  out.getRange(1, 1, 1, report[0].length).setFontWeight('bold');
+  out.setFrozenRows(1);
+
+  Logger.log((apply ? 'Contacts imported. ' : 'PREVIEW — nothing written. ') +
+             'filled ' + filled + ' · already the same ' + already + ' · conflicts ' + conflict);
+  Logger.log('Full report on the "' + CONTACT_REPORT_TAB + '" tab.');
+  if (!apply) Logger.log('Run importRsvpContacts() to apply.');
 }

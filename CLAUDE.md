@@ -87,6 +87,28 @@ instead.
 `script.js` POSTs JSON to `RSVP_ENDPOINT`, a Google Apps Script Web App.
 Actions: `submit`, `update`, `lookupByName`, `lookupByToken`, `addSong`, `listSongs`.
 
+### The two links that open somebody's own RSVP
+
+| Parameter | Carries | Where it comes from |
+| --- | --- | --- |
+| `?rsvp=<edit token>` | one **reply** | the confirmation email |
+| `?h=<household token>` | one **invitation** | the QR on a printed invitation |
+
+**Both skip the password gate**, and `?h=` does so deliberately: the token
+identifies the invitation, so the password has nothing left to protect, and
+asking for one after somebody scans their own invitation puts back the
+friction the QR removes. Anyone holding the paper can then see and change
+that invitation's answer — the same as the emailed edit links.
+
+Both are stripped from the URL on arrival, open the RSVP automatically, and
+are remembered in `localStorage`, so a guest who comes back without the
+paper is still recognised. `?h=` **replaces** whatever that browser had
+stored, because a phone may be shared.
+
+The household token is per **invitation**, not per person. Everyone on a card
+shares one, which is how these replies actually arrive — a parent answering
+for children, one partner for both.
+
 ### ⚠️ The deployment rule
 
 **Deploy → Manage deployments → ✏️ edit → New version.** This keeps the URL.
@@ -135,6 +157,31 @@ everything else and says the column is missing.
 maybe = 0.5, no = 0. A couple answering yes and maybe is 1.5, which a
 per-household rule could not express.
 
+### ⚠️ `Nb Invit` and `Enfants (sans diner)` count different people
+
+`Nb Invit` on `Cartons` counts **dinner seats**. `Enfants (sans diner)` is a
+separate column for the young children who come to the wedding but sit at a
+kids' table, and they are **not** in `Nb Invit`. Two parents with two grown
+children who get seats and two small ones who do not reads `Nb Invit` 4,
+`Enfants` 2 — a family of six, seating four. Currently 18 cards carry
+children, 31 children in all.
+
+A **reply**, on the other hand, lists everybody who is coming, children
+included. So a reply is routinely longer than the card's `Nb Invit` and that
+is correct, not a discrepancy. The dashboard says which of the two it is
+reporting: `Expected to come` is people in the room, with the children
+identified as the part of a reply that runs past the card's seats (capped at
+that card's `Enfants`, so a plus-one is never mistaken for a child) and
+subtracted to give `expected at dinner`. Headers are matched through
+`KIDS_HEADERS`; without the column the dashboard still reports everything
+else and says the headcount mixes the two.
+
+**One reply answers one invitation.** Where two cards resolve to the same
+household — somebody holding a card of their own who also appears on their
+family's — only the first card to claim the reply counts it, and the other
+stays outstanding. Without that guard the household's people and its answered
+cards were both counted twice.
+
 **Invited and answered come from different places and can disagree.** How many
 a card seats is `Nb` on `Cartons`; how many were answered for is the length of
 that reply's attendee list. A card seating two where only one person replied is
@@ -150,6 +197,10 @@ yes among people who have answered, applied to the people who have not. It
 projects twice — over the people already sent a Save the Date, and over the
 whole list — and says on the tab that early replies lean yes, so both read
 high. Do not merge it into the counted sections.
+
+Its **answer rate** is seats answered for over seats sent to, capped card by
+card like the silent seats. Counting every name on a reply against the seat
+total instead let children and plus-ones push the rate past 100%.
 
 The join is `Cartons` → (by name) `Invites` → (by household token) `RSVPs`. Two
 things fall out of it and are reported rather than hidden: cards whose names are
@@ -189,6 +240,46 @@ Website answers are placed by household token, then by given name within
 that household. Anything that cannot be placed — a self-added reply, a name
 on neither list — is reported by name in the log rather than dropped.
 
+**The kids'-table children can never be placed, and that is not a fault.**
+They have no row on `Invites` at all (they are counted per card in `Enfants
+(sans diner)`), so no cell exists to carry their answer, and they would
+otherwise be reprinted as failures on every single run — burying the real
+ones. They are reported in a block of their own, labelled as expected,
+identified by what the guest typed in `relationship` and tested with
+`isChildRelation()` against `CHILD_RELATIONS`.
+
+That test strips a leading possessive and then matches the **whole**
+remainder, so `son` on its own is a child while `son mari` — her husband —
+is not. A loose word search would have read the second as the first. A child
+on a **self-added** reply still goes in the needs-eyes block, because it is
+the reply that has not been attached to anybody. A child whose
+`relationship` was left blank also stays there, which is the safe direction:
+reported, never hidden.
+
+### Contact details from the replies
+
+`previewRsvpContacts()` / `importRsvpContacts()` copy email, address and
+country from `RSVPs` onto `Invites`, matched by household token. **They fill
+empty cells only**: where the guest list already holds something different
+the report says CONFLICT and the existing value stays, because yours may be
+the better of the two.
+
+Address and country are written to every member of the invitation; **email
+is written to one person** — whoever filled the form in, matched by name.
+Writing it across the household would claim a wife's address is her
+husband's. If the name on the reply matches nobody there, it is reported
+rather than placed on a guessed row.
+
+**Phone travels with the email**, onto the same one person: both were given
+by whoever filled the form in. The field is optional on the form, and
+`Phone` is the last column of `RSVPs` — appended, like every column added
+there since.
+
+Nothing copies contact details automatically when a reply arrives — only
+`rsvp_status` is written back to `Invites`, by `markHouseholdResponded()`.
+That is deliberate: a guest editing their RSVP months later would otherwise
+silently rewrite records you may have corrected by hand.
+
 ### Reading the `Cartons` columns
 
 `expandCartons()` finds each column by header name, not by position, so columns
@@ -218,6 +309,30 @@ bugs already fixed here:
 Both are fixed. If you touch `fillNewGuests()` or `runGuestListChanges()`, run
 `previewGuestListChanges()` first — it reports without writing.
 
+### The `side` column fills itself in only halfway
+
+`side` (`Fabre` / `Bokay` / `Ele` / `Hub` / `jeunes`) was filled in at the
+first import and **nothing has written it since**. `fillNewGuests()` writes
+`guest_id`, `household_id`, `household_token`, `party_size` and
+`rsvp_status`, and never column 7. `applyGuestListChanges()` does carry it
+across, but only to somebody **joining an existing household**, who inherits
+it from the host — a person invited on a card of their own has no host to
+inherit from and starts blank.
+
+So blanks accumulate, and they did: 71 of 599 rows, every one of them with a
+`guest_id` of **G611 or higher**, not a single original row among them.
+Nothing reads the column but the exports, so none of this breaks anything —
+it is an incomplete record, not a fault, which is why `checkInvites()`
+reports it **after** the problems and apart from them, so "No problems
+found." keeps meaning what it says. It also flags any one invitation whose
+members are marked with two different sides.
+
+**Do not infer a side from a surname.** It looks tempting and it is wrong
+often enough to matter: of the 71 blanks only 12 have namesakes who all
+agree, and the Hayots alone run Bokay 14 / Fabre 8 / jeunes 2. `side` is her
+own judgement about whose guest somebody is; leave it blank and report it
+rather than guess.
+
 ---
 
 ## 4. Design system
@@ -246,6 +361,24 @@ that carries text clears WCAG AA.** If you shift a token, recompute — don't ey
 
 The blue is the one saturated accent. It marks structure (RSVP step numbers, the
 rule between guests) and carries exactly one filled shape: the calendar button.
+The active filter pill is the only other filled shape, and it is `--olive-deep`
+— it used to be `--ink`, a near-black that was the darkest thing on the page.
+
+### Body copy is weight 400, not 300
+
+Cormorant Garamond at 300 reads as thin on a cream ground and the whole site
+was set in it — "the entire website's writing is so thin" was a rejection.
+Every rule is now 400, which is loaded already (the Google Fonts link carries
+300/400/600 in both romans and italics, so 300 remains available but nothing
+should use it for running text).
+
+### The two alternating sections, and their cards
+
+`#map` and `#activities` are the **only** two sections carrying
+`.section-alt` (`--cream-alt`). Their cards must be `--cream-lift`, not
+`--cream-alt`: when both were the same the card and the band behind it were
+one colour and each section read as a single dark field. The card hover on
+those two therefore goes *down* to `--cream-alt` rather than up to `--cream`.
 
 ### Fonts
 
@@ -289,7 +422,7 @@ than French** — test all three after any nav change, not just English.
 
 Three rules:
 
-1. **All three languages must stay in parity** — same keys, same count. Currently 254 each.
+1. **All three languages must stay in parity** — same keys, same count. Currently 257 each.
 2. **`applyLang()` assigns `textContent`, not `innerHTML`.** HTML entities render
    literally: write `&`, never `&amp;`. This has caused a visible bug before
    ("Trauung &amp; Empfang").

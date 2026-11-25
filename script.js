@@ -220,8 +220,10 @@ const T = {
     map_gmaps:           'Open in Google Maps',
     map_abroad_title:    'Flying In From Abroad',
     map_option1_label:   'Option 1',
-    map_option1_step1:   'Land in Paris at Charles de Gaulle Airport (CDG).',
-    map_option1_step2:   'Take a direct TGV train from the airport to Avignon TGV.',
+    map_option1_step1:   'Land in Paris — Charles de Gaulle (CDG) or Orly (ORY).',
+    map_option1_step2:   'Take the TGV to Avignon TGV.',
+    map_option1_cdg:     'From CDG, trains leave direct from the airport.',
+    map_option1_orly:    'From Orly, Métro 14 runs to Gare de Lyon in about 25 minutes with no change, and TGVs leave from there (2h40).',
     map_option1_step3:   "Book a car at Avignon TGV (Sixt, Avis, Europcar — plenty of choice). It's the best way to explore the region.",
     map_option1_step4:   'Crillon-le-Brave is a 40-minute drive from Avignon TGV.',
     map_option2_label:   'Option 2',
@@ -237,6 +239,7 @@ const T = {
     rsvp_eyebrow:        'RSVP',
     rsvp_contact_label:  'Contact person',
     rsvp_email:          'Email address',
+    rsvp_phone:          'Phone number',
     rsvp_lastname:       'Last name',
     rsvp_firstnames:     'First name(s)',
     rsvp_address:        'Postal address',
@@ -477,8 +480,10 @@ const T = {
     map_gmaps:           'Ouvrir dans Google Maps',
     map_abroad_title:    "De l'étranger",
     map_option1_label:   'Option n°1',
-    map_option1_step1:   'Atterrissez à Paris, à l\'aéroport Charles de Gaulle (CDG).',
-    map_option1_step2:   "Prenez un TGV direct depuis l'aéroport jusqu'à AVIGNON TGV.",
+    map_option1_step1:   'Atterrissez à Paris — Charles de Gaulle (CDG) ou Orly (ORY).',
+    map_option1_step2:   "Prenez le TGV jusqu'à AVIGNON TGV.",
+    map_option1_cdg:     "Depuis CDG, des TGV partent directement de l'aéroport.",
+    map_option1_orly:    "Depuis Orly, la ligne 14 du métro rejoint la Gare de Lyon en 25 minutes environ, sans changement, et les TGV partent de là (2h40).",
     map_option1_step3:   "Réservez une voiture à AVIGNON TGV (Sixt, Avis, Europcar — l'offre ne manque pas). C'est le meilleur moyen d'explorer la région.",
     map_option1_step4:   "Crillon-le-Brave se trouve à 40 minutes de route d'AVIGNON TGV.",
     map_option2_label:   'Option n°2',
@@ -494,6 +499,7 @@ const T = {
     rsvp_eyebrow:        'RSVP',
     rsvp_contact_label:  'Personne de contact',
     rsvp_email:          'Adresse email',
+    rsvp_phone:          'Numéro de téléphone',
     rsvp_lastname:       'Nom de famille',
     rsvp_firstnames:     'Prénom(s)',
     rsvp_address:        'Adresse postale',
@@ -734,8 +740,10 @@ const T = {
     map_gmaps:           'In Google Maps öffnen',
     map_abroad_title:    'Aus dem Ausland anreisen',
     map_option1_label:   'Option 1',
-    map_option1_step1:   'Landet in Paris am Flughafen Charles de Gaulle (CDG).',
-    map_option1_step2:   'Nehmt einen direkten TGV vom Flughafen nach AVIGNON TGV.',
+    map_option1_step1:   'Landet in Paris — Charles de Gaulle (CDG) oder Orly (ORY).',
+    map_option1_step2:   'Nehmt den TGV nach AVIGNON TGV.',
+    map_option1_cdg:     'Von CDG fahren TGV direkt vom Flughafen ab.',
+    map_option1_orly:    'Von Orly bringt euch die Métro-Linie 14 in etwa 25 Minuten ohne Umstieg zum Gare de Lyon, und von dort fahren die TGV (2 Std. 40 Min.).',
     map_option1_step3:   'Mietet ein Auto direkt am Bahnhof AVIGNON TGV (Sixt, Avis, Europcar — die Auswahl ist groß). Das ist die beste Art, die Region zu erkunden.',
     map_option1_step4:   'Crillon-le-Brave liegt eine 40-minütige Autofahrt von AVIGNON TGV entfernt.',
     map_option2_label:   'Option 2',
@@ -751,6 +759,7 @@ const T = {
     rsvp_eyebrow:        'RSVP',
     rsvp_contact_label:  'Kontaktperson',
     rsvp_email:          'E-Mail-Adresse',
+    rsvp_phone:          'Telefonnummer',
     rsvp_lastname:       'Nachname',
     rsvp_firstnames:     'Vorname(n)',
     rsvp_address:        'Postanschrift',
@@ -865,13 +874,19 @@ function ssSet(key, value) { try { sessionStorage.setItem(key, value); } catch {
 // ── State ────────────────────────────────────────
 let lang      = lsGet('weddingLang') || CONFIG.defaultLang;
 let editToken = null;
+let inviteToken = null;   // from ?h= on a printed invitation
 
 // ── Boot ─────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Capture edit token before any init so unlock() can use it
   const params = new URLSearchParams(window.location.search);
   editToken = params.get('rsvp') || null;
-  if (editToken) window.history.replaceState({}, '', window.location.pathname);
+  // ?h=<household token> is what the QR on a printed invitation carries. It
+  // identifies the invitation, so the password gate has nothing left to
+  // protect — making someone type a password after scanning their own
+  // invitation is the friction the code was there to remove.
+  inviteToken = params.get('h') || null;
+  if (editToken || inviteToken) window.history.replaceState({}, '', window.location.pathname);
 
   applyLang(lang);
   initGate();
@@ -930,7 +945,9 @@ function initGate() {
   const submit = document.getElementById('password-submit');
   const err    = document.getElementById('gate-error');
 
-  if (ssGet(CONFIG.sessionKey) === '1') {
+  // A scanned invitation carries its own credential; let it straight in.
+  if (inviteToken || ssGet(CONFIG.sessionKey) === '1') {
+    ssSet(CONFIG.sessionKey, '1');
     unlock(gate, site);
     return;
   }
@@ -965,7 +982,7 @@ function unlock(gate, site) {
   gate.style.display = 'none';
   site.classList.add('visible');
   handleScroll();
-  if (editToken) setTimeout(openRSVP, 400);
+  if (editToken || inviteToken) setTimeout(openRSVP, 400);
 }
 
 // ── Navigation ────────────────────────────────────
@@ -1563,6 +1580,7 @@ function collectFormData() {
   });
   return {
     email:     form.email.value.trim(),
+    phone:     form.phone.value.trim(),
     firstName: form.firstName.value.trim(),
     lastName:  form.lastName.value.trim(),
     address:   form.address.value.trim(),
@@ -1682,6 +1700,7 @@ async function fetchExistingRSVP(token) {
 function prefillForm(data) {
   const form = document.getElementById('rsvp-form');
   form.email.value     = data.email     || '';
+  form.phone.value     = data.phone     || '';
   form.firstName.value = data.firstName || '';
   form.lastName.value  = data.lastName  || '';
   form.address.value   = data.address   || '';
@@ -1740,7 +1759,13 @@ function initRecognition() {
 
   if (editToken) return; // came via an emailed edit link this load — untouched, no banner
 
-  if (householdToken) {
+  // A scanned invitation names its household outright, so it replaces
+  // whatever this browser had remembered — the phone may be shared.
+  if (inviteToken) {
+    householdToken = inviteToken;
+    lsSet('weddingHouseholdToken', inviteToken);
+    recognitionPromise = silentRecognizeByHousehold(inviteToken);
+  } else if (householdToken) {
     recognitionPromise = silentRecognizeByHousehold(householdToken);
   } else {
     const storedEditToken = lsGet('weddingEditToken');
