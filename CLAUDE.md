@@ -361,6 +361,24 @@ that carries text clears WCAG AA.** If you shift a token, recompute — don't ey
 
 The blue is the one saturated accent. It marks structure (RSVP step numbers, the
 rule between guests) and carries exactly one filled shape: the calendar button.
+The active filter pill is the only other filled shape, and it is `--olive-deep`
+— it used to be `--ink`, a near-black that was the darkest thing on the page.
+
+### Body copy is weight 400, not 300
+
+Cormorant Garamond at 300 reads as thin on a cream ground and the whole site
+was set in it — "the entire website's writing is so thin" was a rejection.
+Every rule is now 400, which is loaded already (the Google Fonts link carries
+300/400/600 in both romans and italics, so 300 remains available but nothing
+should use it for running text).
+
+### The two alternating sections, and their cards
+
+`#map` and `#activities` are the **only** two sections carrying
+`.section-alt` (`--cream-alt`). Their cards must be `--cream-lift`, not
+`--cream-alt`: when both were the same the card and the band behind it were
+one colour and each section read as a single dark field. The card hover on
+those two therefore goes *down* to `--cream-alt` rather than up to `--cream`.
 
 ### Fonts
 
@@ -404,7 +422,7 @@ than French** — test all three after any nav change, not just English.
 
 Three rules:
 
-1. **All three languages must stay in parity** — same keys, same count. Currently 255 each.
+1. **All three languages must stay in parity** — same keys, same count. Currently 257 each.
 2. **`applyLang()` assigns `textContent`, not `innerHTML`.** HTML entities render
    literally: write `&`, never `&amp;`. This has caused a visible bug before
    ("Trauung &amp; Empfang").
