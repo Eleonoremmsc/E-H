@@ -309,6 +309,30 @@ bugs already fixed here:
 Both are fixed. If you touch `fillNewGuests()` or `runGuestListChanges()`, run
 `previewGuestListChanges()` first — it reports without writing.
 
+### The `side` column fills itself in only halfway
+
+`side` (`Fabre` / `Bokay` / `Ele` / `Hub` / `jeunes`) was filled in at the
+first import and **nothing has written it since**. `fillNewGuests()` writes
+`guest_id`, `household_id`, `household_token`, `party_size` and
+`rsvp_status`, and never column 7. `applyGuestListChanges()` does carry it
+across, but only to somebody **joining an existing household**, who inherits
+it from the host — a person invited on a card of their own has no host to
+inherit from and starts blank.
+
+So blanks accumulate, and they did: 71 of 599 rows, every one of them with a
+`guest_id` of **G611 or higher**, not a single original row among them.
+Nothing reads the column but the exports, so none of this breaks anything —
+it is an incomplete record, not a fault, which is why `checkInvites()`
+reports it **after** the problems and apart from them, so "No problems
+found." keeps meaning what it says. It also flags any one invitation whose
+members are marked with two different sides.
+
+**Do not infer a side from a surname.** It looks tempting and it is wrong
+often enough to matter: of the 71 blanks only 12 have namesakes who all
+agree, and the Hayots alone run Bokay 14 / Fabre 8 / jeunes 2. `side` is her
+own judgement about whose guest somebody is; leave it blank and report it
+rather than guess.
+
 ---
 
 ## 4. Design system

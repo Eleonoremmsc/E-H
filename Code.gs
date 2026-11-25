@@ -2088,6 +2088,11 @@ function checkInvites() {
   const problems = [];
   const seenGuestIds = {};
   const households = {};
+  // "side" breaks nothing if it is empty — nothing reads it but the exports —
+  // so these are reported apart from the problems, and the "no problems" line
+  // keeps meaning what it says. They are still worth knowing about: nothing
+  // writes that column after the first import, so blanks accumulate unseen.
+  const sideBlank = [];
 
   rows.forEach(function(r, i) {
     if (i === 0) return;
@@ -2104,13 +2109,20 @@ function checkInvites() {
     if (!token)       problems.push('Row ' + line + ': no household_token — this person cannot be found by search.');
     if (!named)       problems.push('Row ' + line + ': has an id but no name.');
 
+    // An unnamed placeholder seat is not somebody whose side is missing.
+    if (named && !S(r[6])) sideBlank.push({ line: line, who: (S(r[1]) + ' ' + S(r[2])).trim() });
+
     if (token) {
-      if (!households[token]) households[token] = { rows: [], sizes: {} };
+      if (!households[token]) households[token] = { rows: [], sizes: {}, sides: {} };
       households[token].rows.push(line);
       households[token].sizes[S(r[5])] = true;
+      // Only a filled cell can disagree with another; an empty one is already
+      // counted above and would otherwise be reported twice.
+      if (named && S(r[6])) households[token].sides[S(r[6])] = true;
     }
   });
 
+  const sideSplit = [];
   Object.keys(households).forEach(function(tok) {
     const h = households[tok];
     const sizes = Object.keys(h.sizes);
@@ -2120,6 +2132,13 @@ function checkInvites() {
     } else if (sizes[0] && parseInt(sizes[0], 10) !== h.rows.length) {
       problems.push('Token …' + tok.slice(-6) + ': party_size says ' + sizes[0] +
                     ' but ' + h.rows.length + ' row(s) carry that token (rows ' + h.rows.join(', ') + ').');
+    }
+    // One invitation, two sides. Harmless to the site, but one of them is
+    // wrong and only you can say which.
+    const sides = Object.keys(h.sides);
+    if (sides.length > 1) {
+      sideSplit.push('rows ' + h.rows.join(', ') + ' share one invitation but ' +
+                     'are marked ' + sides.join(' and ') + '.');
     }
   });
 
@@ -2131,6 +2150,29 @@ function checkInvites() {
   } else {
     Logger.log(problems.length + ' problem(s):');
     problems.forEach(function(p) { Logger.log('  ' + p); });
+  }
+
+  // ── The "side" column, reported apart because nothing here breaks ──
+  if (sideBlank.length || sideSplit.length) {
+    Logger.log('');
+    Logger.log('Nothing above depends on this, but worth filling in:');
+  }
+  if (sideBlank.length) {
+    Logger.log('  ' + sideBlank.length + ' named row(s) have no "side". Nothing writes ' +
+               'that column after the first import — fillNewGuests() does not, and ' +
+               'applyGuestListChanges() only passes it on to somebody joining an ' +
+               'existing household — so anyone invited on a new card starts blank.');
+    // The row numbers, in short lines, so they can be worked through in the
+    // sheet. The names would run to one line each and bury everything else.
+    const nums = sideBlank.map(function(s) { return s.line; });
+    for (let i = 0; i < nums.length; i += 15) {
+      Logger.log('      rows ' + nums.slice(i, i + 15).join(', '));
+    }
+    Logger.log('      first one: row ' + sideBlank[0].line + ', ' + sideBlank[0].who);
+  }
+  if (sideSplit.length) {
+    Logger.log('  ' + sideSplit.length + ' invitation(s) whose members disagree on "side":');
+    sideSplit.forEach(function(s) { Logger.log('      ' + s); });
   }
 }
 
